@@ -1,0 +1,21 @@
+# raw source data, re-fetchable with scripts/fetch_data.sh
+data/raw/
+data/processed/*.parquet
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# node
+node_modules/
+web/preview.html
+web/shot-*.png
+
+# os
+.DS_Store
+
+# fetched at build time by scripts/fetch_logos.py, not redistributed
+data/logos/
+web/logos-src/
