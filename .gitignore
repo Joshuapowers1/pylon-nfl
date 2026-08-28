@@ -19,3 +19,7 @@ web/shot-*.png
 # fetched at build time by scripts/fetch_logos.py, not redistributed
 data/logos/
 web/logos-src/
+
+# playwright is a dev-only test dependency, installed ad hoc
+web/package.json
+web/package-lock.json
