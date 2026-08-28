@@ -1,0 +1,27 @@
+{
+  "position": "QB",
+  "teams": 12,
+  "replacement_rank": 14,
+  "premium_ppg": -1.721,
+  "by_season": [
+    {
+      "season": 2023,
+      "streamed_ppg": 15.329333333333333,
+      "naive_ppg": 18.725,
+      "weeks": 15
+    },
+    {
+      "season": 2024,
+      "streamed_ppg": 18.412,
+      "naive_ppg": 18.585882352941177,
+      "weeks": 15
+    },
+    {
+      "season": 2025,
+      "streamed_ppg": 17.517333333333333,
+      "naive_ppg": 19.111666666666668,
+      "weeks": 15
+    }
+  ],
+  "method": "Each week the streamer takes the unrostered starter facing the softest pass defense, rated only on games already played. Compared against the season-long QB at replacement rank."
+}

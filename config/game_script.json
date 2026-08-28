@@ -1,0 +1,15 @@
+{
+  "pass_att_per_point": 0.07,
+  "rush_att_per_point": -0.253,
+  "opp_sensitivity": {
+    "pass": 8.0,
+    "rush": 7.0
+  },
+  "week_cv": {
+    "QB": 0.34,
+    "RB": 0.52,
+    "WR": 0.58,
+    "TE": 0.61
+  },
+  "fitted_on": "2023-2025, 1632 team-games"
+}
