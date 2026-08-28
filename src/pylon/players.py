@@ -425,17 +425,54 @@ def positional_finish_odds(sim_df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def add_vorp(df: pd.DataFrame) -> pd.DataFrame:
+# Streaming premium, in fantasy points per game.
+#
+# Naive value over replacement assumes you had to draft the player. For a
+# streamable position you did not: you can carry one quarterback and start
+# whoever draws the best matchup, so the replacement you actually field is not
+# the season-long QB14, it is roughly the best of a dozen unrostered arms picked
+# on matchup each week. That is worth more than any single one of them averages,
+# and pricing replacement at the season rank is the reason every VORP cheat sheet
+# in existence wants quarterbacks two rounds earlier than experienced drafters
+# take them.
+#
+# This is the one number in the player model that is an estimate rather than a
+# fit. Matchup selection cannot capture the full weekly spread, since you are
+# choosing on expectation and not on outcome, so the premium is set well below
+# the theoretical expected-maximum of the pool. Quarterback carries the largest
+# premium because the position is deep and every team starts exactly one. Running
+# back and receiver carry none: you start four or five of them and cannot stream
+# a position you are already scraping the bottom of.
+STREAM_PREMIUM_PPG = {"QB": 1.5, "TE": 0.8, "RB": 0.0, "WR": 0.0}
+GAMES_IN_SEASON = 17
+
+
+def replacement_levels(df: pd.DataFrame, ranks: dict | None = None,
+                       stream: bool = True) -> dict:
+    """Season points a freely available player at each position is worth."""
+    ranks = ranks or REPLACEMENT_RANK
+    out = {}
+    for posn, rep in ranks.items():
+        g = df[df["position"] == posn].sort_values("proj_points", ascending=False)
+        if not len(g):
+            out[posn] = 0.0
+            continue
+        naive = float(g["proj_points"].iloc[min(rep, len(g)) - 1])
+        prem = STREAM_PREMIUM_PPG.get(posn, 0.0) * GAMES_IN_SEASON if stream else 0.0
+        out[posn] = naive + prem
+    return out
+
+
+def add_vorp(df: pd.DataFrame, ranks: dict | None = None, stream: bool = True) -> pd.DataFrame:
     """Value over replacement, the only currency in which a quarterback and a
     running back can be compared."""
     df = df.copy()
     df["vorp"] = np.nan
-    for posn, rep in REPLACEMENT_RANK.items():
-        g = df[df["position"] == posn].sort_values("proj_points", ascending=False)
-        if len(g) < rep:
-            continue
-        baseline = g["proj_points"].iloc[rep - 1]
+    base = replacement_levels(df, ranks, stream)
+    for posn, baseline in base.items():
+        g = df[df["position"] == posn]
         df.loc[g.index, "vorp"] = g["proj_points"] - baseline
     df["pos_rank"] = df.groupby("position")["proj_points"].rank(ascending=False, method="min")
     df["overall_value_rank"] = df["vorp"].rank(ascending=False, method="min")
+    df.attrs["replacement"] = base
     return df

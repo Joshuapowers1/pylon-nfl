@@ -1,0 +1,56 @@
+name: weekly in-season update
+
+# The whole point of the in-season engine: once games start, a rating frozen at
+# week zero is the worst version of this model. This refits it every Tuesday
+# morning on whatever has been played, rebuilds the site, and commits the result.
+on:
+  schedule:
+    - cron: "0 13 * * 2"     # Tuesdays 13:00 UTC, after Monday night resolves
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Fetch source data
+        run: ./scripts/fetch_data.sh
+
+      - name: Refit and rebuild
+        run: |
+          PYTHONPATH=src python -m pylon.run --sims 25000 --player-sims 10000
+          PYTHONPATH=src python -m pylon.webdata
+          cd web && ./build.sh
+
+      - name: Run the test suite against the new outputs
+        run: python -m pytest
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name  "Joshua Powers"
+          git config user.email "joshpowersbiz@gmail.com"
+          git add out/ config/ docs/ web/index.html
+          if git diff --staged --quiet; then
+            echo "no change this week"
+          else
+            git commit -m "Weekly refit: $(date -u +%Y-%m-%d)"
+            git push
+          fi

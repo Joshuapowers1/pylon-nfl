@@ -1,0 +1,51 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run the test suite
+        run: python -m pytest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Lint the web template
+        run: cd web && node lint.mjs
+
+      - name: Check the site is in sync with the model
+        run: |
+          # docs/index.html is generated. If it drifts from the template plus the
+          # committed outputs, the published site is not the tested one.
+          test -f docs/index.html
+          python - <<'PY'
+          import pathlib, sys
+          html = pathlib.Path("docs/index.html").read_text()
+          bad = [c for c in html if ord(c) > 127]
+          if bad:
+              sys.exit(f"docs/index.html contains {len(bad)} non-ASCII bytes; "
+                       "it will render as mojibake wherever no charset is declared")
+          for token in ("__DATA__", "__LOGOS__"):
+              if token in html:
+                  sys.exit(f"{token} placeholder was never filled: run web/build.sh")
+          print("site is ASCII-clean and fully built")
+          PY
