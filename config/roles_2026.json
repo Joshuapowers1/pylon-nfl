@@ -1,0 +1,482 @@
+{
+  "_doc": "PYLON 2026 role priors. Two purposes. (1) Rookies and role-changers have no usable play-by-play history, so their opportunity share has to be asserted rather than measured. (2) Known injuries and depth-chart decisions override what the history implies. target_share / rush_share are shares of the team's projected attempts BEFORE within-team normalisation. games is the projected availability out of 17. Every entry cites the reason.",
+  "players": {
+    "Jeremiyah Love": {
+      "team": "AZ",
+      "pos": "RB",
+      "rush_share": 0.6,
+      "target_share": 0.085,
+      "games": 15.0,
+      "why": "1.03 overall. Bell-cow role but high ankle sprain in camp and Brissett at QB caps the offense."
+    },
+    "Jadarian Price": {
+      "team": "SEA",
+      "pos": "RB",
+      "rush_share": 0.52,
+      "target_share": 0.07,
+      "games": 16.0,
+      "why": "1.32. Direct replacement for Kenneth Walker III with Charbonnet on PUP."
+    },
+    "Carnell Tate": {
+      "team": "TEN",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.215,
+      "games": 16.5,
+      "why": "1.04 into an empty Tennessee WR room. Daboll OC."
+    },
+    "Jordyn Tyson": {
+      "team": "NO",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.17,
+      "games": 10.0,
+      "why": "1.08 but a hamstring costs roughly two months."
+    },
+    "Makai Lemon": {
+      "team": "PHI",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.135,
+      "games": 15.0,
+      "why": "1.20. Direct beneficiary of the A.J. Brown trade. Hamstring costs early reps."
+    },
+    "KC Concepcion": {
+      "team": "CLE",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.165,
+      "games": 16.0,
+      "why": "1.24 into the league's thinnest receiver room."
+    },
+    "De'Zhaun Stribling": {
+      "team": "SF",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.14,
+      "games": 16.0,
+      "why": "R2. Biggest ADP riser in football after Pearsall's season-ending PCL surgery."
+    },
+    "Denzel Boston": {
+      "team": "CLE",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.13,
+      "games": 16.0,
+      "why": "R2 opposite Concepcion."
+    },
+    "Jonah Coleman": {
+      "team": "DEN",
+      "pos": "RB",
+      "rush_share": 0.28,
+      "target_share": 0.045,
+      "games": 16.0,
+      "why": "R4 but drafted three rounds ahead of ADP in expert mocks. Committee with Harvey and Dobbins."
+    },
+    "Kenyon Sadiq": {
+      "team": "NYJ",
+      "pos": "TE",
+      "rush_share": 0.0,
+      "target_share": 0.125,
+      "games": 16.0,
+      "why": "1.16 into a Frank Reich offense with Geno Smith."
+    },
+    "Kaelon Black": {
+      "team": "SF",
+      "pos": "RB",
+      "rush_share": 0.22,
+      "target_share": 0.055,
+      "games": 15.0,
+      "why": "R3 insurance behind McCaffrey, who is 30 with a long injury ledger."
+    },
+    "Omar Cooper Jr.": {
+      "team": "NYJ",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.13,
+      "games": 16.0,
+      "why": "1.30. Second option behind Garrett Wilson."
+    },
+    "Fernando Mendoza": {
+      "team": "LV",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 7.0,
+      "why": "1.01 but Cousins opens as starter. Priced as a midseason takeover."
+    },
+    "Ty Simpson": {
+      "team": "LA",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 2.0,
+      "why": "1.13. Pure succession pick behind a healthy Stafford."
+    },
+    "Malik Willis": {
+      "team": "MIA",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 16.0,
+      "why": "3yr/$67.5M. Career high is 23 pass attempts in a game. Volume ceiling is the whole story."
+    },
+    "Kyler Murray": {
+      "team": "MIN",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 15.5,
+      "why": "Beat out J.J. McCarthy on a vet-minimum deal."
+    },
+    "Tua Tagovailoa": {
+      "team": "ATL",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 14.5,
+      "why": "Vet minimum. Durability history is the projection risk."
+    },
+    "Deshaun Watson": {
+      "team": "CLE",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 13.0,
+      "why": "Named starter Aug 24 over Sanders. Short leash."
+    },
+    "Kirk Cousins": {
+      "team": "LV",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 11.0,
+      "why": "Opens as starter with the 1.01 behind him."
+    },
+    "Geno Smith": {
+      "team": "NYJ",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 16.5,
+      "why": "Clear starter, Frank Reich system."
+    },
+    "Patrick Mahomes": {
+      "team": "KC",
+      "pos": "QB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 16.0,
+      "why": "Returning from torn ACL/LCL. Practicing, listed questionable."
+    },
+    "Micah Parsons": {
+      "team": "GB",
+      "pos": "LB",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 9.0,
+      "why": "PUP to roughly mid-October off a December ACL tear."
+    },
+    "Josh Jacobs": {
+      "team": "GB",
+      "pos": "RB",
+      "rush_share": 0.52,
+      "target_share": 0.085,
+      "games": 12.0,
+      "why": "Has not practiced since Aug 5 and the league has not resolved potential discipline. Availability, not talent, is the projection."
+    },
+    "Breece Hall": {
+      "team": "NYJ",
+      "pos": "RB",
+      "rush_share": 0.58,
+      "target_share": 0.115,
+      "games": 14.5,
+      "why": "Groin strain, out 2-3 weeks."
+    },
+    "Ashton Jeanty": {
+      "team": "LV",
+      "pos": "RB",
+      "rush_share": 0.66,
+      "target_share": 0.125,
+      "games": 15.0,
+      "why": "Ankle sprain with an unclear timeline."
+    },
+    "Zach Charbonnet": {
+      "team": "SEA",
+      "pos": "RB",
+      "rush_share": 0.24,
+      "target_share": 0.06,
+      "games": 11.0,
+      "why": "PUP after February ACL surgery. Unlikely Week 1."
+    },
+    "George Kittle": {
+      "team": "SF",
+      "pos": "TE",
+      "rush_share": 0.0,
+      "target_share": 0.185,
+      "games": 14.0,
+      "why": "Off PUP ahead of schedule after an Achilles injury."
+    },
+    "Tucker Kraft": {
+      "team": "GB",
+      "pos": "TE",
+      "rush_share": 0.0,
+      "target_share": 0.185,
+      "games": 15.5,
+      "why": "Off PUP and on track for Week 1 after a torn ACL."
+    },
+    "Malik Nabers": {
+      "team": "NYG",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.275,
+      "games": 15.5,
+      "why": "Full-speed drills, trending to Week 1 off a torn ACL."
+    },
+    "Ricky Pearsall": {
+      "team": "SF",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 0.0,
+      "why": "PCL surgery. Out for the season."
+    },
+    "Jayden Higgins": {
+      "team": "HOU",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 0.0,
+      "why": "Torn ACL. Out for the season."
+    },
+    "Chris Brazzell": {
+      "team": "CAR",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.0,
+      "games": 0.0,
+      "why": "Knee. Out for the season."
+    },
+    "A.J. Brown": {
+      "team": "NE",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.245,
+      "games": 15.5,
+      "why": "Traded to New England. Alpha share in a Drake Maye offense."
+    },
+    "Jaylen Waddle": {
+      "team": "DEN",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.235,
+      "games": 16.0,
+      "why": "Traded to Denver as the clear WR1 over Sutton."
+    },
+    "D.J. Moore": {
+      "team": "BUF",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.215,
+      "games": 16.5,
+      "why": "First real WR1 Josh Allen has had since Diggs."
+    },
+    "Mike Evans": {
+      "team": "SF",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.195,
+      "games": 14.5,
+      "why": "Signed with San Francisco at 33. Pearsall out, Kirk calf."
+    },
+    "Michael Pittman Jr.": {
+      "team": "PIT",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.215,
+      "games": 16.0,
+      "why": "Traded and extended 3yr/$59M as Rodgers' primary target."
+    },
+    "Kenneth Walker III": {
+      "team": "KC",
+      "pos": "RB",
+      "rush_share": 0.6,
+      "target_share": 0.075,
+      "games": 15.5,
+      "why": "Super Bowl LX MVP signed 3yr/$45M as the Chiefs' lead back."
+    },
+    "Travis Etienne Jr.": {
+      "team": "NO",
+      "pos": "RB",
+      "rush_share": 0.58,
+      "target_share": 0.105,
+      "games": 16.0,
+      "why": "Signed as New Orleans' lead back."
+    },
+    "David Montgomery": {
+      "team": "HOU",
+      "pos": "RB",
+      "rush_share": 0.52,
+      "target_share": 0.07,
+      "games": 15.0,
+      "why": "Traded to Houston to be the early-down and goal-line back."
+    },
+    "Isiah Pacheco": {
+      "team": "DET",
+      "pos": "RB",
+      "rush_share": 0.32,
+      "target_share": 0.055,
+      "games": 15.0,
+      "why": "Signed to take the Montgomery role next to Gibbs. Grade 1 MCL sprain in camp."
+    },
+    "Rico Dowdle": {
+      "team": "PIT",
+      "pos": "RB",
+      "rush_share": 0.5,
+      "target_share": 0.085,
+      "games": 16.0,
+      "why": "Signed as Pittsburgh's lead back under McCarthy."
+    },
+    "Stefon Diggs": {
+      "team": "WAS",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.185,
+      "games": 15.0,
+      "why": "Signed in Washington opposite McLaurin."
+    },
+    "Chig Okonkwo": {
+      "team": "WAS",
+      "pos": "TE",
+      "rush_share": 0.0,
+      "target_share": 0.135,
+      "games": 16.0,
+      "why": "Signed as Daniels' move tight end."
+    },
+    "David Njoku": {
+      "team": "LAC",
+      "pos": "TE",
+      "rush_share": 0.0,
+      "target_share": 0.15,
+      "games": 15.5,
+      "why": "Signed into a Mike McDaniel offense."
+    },
+    "Isaiah Likely": {
+      "team": "NYG",
+      "pos": "TE",
+      "rush_share": 0.0,
+      "target_share": 0.155,
+      "games": 16.0,
+      "why": "Signed as the Giants' starting tight end under Nagy."
+    },
+    "Wan'Dale Robinson": {
+      "team": "TEN",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.185,
+      "games": 16.0,
+      "why": "Signed as the Titans' slot with Daboll calling plays."
+    },
+    "Romeo Doubs": {
+      "team": "NE",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.145,
+      "games": 16.0,
+      "why": "4yr/$68M as New England's WR2 behind A.J. Brown."
+    },
+    "Jauan Jennings": {
+      "team": "MIN",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.15,
+      "games": 15.5,
+      "why": "Signed opposite Jefferson with Kyler Murray at QB."
+    },
+    "Kenny Gainwell": {
+      "team": "TB",
+      "pos": "RB",
+      "rush_share": 0.3,
+      "target_share": 0.105,
+      "games": 16.0,
+      "why": "Signed as Tampa's passing-down back behind Irving."
+    },
+    "Tyler Allgeier": {
+      "team": "AZ",
+      "pos": "RB",
+      "rush_share": 0.3,
+      "target_share": 0.035,
+      "games": 16.0,
+      "why": "2yr/$12.25M as the veteran complement to Love."
+    },
+    "Brian Robinson": {
+      "team": "ATL",
+      "pos": "RB",
+      "rush_share": 0.24,
+      "target_share": 0.035,
+      "games": 15.0,
+      "why": "Signed as the short-yardage back behind Bijan."
+    },
+    "Jahan Dotson": {
+      "team": "ATL",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.12,
+      "games": 16.0,
+      "why": "2yr/$15M as the third option behind London and Pitts."
+    },
+    "Hollywood Brown": {
+      "team": "PHI",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.13,
+      "games": 15.0,
+      "why": "Signed to absorb part of the A.J. Brown vacancy."
+    },
+    "Alec Pierce": {
+      "team": "IND",
+      "pos": "WR",
+      "rush_share": 0.0,
+      "target_share": 0.175,
+      "games": 15.0,
+      "why": "Extended 4yr/$116M but opened camp on PUP after ankle surgery."
+    },
+    "Chuba Hubbard": {
+      "team": "CAR",
+      "pos": "RB",
+      "rush_share": 0.44,
+      "target_share": 0.07,
+      "games": 14.0,
+      "why": "Hamstring, week to week, with Brooks ascending."
+    },
+    "Kyle Monangai": {
+      "team": "CHI",
+      "pos": "RB",
+      "rush_share": 0.26,
+      "target_share": 0.045,
+      "games": 13.0,
+      "why": "Hyperextended knee, doubtful for Week 1."
+    },
+    "Cam Skattebo": {
+      "team": "NYG",
+      "pos": "RB",
+      "rush_share": 0.55,
+      "target_share": 0.115,
+      "games": 15.0,
+      "why": "Took the job midseason as a rookie and never gave it back, then missed the last stretch. He has no December sample for the model to read, so the role is asserted: lead back, Tracy in a change-of-pace committee."
+    }
+  },
+  "qb_depth_2026": {
+    "_doc": "Share of the team's dropbacks the Week 1 starter takes IN THE GAMES HE PLAYS. Availability is handled separately by the per-player games projection, so this number should reflect only blowout relief and in-game hooks, not injury risk. An earlier build conflated the two and taxed every quarterback twice.",
+    "default_starter_share": 0.965,
+    "overrides": {
+      "CLE": 0.9,
+      "LV": 0.94,
+      "ATL": 0.95,
+      "MIA": 0.94,
+      "NO": 0.95,
+      "TEN": 0.96,
+      "CAR": 0.95
+    }
+  }
+}

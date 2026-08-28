@@ -1,0 +1,23 @@
+{
+  "seasons_tested": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_team_seasons": 160,
+  "rmse_wins": 2.871,
+  "mae_wins": 2.39,
+  "correlation_pred_actual": 0.406,
+  "within_1_win_pct": 0.225,
+  "within_2_wins_pct": 0.469,
+  "straight_up_game_accuracy": 0.5823,
+  "variance_split": {
+    "sigma_total_pts": 13.754,
+    "sigma_game_pts": 12.501,
+    "sigma_team_pts": 4.055,
+    "team_error_in_wins": 1.999,
+    "note": "sigma_team is a season-long, team-constant strength error. Without it the simulator understates win-total spread by roughly a third."
+  }
+}

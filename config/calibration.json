@@ -1,0 +1,40 @@
+{
+  "shrinkage": {
+    "off_pass": {
+      "shrinkage": 0.5676,
+      "correlation": 0.4614,
+      "n": 160
+    },
+    "off_rush": {
+      "shrinkage": 0.4161,
+      "correlation": 0.3293,
+      "n": 160
+    },
+    "def_pass": {
+      "shrinkage": 0.1385,
+      "correlation": 0.0999,
+      "n": 160
+    },
+    "def_rush": {
+      "shrinkage": 0.1726,
+      "correlation": 0.1205,
+      "n": 160
+    }
+  },
+  "translation": {
+    "hfa": 2.054,
+    "points_per_rating": 89.77,
+    "sigma": 13.754,
+    "r2_out_of_sample": 0.0609,
+    "straight_up_accuracy": 0.5823,
+    "n_games": 1359,
+    "test_years": [
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
+  },
+  "note": "Fitted out of sample: every rating used to predict season t was built only from seasons t-3 through t-1."
+}

@@ -1,0 +1,192 @@
+{
+  "_doc": "PYLON 2026 roster/scheme prior file. off_delta and def_delta are in EPA per play. Positive off_delta = better offense. NEGATIVE def_delta = better defense (less EPA allowed). Magnitude guide: full QB tier swap +/-0.100, meaningful QB swap +/-0.035, elite WR1 +/-0.015, DPOY-level edge -0.018, elite CB -0.010, coordinator scheme change +/-0.015, head coach change +/-0.008. Every entry cites the transaction it prices.",
+  "_scale_guide": {
+    "qb_tier_swap": 0.1,
+    "qb_meaningful": 0.035,
+    "elite_wr1": 0.015,
+    "dpoy_edge": 0.018,
+    "elite_cb": 0.01,
+    "scheme": 0.015,
+    "head_coach": 0.008
+  },
+  "teams": {
+    "ARI": {
+      "off_delta": -0.022,
+      "def_delta": 0.002,
+      "notes": "Kyler Murray released, Brissett starts. Jeremiyah Love (1.03) adds rushing floor. Mike LaFleur first year as HC."
+    },
+    "ATL": {
+      "off_delta": 0.014,
+      "def_delta": -0.004,
+      "notes": "Tua Tagovailoa on a vet-minimum deal over Penix Jr., Stefanski to HC, Tommy Rees OC. Trimmed from an initial +0.030: a minimum-salary QB signing is a hedge, not a tier change."
+    },
+    "BAL": {
+      "off_delta": -0.006,
+      "def_delta": -0.02,
+      "notes": "Trey Hendrickson 4yr/$112M. Harbaugh out to NYG, Jesse Minter HC, Doyle OC. Continuity loss on offense."
+    },
+    "BUF": {
+      "off_delta": 0.014,
+      "def_delta": -0.012,
+      "notes": "D.J. Moore trade gives Allen a real WR1. Bradley Chubb + C.J. Gardner-Johnson. McDermott out, Joe Brady promoted."
+    },
+    "CAR": {
+      "off_delta": -0.004,
+      "def_delta": -0.014,
+      "notes": "Jaelan Phillips 4yr/$120M, Devin Lloyd. Hubbard hamstring, Brazzell lost for year."
+    },
+    "CHI": {
+      "off_delta": -0.014,
+      "def_delta": 0.0,
+      "notes": "D.J. Moore traded to BUF. Bradbury upgrade at center. Loveland/Burden year two."
+    },
+    "CIN": {
+      "off_delta": 0.0,
+      "def_delta": -0.026,
+      "notes": "Worst-in-league pass defense rebuilt: Dexter Lawrence, Jonathan Allen, Boye Mafe, Bryan Cook. Offset by losing Hendrickson."
+    },
+    "CLE": {
+      "off_delta": 0.022,
+      "def_delta": 0.02,
+      "notes": "Traded Myles Garrett (DPOY) for Jared Verse. Watson named starter over Sanders. Monken HC lifts a 32nd-ranked offense off the floor."
+    },
+    "DAL": {
+      "off_delta": -0.004,
+      "def_delta": -0.016,
+      "notes": "Rashan Gary + Caleb Downs (1.11) + Jalen Thompson attack the worst defensive EPA/play in football. Lost Osa Odighizuwa."
+    },
+    "DEN": {
+      "off_delta": 0.018,
+      "def_delta": 0.0,
+      "notes": "Jaylen Waddle trade. Nix healthy after two ankle surgeries. Davis Webb first year calling plays."
+    },
+    "DET": {
+      "off_delta": -0.008,
+      "def_delta": -0.004,
+      "notes": "Petzing OC leans multi-TE. Pacheco replaces Montgomery. Branch and Joseph opened camp on PUP."
+    },
+    "GB": {
+      "off_delta": -0.002,
+      "def_delta": 0.012,
+      "notes": "Micah Parsons on PUP to mid-October. Gannon takes over defense. Jacobs groin plus pending league discipline. Kraft back."
+    },
+    "HOU": {
+      "off_delta": 0.012,
+      "def_delta": 0.0,
+      "notes": "David Montgomery trade, three OL additions (Braden Smith, Teller). Jayden Higgins lost for season."
+    },
+    "IND": {
+      "off_delta": -0.006,
+      "def_delta": -0.004,
+      "notes": "Daniel Jones back from Achilles, Pittman traded to PIT, Pierce extended but on PUP."
+    },
+    "JAX": {
+      "off_delta": -0.01,
+      "def_delta": 0.002,
+      "notes": "Etienne to NO with no marquee replacement. Quiet offseason on a 13-4 roster, which historically regresses."
+    },
+    "KC": {
+      "off_delta": 0.038,
+      "def_delta": 0.01,
+      "notes": "Mahomes returns from torn ACL/LCL, Bieniemy back as OC, Kenneth Walker III signed. Lost Trent McDuffie."
+    },
+    "LA": {
+      "off_delta": -0.004,
+      "def_delta": -0.03,
+      "notes": "Myles Garrett AND Trent McDuffie in one offseason. Stafford is 38. Ty Simpson drafted 1.13 as succession."
+    },
+    "LAC": {
+      "off_delta": 0.026,
+      "def_delta": 0.002,
+      "notes": "Mike McDaniel takes over the offense. Njoku and Kolar at TE. Biggest scheme upgrade in the league."
+    },
+    "LV": {
+      "off_delta": 0.01,
+      "def_delta": -0.015,
+      "notes": "Cousins over Geno, Kubiak HC, Linderbaum at center. Paye, Koonce, Quay Walker, Nakobe Dean, Taron Johnson rebuild a 30th-ranked roster."
+    },
+    "MIA": {
+      "off_delta": -0.062,
+      "def_delta": -0.006,
+      "notes": "Largest single-team downgrade on the board. Tua and Waddle both gone, Malik Willis starting, Hafley HC and Slowik OC installing a new system at once."
+    },
+    "MIN": {
+      "off_delta": 0.026,
+      "def_delta": 0.0,
+      "notes": "Kyler Murray beat out J.J. McCarthy on a vet-minimum deal. Jauan Jennings added. Defense was 3rd in DVOA and returns intact."
+    },
+    "NE": {
+      "off_delta": 0.024,
+      "def_delta": -0.008,
+      "notes": "A.J. Brown plus Romeo Doubs around a 22-year-old MVP runner-up. Vera-Tucker, Dre'Mont Jones, Byard."
+    },
+    "NO": {
+      "off_delta": 0.014,
+      "def_delta": -0.006,
+      "notes": "Travis Etienne signed, Jordyn Tyson (1.08) but hamstring costs two months. Shough year two."
+    },
+    "NYG": {
+      "off_delta": 0.012,
+      "def_delta": -0.002,
+      "notes": "John Harbaugh HC, Matt Nagy OC, Isaiah Likely. Nabers trending to Week 1 off ACL. Lost Dexter Lawrence."
+    },
+    "NYJ": {
+      "off_delta": 0.02,
+      "def_delta": -0.023,
+      "notes": "Geno Smith over Fields, Frank Reich OC. Defense that produced FOUR takeaways all year adds Minkah Fitzpatrick, T'Vondre Sweat, Ossai, Enagbare, Onyemata, Demario Davis."
+    },
+    "PHI": {
+      "off_delta": -0.018,
+      "def_delta": -0.01,
+      "notes": "A.J. Brown traded for a 2028 first plus $43.5M dead cap. Greenard and Woolen added. Makai Lemon (1.20) hamstring."
+    },
+    "PIT": {
+      "off_delta": 0.014,
+      "def_delta": -0.006,
+      "notes": "Tomlin out after 19 seasons, McCarthy in. Pittman and Dowdle added. Rodgers back at 42. Ramsey and Porter on PUP."
+    },
+    "SEA": {
+      "off_delta": -0.01,
+      "def_delta": -0.002,
+      "notes": "Champion roster, quiet offseason, lost Kenneth Walker III to KC. Jadarian Price (1.32) replaces him. Charbonnet on PUP."
+    },
+    "SF": {
+      "off_delta": 0.006,
+      "def_delta": -0.008,
+      "notes": "Mike Evans signed, Kittle off PUP ahead of schedule, Raheem Morris takes over the defense. Pearsall lost for the season."
+    },
+    "TB": {
+      "off_delta": -0.012,
+      "def_delta": -0.002,
+      "notes": "Mike Evans gone to SF, Mayfield contract talks stalled, Vea holding in. Gainwell and Anzalone added."
+    },
+    "TEN": {
+      "off_delta": 0.018,
+      "def_delta": -0.017,
+      "notes": "Robert Saleh HC and Brian Daboll OC around Cam Ward year two. Jermaine Johnson, Franklin-Myers, Solomon Thomas, two CBs. Carnell Tate 1.04."
+    },
+    "WAS": {
+      "off_delta": 0.01,
+      "def_delta": -0.014,
+      "notes": "Stefon Diggs and Chig Okonkwo for Daniels. Oweh, Chenal, Rasul Douglas, Nick Cross against a minus-13 turnover margin."
+    }
+  },
+  "pace_scheme_2026": {
+    "_doc": "Multiplicative adjustment to projected dropback rate for new play-callers. 1.00 = no change.",
+    "LAC": 1.045,
+    "MIA": 0.93,
+    "ATL": 1.02,
+    "NYJ": 1.015,
+    "TEN": 1.03,
+    "DET": 0.975,
+    "KC": 1.02,
+    "MIN": 1.015,
+    "CLE": 1.01,
+    "LV": 1.005,
+    "ARI": 1.01,
+    "PIT": 0.985,
+    "NYG": 1.005,
+    "BAL": 0.99,
+    "BUF": 1.0
+  }
+}
