@@ -1,5 +1,5 @@
 {
-  "_doc": "PYLON 2026 role priors. Two purposes. (1) Rookies and role-changers have no usable play-by-play history, so their opportunity share has to be asserted rather than measured. (2) Known injuries and depth-chart decisions override what the history implies. target_share / rush_share are shares of the team's projected attempts BEFORE within-team normalisation. games is the projected availability out of 17. Every entry cites the reason.",
+  "_doc": "PYLON 2026 role priors. Two purposes. (1) Rookies and role-changers have no usable play-by-play history, so their opportunity share has to be asserted rather than measured. (2) Known injuries and depth-chart decisions override what the history implies. target_share / rush_share are shares of the team's projected attempts BEFORE within-team normalisation. games is the projected availability out of 17. Every entry cites the reason. Entries carrying an availability claim have a stale_after_week: past that week the assertion is dropped and measured in-season usage takes over, because an August injury note is a statement about September and nothing else.",
   "players": {
     "Jeremiyah Love": {
       "team": "AZ",
@@ -7,7 +7,8 @@
       "rush_share": 0.6,
       "target_share": 0.085,
       "games": 15.0,
-      "why": "1.03 overall. Bell-cow role but high ankle sprain in camp and Brissett at QB caps the offense."
+      "why": "1.03 overall. Bell-cow role but high ankle sprain in camp and Brissett at QB caps the offense.",
+      "stale_after_week": 6
     },
     "Jadarian Price": {
       "team": "SEA",
@@ -15,7 +16,8 @@
       "rush_share": 0.52,
       "target_share": 0.07,
       "games": 16.0,
-      "why": "1.32. Direct replacement for Kenneth Walker III with Charbonnet on PUP."
+      "why": "1.32. Direct replacement for Kenneth Walker III with Charbonnet on PUP.",
+      "stale_after_week": 6
     },
     "Carnell Tate": {
       "team": "TEN",
@@ -31,7 +33,8 @@
       "rush_share": 0.0,
       "target_share": 0.17,
       "games": 10.0,
-      "why": "1.08 but a hamstring costs roughly two months."
+      "why": "1.08 but a hamstring costs roughly two months.",
+      "stale_after_week": 6
     },
     "Makai Lemon": {
       "team": "PHI",
@@ -39,7 +42,8 @@
       "rush_share": 0.0,
       "target_share": 0.135,
       "games": 15.0,
-      "why": "1.20. Direct beneficiary of the A.J. Brown trade. Hamstring costs early reps."
+      "why": "1.20. Direct beneficiary of the A.J. Brown trade. Hamstring costs early reps.",
+      "stale_after_week": 6
     },
     "KC Concepcion": {
       "team": "CLE",
@@ -55,7 +59,8 @@
       "rush_share": 0.0,
       "target_share": 0.14,
       "games": 16.0,
-      "why": "R2. Biggest ADP riser in football after Pearsall's season-ending PCL surgery."
+      "why": "R2. Biggest ADP riser in football after Pearsall's season-ending PCL surgery.",
+      "stale_after_week": 18
     },
     "Denzel Boston": {
       "team": "CLE",
@@ -87,7 +92,8 @@
       "rush_share": 0.22,
       "target_share": 0.055,
       "games": 15.0,
-      "why": "R3 insurance behind McCaffrey, who is 30 with a long injury ledger."
+      "why": "R3 insurance behind McCaffrey, who is 30 with a long injury ledger.",
+      "stale_after_week": 6
     },
     "Omar Cooper Jr.": {
       "team": "NYJ",
@@ -127,7 +133,8 @@
       "rush_share": 0.0,
       "target_share": 0.0,
       "games": 15.5,
-      "why": "Beat out J.J. McCarthy on a vet-minimum deal."
+      "why": "Beat out J.J. McCarthy on a vet-minimum deal.",
+      "stale_after_week": 6
     },
     "Tua Tagovailoa": {
       "team": "ATL",
@@ -167,7 +174,8 @@
       "rush_share": 0.0,
       "target_share": 0.0,
       "games": 16.0,
-      "why": "Returning from torn ACL/LCL. Practicing, listed questionable."
+      "why": "Returning from torn ACL/LCL. Practicing, listed questionable.",
+      "stale_after_week": 18
     },
     "Micah Parsons": {
       "team": "GB",
@@ -175,7 +183,8 @@
       "rush_share": 0.0,
       "target_share": 0.0,
       "games": 9.0,
-      "why": "PUP to roughly mid-October off a December ACL tear."
+      "why": "PUP to roughly mid-October off a December ACL tear.",
+      "stale_after_week": 6
     },
     "Josh Jacobs": {
       "team": "GB",
@@ -191,7 +200,8 @@
       "rush_share": 0.58,
       "target_share": 0.115,
       "games": 14.5,
-      "why": "Groin strain, out 2-3 weeks."
+      "why": "Groin strain, out 2-3 weeks.",
+      "stale_after_week": 6
     },
     "Ashton Jeanty": {
       "team": "LV",
@@ -199,7 +209,8 @@
       "rush_share": 0.66,
       "target_share": 0.125,
       "games": 15.0,
-      "why": "Ankle sprain with an unclear timeline."
+      "why": "Ankle sprain with an unclear timeline.",
+      "stale_after_week": 6
     },
     "Zach Charbonnet": {
       "team": "SEA",
@@ -207,7 +218,8 @@
       "rush_share": 0.24,
       "target_share": 0.06,
       "games": 11.0,
-      "why": "PUP after February ACL surgery. Unlikely Week 1."
+      "why": "PUP after February ACL surgery. Unlikely Week 1.",
+      "stale_after_week": 6
     },
     "George Kittle": {
       "team": "SF",
@@ -215,7 +227,8 @@
       "rush_share": 0.0,
       "target_share": 0.185,
       "games": 14.0,
-      "why": "Off PUP ahead of schedule after an Achilles injury."
+      "why": "Off PUP ahead of schedule after an Achilles injury.",
+      "stale_after_week": 6
     },
     "Tucker Kraft": {
       "team": "GB",
@@ -223,7 +236,8 @@
       "rush_share": 0.0,
       "target_share": 0.185,
       "games": 15.5,
-      "why": "Off PUP and on track for Week 1 after a torn ACL."
+      "why": "Off PUP and on track for Week 1 after a torn ACL.",
+      "stale_after_week": 18
     },
     "Malik Nabers": {
       "team": "NYG",
@@ -231,7 +245,8 @@
       "rush_share": 0.0,
       "target_share": 0.275,
       "games": 15.5,
-      "why": "Full-speed drills, trending to Week 1 off a torn ACL."
+      "why": "Full-speed drills, trending to Week 1 off a torn ACL.",
+      "stale_after_week": 18
     },
     "Ricky Pearsall": {
       "team": "SF",
@@ -239,7 +254,8 @@
       "rush_share": 0.0,
       "target_share": 0.0,
       "games": 0.0,
-      "why": "PCL surgery. Out for the season."
+      "why": "PCL surgery. Out for the season.",
+      "stale_after_week": 18
     },
     "Jayden Higgins": {
       "team": "HOU",
@@ -247,7 +263,8 @@
       "rush_share": 0.0,
       "target_share": 0.0,
       "games": 0.0,
-      "why": "Torn ACL. Out for the season."
+      "why": "Torn ACL. Out for the season.",
+      "stale_after_week": 18
     },
     "Chris Brazzell": {
       "team": "CAR",
@@ -255,7 +272,8 @@
       "rush_share": 0.0,
       "target_share": 0.0,
       "games": 0.0,
-      "why": "Knee. Out for the season."
+      "why": "Knee. Out for the season.",
+      "stale_after_week": 18
     },
     "A.J. Brown": {
       "team": "NE",
@@ -287,7 +305,8 @@
       "rush_share": 0.0,
       "target_share": 0.195,
       "games": 14.5,
-      "why": "Signed with San Francisco at 33. Pearsall out, Kirk calf."
+      "why": "Signed with San Francisco at 33. Pearsall out, Kirk calf.",
+      "stale_after_week": 6
     },
     "Michael Pittman Jr.": {
       "team": "PIT",
@@ -327,7 +346,8 @@
       "rush_share": 0.32,
       "target_share": 0.055,
       "games": 15.0,
-      "why": "Signed to take the Montgomery role next to Gibbs. Grade 1 MCL sprain in camp."
+      "why": "Signed to take the Montgomery role next to Gibbs. Grade 1 MCL sprain in camp.",
+      "stale_after_week": 6
     },
     "Rico Dowdle": {
       "team": "PIT",
@@ -343,7 +363,8 @@
       "rush_share": 0.0,
       "target_share": 0.185,
       "games": 15.0,
-      "why": "Signed in Washington opposite McLaurin."
+      "why": "Signed in Washington opposite McLaurin.",
+      "stale_after_week": 6
     },
     "Chig Okonkwo": {
       "team": "WAS",
@@ -439,7 +460,8 @@
       "rush_share": 0.0,
       "target_share": 0.175,
       "games": 15.0,
-      "why": "Extended 4yr/$116M but opened camp on PUP after ankle surgery."
+      "why": "Extended 4yr/$116M but opened camp on PUP after ankle surgery.",
+      "stale_after_week": 6
     },
     "Chuba Hubbard": {
       "team": "CAR",
@@ -447,7 +469,8 @@
       "rush_share": 0.44,
       "target_share": 0.07,
       "games": 14.0,
-      "why": "Hamstring, week to week, with Brooks ascending."
+      "why": "Hamstring, week to week, with Brooks ascending.",
+      "stale_after_week": 6
     },
     "Kyle Monangai": {
       "team": "CHI",
@@ -455,7 +478,8 @@
       "rush_share": 0.26,
       "target_share": 0.045,
       "games": 13.0,
-      "why": "Hyperextended knee, doubtful for Week 1."
+      "why": "Hyperextended knee, doubtful for Week 1.",
+      "stale_after_week": 6
     },
     "Cam Skattebo": {
       "team": "NYG",

@@ -166,6 +166,21 @@ def _eb(obs, n, prior, k):
     return (n * obs + k * prior) / (n + k)
 
 
+def active_roles(roles: dict, week: int | None = None) -> dict:
+    """Drop role priors that have passed their shelf life.
+
+    Twenty-one of the fifty-eight priors are availability claims: a hamstring, a
+    PUP designation, an expected return date. Those describe September. Carried
+    into November they are not a prior, they are stale hand-entry fighting real
+    usage data, so past `stale_after_week` the assertion is removed and the
+    measured share takes over."""
+    if week is None:
+        return roles
+    keep = {k: v for k, v in roles["players"].items()
+            if v.get("stale_after_week", 99) >= week}
+    return {**roles, "players": keep}
+
+
 def build_player_frame(usage: pd.DataFrame, roles: dict, usage_late: pd.DataFrame | None = None) -> pd.DataFrame:
     hist = blend_usage(usage)
     hist = apply_late_season(hist, usage_late)
@@ -425,30 +440,36 @@ def positional_finish_odds(sim_df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# Streaming premium, in fantasy points per game.
+# Streaming premium, in fantasy points per game. MEASURED, and the measurement
+# went the other way.
 #
-# Naive value over replacement assumes you had to draft the player. For a
-# streamable position you did not: you can carry one quarterback and start
-# whoever draws the best matchup, so the replacement you actually field is not
-# the season-long QB14, it is roughly the best of a dozen unrostered arms picked
-# on matchup each week. That is worth more than any single one of them averages,
-# and pricing replacement at the season rank is the reason every VORP cheat sheet
-# in existence wants quarterbacks two rounds earlier than experienced drafters
-# take them.
+# The reasoning that produced this constant was: naive value over replacement
+# assumes you had to draft the player, and for a streamable position you did
+# not, so replacement should sit above the season-long QB14 and quarterbacks
+# should therefore fall down the board. That is the conventional wisdom and it
+# is why every VORP sheet gets overridden by hand.
 #
-# This is the one number in the player model that is an estimate rather than a
-# fit. Matchup selection cannot capture the full weekly spread, since you are
-# choosing on expectation and not on outcome, so the premium is set well below
-# the theoretical expected-maximum of the pool. Quarterback carries the largest
-# premium because the position is deep and every team starts exactly one. Running
-# back and receiver carry none: you start four or five of them and cannot stream
-# a position you are already scraping the bottom of.
-STREAM_PREMIUM_PPG = {"QB": 1.5, "TE": 0.8, "RB": 0.0, "WR": 0.0}
+# `streaming.measure()` replays it instead of assuming it. Each week a simulated
+# manager starts whichever unrostered quarterback faces the softest pass
+# defense, rated only on games already played, with no sight of the outcome.
+# Across 2023-2025 that manager averaged 17.1 points per game against 18.8 for
+# the quarterback who finished 14th: a premium of MINUS 1.7.
+#
+# Streaming is worse than rostering the player who ends up at replacement rank.
+# The waiver pool is a real downgrade, not a free option. So the honest premium
+# is zero or negative, the fudge factor is deleted, and the board goes back to
+# ranking quarterbacks where the arithmetic actually puts them. That disagrees
+# with how most people draft, which is the entire reason this project exists.
+#
+# `stream=True` is kept so the measured value can be applied, and the draft room
+# exposes it as a toggle for anyone who trusts the convention over the replay.
+# See config/streaming_premium.json for the run.
+STREAM_PREMIUM_PPG = {"QB": -1.72, "TE": 0.0, "RB": 0.0, "WR": 0.0}
 GAMES_IN_SEASON = 17
 
 
 def replacement_levels(df: pd.DataFrame, ranks: dict | None = None,
-                       stream: bool = True) -> dict:
+                       stream: bool = False) -> dict:
     """Season points a freely available player at each position is worth."""
     ranks = ranks or REPLACEMENT_RANK
     out = {}
@@ -463,7 +484,7 @@ def replacement_levels(df: pd.DataFrame, ranks: dict | None = None,
     return out
 
 
-def add_vorp(df: pd.DataFrame, ranks: dict | None = None, stream: bool = True) -> pd.DataFrame:
+def add_vorp(df: pd.DataFrame, ranks: dict | None = None, stream: bool = False) -> pd.DataFrame:
     """Value over replacement, the only currency in which a quarterback and a
     running back can be compared."""
     df = df.copy()
