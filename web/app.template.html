@@ -1,0 +1,2536 @@
+<title>Pylon Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ============================================================================
+   PYLON TERMINAL
+   Tokens: complete light palette on bare :root, redefined under the dark media
+   query (guarded so an explicit light stamp wins) and again under the dark
+   stamp (so the toggle wins both ways). No component ever declares a color
+   outside this block.
+   ========================================================================== */
+:root{
+  color-scheme: light;
+  --ground:#F6F7F5; --surface:#FFFFFF; --raised:#FBFCFA; --sunken:#EFF2EE;
+  --line:#DEE4DF; --line-strong:#C6CFC8;
+  --ink:#0B1014; --ink-2:#3C4A52; --ink-3:#5F6E77; --ink-4:#8A979E;
+  --accent:#DB5A00; --accent-ink:#FFFFFF; --accent-wash:#FDF0E6;
+  /* data language: one diverging pair, used identically everywhere */
+  --up:#2a78d6; --up-wash:#E4EEFB; --down:#e34948; --down-wash:#FBE7E7; --mid:#B9C2BC;
+  /* categorical, adjacent-validated, capped at 4 and always direct-labelled */
+  --s1:#eb6834; --s2:#2a78d6; --s3:#1baf7a; --s4:#4a3aa7;
+  /* sequential blue ramp */
+  --q1:#cde2fb; --q2:#9ec5f4; --q3:#6da7ec; --q4:#3987e5; --q5:#256abf; --q6:#184f95;
+  --shadow:0 1px 2px rgba(11,16,20,.06),0 8px 24px -12px rgba(11,16,20,.18);
+  --shadow-lg:0 2px 6px rgba(11,16,20,.08),0 24px 56px -20px rgba(11,16,20,.28);
+  --r:10px; --r-sm:6px;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#0B1014; --surface:#121A20; --raised:#18232B; --sunken:#0E161B;
+    --line:#22303A; --line-strong:#33454F;
+    --ink:#E9EFF2; --ink-2:#B4C2CA; --ink-3:#7C8D97; --ink-4:#5B6C76;
+    --accent:#FF7A1A; --accent-ink:#160B02; --accent-wash:#2A1A0C;
+    --up:#3987e5; --up-wash:#12243A; --down:#e66767; --down-wash:#331B1B; --mid:#3A4750;
+    --s1:#d95926; --s2:#3987e5; --s3:#199e70; --s4:#9085e9;
+    --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#9ec5f4; --q6:#cde2fb;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
+    --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0B1014; --surface:#121A20; --raised:#18232B; --sunken:#0E161B;
+  --line:#22303A; --line-strong:#33454F;
+  --ink:#E9EFF2; --ink-2:#B4C2CA; --ink-3:#7C8D97; --ink-4:#5B6C76;
+  --accent:#FF7A1A; --accent-ink:#160B02; --accent-wash:#2A1A0C;
+  --up:#3987e5; --up-wash:#12243A; --down:#e66767; --down-wash:#331B1B; --mid:#3A4750;
+  --s1:#d95926; --s2:#3987e5; --s3:#199e70; --s4:#9085e9;
+  --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#9ec5f4; --q6:#cde2fb;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--f-body); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+h1,h2,h3,h4{font-family:var(--f-display); font-weight:700; letter-spacing:-.02em; margin:0; text-wrap:balance;}
+a{color:inherit;}
+button{font:inherit; color:inherit; cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px;}
+.num{font-family:var(--f-mono); font-variant-numeric:tabular-nums; font-feature-settings:"tnum";}
+.eyebrow{
+  font-family:var(--f-mono); font-size:10.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-4);
+}
+.muted{color:var(--ink-3);} .dim{color:var(--ink-4);}
+
+/* ---------- app shell ---------- */
+.shell{max-width:1480px; margin:0 auto; padding:0 20px 96px;}
+header.top{
+  position:sticky; top:0; z-index:60; background:var(--ground);
+  border-bottom:1px solid var(--line);
+}
+.top-in{
+  max-width:1480px; margin:0 auto; padding:0 20px;
+  display:flex; align-items:center; gap:18px; height:58px;
+}
+.brand{display:flex; align-items:center; gap:9px; flex:none;}
+.pylon{width:13px; height:19px; flex:none;}
+.brand b{font-family:var(--f-display); font-weight:800; font-size:16px; letter-spacing:-.03em;}
+.brand span{
+  font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em;
+  color:var(--ink-4); text-transform:uppercase; padding-top:2px;
+}
+nav.tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; flex:1; min-width:0;}
+nav.tabs::-webkit-scrollbar{display:none;}
+nav.tabs button{
+  background:none; border:0; padding:7px 11px; border-radius:var(--r-sm);
+  font-size:13.5px; font-weight:500; color:var(--ink-3); white-space:nowrap;
+  transition:color .12s, background .12s;
+}
+nav.tabs button:hover{color:var(--ink); background:var(--sunken);}
+nav.tabs button[aria-current="true"]{color:var(--accent); background:var(--accent-wash);}
+nav.tabs button em{
+  font-style:normal; font-family:var(--f-mono); font-size:8.5px; letter-spacing:.1em;
+  background:var(--accent); color:var(--accent-ink); border-radius:3px; padding:1px 3px;
+  margin-left:5px; vertical-align:2px; text-transform:uppercase;
+}
+.top-act{display:flex; gap:7px; flex:none;}
+.iconbtn{
+  width:34px; height:34px; border:1px solid var(--line); background:var(--surface);
+  border-radius:var(--r-sm); display:grid; place-items:center; color:var(--ink-3);
+  transition:border-color .12s, color .12s;
+}
+.iconbtn:hover{border-color:var(--line-strong); color:var(--ink);}
+a.iconbtn{text-decoration:none;}
+.searchbtn{
+  width:auto; padding:0 10px; gap:8px; font-size:13px;
+  display:flex; align-items:center;
+}
+.searchbtn kbd{
+  font-family:var(--f-mono); font-size:10px; border:1px solid var(--line);
+  border-radius:4px; padding:1px 4px; color:var(--ink-4);
+}
+
+/* ---------- section furniture ---------- */
+section.page{display:none; padding-top:30px;}
+section.page.on{display:block; animation:fade .22s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important;} }
+
+.hero{
+  display:grid; grid-template-columns:1.65fr 1fr; gap:28px; align-items:start;
+  padding:8px 0 4px;
+}
+.byline{font-size:13px; color:var(--ink-3); margin-top:6px;}
+.byline a{color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--line-strong);}
+.byline a:hover{color:var(--accent); border-bottom-color:var(--accent);}
+.hero-copy h2{font-size:clamp(28px,4.2vw,46px); line-height:1.02; margin:12px 0 12px; letter-spacing:-.035em;}
+.hero-copy p{margin:0 0 16px; color:var(--ink-2); font-size:15px; line-height:1.62; max-width:60ch;}
+.hero-cta{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;}
+.chip.go{
+  background:var(--accent); color:var(--accent-ink); border-color:var(--accent);
+  font-weight:600; padding:7px 14px; font-size:13px;
+}
+.chip.go:nth-child(n+2){background:var(--surface); color:var(--ink); border-color:var(--line-strong);}
+.stack{display:flex; gap:5px; flex-wrap:wrap;}
+.stack span{
+  font-family:var(--f-mono); font-size:10.5px; color:var(--ink-4);
+  border:1px solid var(--line); border-radius:4px; padding:2px 6px;
+}
+.hero-side{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  padding:14px; display:flex; flex-direction:column; gap:2px;
+}
+.hero-row{
+  display:flex; align-items:center; gap:9px; width:100%; background:none; border:0;
+  padding:6px 7px; border-radius:var(--r-sm); font-size:13.5px; color:inherit;
+}
+.hero-row:hover{background:var(--sunken);}
+@media (max-width:840px){ .hero{grid-template-columns:1fr; gap:20px;} }
+.sec-head{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:20px;
+  flex-wrap:wrap; margin-bottom:16px;
+}
+.sec-head h2{font-size:clamp(21px,2.4vw,27px); line-height:1.1;}
+.sec-head p{margin:5px 0 0; color:var(--ink-3); font-size:13.5px; max-width:62ch;}
+/* yard-line motif: hairline ticks under a section heading */
+.yards{
+  height:9px; margin:14px 0 22px; border-top:1px solid var(--line);
+  background-image:repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px 40px);
+  background-size:40px 5px; background-repeat:repeat-x; opacity:.85;
+}
+
+/* ---------- cards / grids ---------- */
+.card{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r); padding:16px;
+}
+.grid{display:grid; gap:12px;}
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:10px; margin-bottom:22px;}
+.kpi{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  padding:13px 14px; display:flex; flex-direction:column; gap:3px;
+}
+.kpi .v{font-family:var(--f-display); font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1;}
+.kpi .v small{font-size:14px; font-weight:600; color:var(--ink-3); letter-spacing:0;}
+.kpi .l{font-size:11.5px; color:var(--ink-3); line-height:1.35;}
+
+/* ---------- controls ---------- */
+.bar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-3);
+  border-radius:99px; padding:5px 11px; font-size:12.5px; font-weight:500;
+  transition:all .12s;
+}
+.chip:hover{border-color:var(--line-strong); color:var(--ink);}
+.chip[aria-pressed="true"]{background:var(--ink); color:var(--ground); border-color:var(--ink);}
+.chip.up[aria-pressed="true"]{background:var(--up); border-color:var(--up); color:#fff;}
+.chip.down[aria-pressed="true"]{background:var(--down); border-color:var(--down); color:#fff;}
+input.txt, select.sel{
+  font:inherit; font-size:13px; background:var(--surface); color:var(--ink);
+  border:1px solid var(--line); border-radius:var(--r-sm); padding:6px 10px; min-width:0;
+}
+input.txt::placeholder{color:var(--ink-4);}
+input.slider{
+  -webkit-appearance:none; appearance:none; width:104px; height:3px; border-radius:2px;
+  background:var(--line-strong); vertical-align:middle; margin-right:7px; cursor:pointer;
+}
+input.slider::-webkit-slider-thumb{
+  -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
+  background:var(--accent); border:2px solid var(--surface); cursor:grab;
+}
+input.slider::-moz-range-thumb{
+  width:11px; height:11px; border-radius:50%; background:var(--accent);
+  border:2px solid var(--surface); cursor:grab;
+}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:var(--r-sm); overflow:hidden; background:var(--surface);}
+.seg button{border:0; background:none; padding:6px 11px; font-size:12.5px; color:var(--ink-3);}
+.seg button[aria-pressed="true"]{background:var(--sunken); color:var(--ink); font-weight:600;}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--surface);}
+table{border-collapse:separate; border-spacing:0; width:100%; font-size:13px;}
+thead th{
+  /* Sticky resolves against the nearest scroll container, and .tw is one
+     because overflow-x:auto makes it scrollable on both axes. Offsetting by
+     the header bar height here would push every table header down by exactly
+     one row instead of pinning it to the page. */
+  position:sticky; top:0; z-index:5; background:var(--surface);
+  text-align:right; padding:9px 10px; font-family:var(--f-mono); font-size:10px;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--ink-4); font-weight:500;
+  border-bottom:1px solid var(--line); white-space:nowrap; cursor:pointer; user-select:none;
+}
+thead th:first-child, tbody td:first-child{text-align:left; padding-left:14px;}
+thead th.l, tbody td.l{text-align:left;}
+thead th:hover{color:var(--ink-2);}
+thead th[data-sorted]{color:var(--accent);}
+tbody td{
+  padding:8px 10px; text-align:right; border-bottom:1px solid var(--line);
+  font-family:var(--f-mono); font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+tbody td.l{font-family:var(--f-body);}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr{cursor:pointer;}
+tbody tr:hover td{background:var(--sunken);}
+.tag{
+  display:inline-block; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.07em;
+  padding:2px 5px; border-radius:4px; background:var(--sunken); color:var(--ink-3);
+  border:1px solid var(--line); text-transform:uppercase; font-weight:500;
+}
+.tag.up{background:var(--up-wash); color:var(--up); border-color:transparent;}
+.tag.down{background:var(--down-wash); color:var(--down); border-color:transparent;}
+.tag.acc{background:var(--accent-wash); color:var(--accent); border-color:transparent;}
+.pos-dot{
+  display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:6px;
+  vertical-align:baseline;
+}
+
+/* ---------- win ribbon (signature device) ---------- */
+.ribbon{display:block; width:100%; height:auto;}
+
+/* ---------- sheet ---------- */
+.scrim{
+  position:fixed; inset:0; background:rgba(6,10,13,.55); z-index:80;
+  opacity:0; pointer-events:none; transition:opacity .18s;
+}
+.scrim.on{opacity:1; pointer-events:auto;}
+.sheet{
+  position:fixed; top:0; right:0; bottom:0; width:min(660px,100%);
+  background:var(--ground); border-left:1px solid var(--line); z-index:90;
+  transform:translateX(101%); transition:transform .24s cubic-bezier(.32,.72,0,1);
+  overflow-y:auto; overscroll-behavior:contain; box-shadow:var(--shadow-lg);
+}
+.sheet.on{transform:none;}
+.sheet-head{
+  position:sticky; top:0; background:var(--ground); border-bottom:1px solid var(--line);
+  padding:16px 20px; display:flex; align-items:flex-start; gap:14px; z-index:2;
+}
+.sheet-body{padding:20px; display:flex; flex-direction:column; gap:22px;}
+
+.crest{
+  width:44px; height:44px; border-radius:9px; flex:none; display:grid; place-items:center;
+  font-family:var(--f-display); font-weight:800; font-size:13px; letter-spacing:-.02em;
+  color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+.crest.logo{position:relative; background:none; color:inherit; text-shadow:none; overflow:hidden;}
+.crest.logo .plate{position:absolute; inset:0; border-radius:9px; border:1px solid var(--line);}
+.crest.logo img{position:relative; object-fit:contain;}
+.mk{vertical-align:-4px; margin-right:6px; object-fit:contain;}
+.blk h4{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:500; margin-bottom:9px;
+}
+.dl{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line);
+   border:1px solid var(--line); border-radius:var(--r); overflow:hidden;}
+@media (max-width:480px){ .dl{grid-template-columns:repeat(2,1fr);} }
+.dl div{background:var(--surface); padding:9px 11px;}
+.dl dt{font-size:10.5px; color:var(--ink-4); margin-bottom:2px;}
+.dl dd{margin:0; font-family:var(--f-mono); font-size:15px; font-weight:500;}
+.note{
+  font-size:12.5px; color:var(--ink-2); line-height:1.55; background:var(--sunken);
+  border-left:2px solid var(--accent); padding:10px 13px; border-radius:0 var(--r-sm) var(--r-sm) 0;
+}
+
+/* ---------- palette (search) ---------- */
+.pal{
+  position:fixed; inset:0; z-index:100; display:none;
+  background:rgba(6,10,13,.5); padding:12vh 16px 16px;
+}
+.pal.on{display:block;}
+.pal-in{
+  max-width:560px; margin:0 auto; background:var(--surface); border:1px solid var(--line);
+  border-radius:12px; box-shadow:var(--shadow-lg); overflow:hidden;
+}
+.pal input{
+  width:100%; border:0; border-bottom:1px solid var(--line); background:none;
+  padding:15px 17px; font:inherit; font-size:15px; color:var(--ink);
+}
+.pal input:focus{outline:none;}
+.pal ul{list-style:none; margin:0; padding:6px; max-height:52vh; overflow-y:auto;}
+.pal li{
+  padding:8px 11px; border-radius:var(--r-sm); display:flex; align-items:center;
+  gap:10px; cursor:pointer; font-size:13.5px;
+}
+.pal li[aria-selected="true"]{background:var(--sunken);}
+.pal li .k{margin-left:auto; font-family:var(--f-mono); font-size:10px; color:var(--ink-4);}
+
+/* ---------- misc ---------- */
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3); align-items:center;}
+.legend i{width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:-1px;}
+.tip{
+  position:fixed; z-index:120; pointer-events:none; background:var(--ink); color:var(--ground);
+  padding:7px 10px; border-radius:var(--r-sm); font-size:12px; opacity:0;
+  transition:opacity .1s; max-width:250px; box-shadow:var(--shadow);
+}
+.tip.on{opacity:1;}
+.tip b{font-family:var(--f-mono); font-weight:600;}
+.foot{margin-top:56px; padding-top:22px; border-top:1px solid var(--line);}
+.foot-main{display:flex; justify-content:space-between; gap:26px; flex-wrap:wrap; margin-bottom:16px;}
+.foot-name{font-family:var(--f-display); font-weight:700; font-size:17px; letter-spacing:-.02em;}
+.foot-role{font-size:12.5px; color:var(--ink-3); margin:1px 0 8px;}
+.foot-links{display:flex; gap:14px; flex-wrap:wrap; font-size:13px;}
+.foot-links a{color:var(--accent); text-decoration:none; border-bottom:1px solid transparent;}
+.foot-links a:hover{border-bottom-color:var(--accent);}
+.foot-meta{display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--ink-4); text-align:right;}
+.foot-fine{font-size:11px; color:var(--ink-4); line-height:1.55; max-width:78ch; padding-top:14px; border-top:1px solid var(--line);}
+@media (max-width:700px){ .foot-meta{text-align:left;} }
+.two{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+/* Grid items default to min-width:auto, so a wide table inside a column sizes
+   the whole track to its content and the page scrolls sideways instead of the
+   table scrolling inside its own box. */
+.two > *, .cmpcards > *{min-width:0;}
+.two.split{grid-template-columns:1.55fr 1fr;}
+.cmpcards{display:grid; grid-template-columns:repeat(var(--n),1fr); gap:10px; margin-bottom:12px;}
+@media (max-width:760px){ .cmpcards{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:420px){ .cmpcards{grid-template-columns:1fr;} }
+@media (max-width:900px){ .two, .two.split{grid-template-columns:1fr;} }
+@media (max-width:640px){
+  .shell{padding:0 13px 80px;} .top-in{padding:0 13px; gap:11px;}
+  .searchbtn span{display:none;} .brand span{display:none;}
+}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg class="pylon" viewBox="0 0 13 19" aria-hidden="true">
+        <path d="M6.5 0 13 3.4v12.2L6.5 19 0 15.6V3.4z" fill="var(--accent)"/>
+        <path d="M6.5 0 13 3.4 6.5 6.8 0 3.4z" fill="var(--accent)" opacity=".55"/>
+      </svg>
+      <b>PYLON</b><span>2026</span>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+    <div class="top-act">
+      <button class="iconbtn searchbtn" id="openPal" aria-label="Search teams and players">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span>Search</span><kbd>/</kbd>
+      </button>
+      <a class="iconbtn" href="https://github.com/Joshuapowers1/pylon-nfl" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+      </a>
+      <button class="iconbtn" id="themeBtn" aria-label="Toggle theme">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="8" cy="8" r="3.4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 .8v2M8 13.2v2M.8 8h2M13.2 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M13.1 2.9l-1.4 1.4M4.3 11.7l-1.4 1.4"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <section class="page" id="pg-overview"></section>
+  <section class="page" id="pg-teams"></section>
+  <section class="page" id="pg-players"></section>
+  <section class="page" id="pg-draft"></section>
+  <section class="page" id="pg-market"></section>
+  <section class="page" id="pg-compare"></section>
+  <section class="page" id="pg-model"></section>
+  <footer class="foot">
+    <div class="foot-main">
+      <div>
+        <div class="foot-name">Joshua&nbsp;Powers</div>
+        <div class="foot-role">Built and maintained by Joshua Powers</div>
+        <div class="foot-links">
+          <a href="mailto:joshpowersbiz@gmail.com">joshpowersbiz@gmail.com</a>
+          <a href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/Joshuapowers1/pylon-nfl" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://instagram.com/joshuampowers" target="_blank" rel="noopener">@joshuampowers</a>
+        </div>
+      </div>
+      <div class="foot-meta">
+        <span>PYLON v1.0 &middot; MIT licensed</span>
+        <span>25,000 season simulations &middot; 10,000 per player</span>
+        <span>Markets pulled 2026-08-25 07:34 UTC</span>
+        <span>Backtested on 160 team-seasons, no lookahead</span>
+      </div>
+    </div>
+    <div class="foot-fine">
+      Team names, logos and marks are the property of their respective owners and appear here for
+      identification in an independent analytical project. Not affiliated with or endorsed by the NFL
+      or any club. Projections are estimates and nothing here is financial advice.
+    </div>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" aria-hidden="true" role="dialog" aria-label="Detail"></aside>
+<div class="pal" id="pal" role="dialog" aria-label="Search">
+  <div class="pal-in">
+    <input id="palQ" placeholder="Search any team or player&hellip;" autocomplete="off" spellcheck="false">
+    <ul id="palList" role="listbox"></ul>
+  </div>
+</div>
+<div class="tip" id="tip" role="status"></div>
+
+<script id="PYLON_LOGOS" type="application/json">__LOGOS__</script>
+<script id="PYLON_DATA" type="application/json">__DATA__</script>
+<script>
+"use strict";
+/* ==========================================================================
+   PYLON TERMINAL - single-file client
+   Data is embedded above as a columnar bundle and rehydrated once on load.
+   Charts are hand-built SVG: no external libraries reach the page.
+   ========================================================================== */
+const D = JSON.parse(document.getElementById('PYLON_DATA').textContent);
+const LOGOS = JSON.parse(document.getElementById('PYLON_LOGOS').textContent);
+
+/* ---- rehydrate columnar tables into objects ---- */
+function hydrate(t){ const {cols,rows}=t; return rows.map(r=>{const o={}; cols.forEach((c,i)=>o[c]=r[i]); return o;}); }
+const TEAMS   = hydrate(D.teams);
+const PLAYERS = hydrate(D.players);
+const EDGES   = hydrate(D.edges);
+const VIG     = hydrate(D.vig);
+const BTPTS   = hydrate(D.backtest_points);
+const BYTEAM  = Object.fromEntries(TEAMS.map(t=>[t.team,t]));
+const POS     = ['QB','RB','WR','TE'];
+
+/* ---- formatting ---- */
+const f1 = v => v==null? '–' : (+v).toFixed(1);
+const f2 = v => v==null? '–' : (+v).toFixed(2);
+const f0 = v => v==null? '–' : Math.round(+v).toString();
+const pct = (v,d=1) => v==null? '–' : (100*+v).toFixed(d)+'%';
+const pp  = v => v==null? '–' : (v>0?'+':'')+(+v).toFixed(1);
+const sgn = v => v>0? '+'+(+v).toFixed(1) : (+v).toFixed(1);
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* A <div> host silently drops table-scoped tags like <th> and <tr>, because they are
+   invalid there and the parser throws them away. <template> parses any fragment. */
+const el = (h) => { const t=document.createElement('template'); t.innerHTML=h.trim(); return t.content.firstElementChild; };
+
+/* ---- tooltip ---- */
+const TIP = document.getElementById('tip');
+function tipShow(e,html){
+  TIP.innerHTML=html; TIP.classList.add('on');
+  const r=TIP.getBoundingClientRect();
+  let x=e.clientX+14, y=e.clientY-r.height-10;
+  if(x+r.width>innerWidth-8) x=e.clientX-r.width-14;
+  if(y<8) y=e.clientY+18;
+  TIP.style.left=x+'px'; TIP.style.top=y+'px';
+}
+function tipHide(){ TIP.classList.remove('on'); }
+function hoverable(node, html){
+  node.addEventListener('mousemove', e=>tipShow(e,html));
+  node.addEventListener('mouseleave', tipHide);
+}
+
+/* ==========================================================================
+   CHART PRIMITIVES  (SVG, theme-aware via currentColor and CSS vars)
+   ========================================================================== */
+
+/* The signature device. A team's full 0-17 win distribution drawn as a field
+   strip: yard-line ticks every win, bars for probability mass, the projected
+   total marked, and the sportsbook line drawn as a goal line when there is one. */
+function winRibbon(team, opts={}){
+  const dist = D.win_dist[team] || [];
+  const h = opts.h || 60, w = 100, pad = 2;
+  const max = Math.max(...dist, .001);
+  const bw = (w - pad*2)/18;
+  const t = BYTEAM[team];
+  let bars='', ticks='';
+  dist.forEach((p,i)=>{
+    const bh = (p/max)*(h-16);
+    const x = pad + i*bw, y = h-10-bh;
+    const hot = Math.abs(i - t.proj_wins) < .5;
+    bars += `<rect x="${(x+bw*.13).toFixed(2)}" y="${y.toFixed(2)}" width="${(bw*.74).toFixed(2)}" height="${Math.max(bh,.6).toFixed(2)}" rx="1"
+             fill="${hot?'var(--accent)':'var(--q4)'}" opacity="${hot?1:.62}"><title>${i} wins: ${pct(p)}</title></rect>`;
+    if(i%2===0) ticks += `<line x1="${(x+bw/2).toFixed(2)}" y1="${h-9}" x2="${(x+bw/2).toFixed(2)}" y2="${h-6}" stroke="var(--line-strong)" stroke-width=".4"/>`;
+  });
+  const px = pad + (t.proj_wins+.5)*bw;
+  let line='';
+  if(opts.line!=null){
+    const lx = pad + (opts.line+.5)*bw;
+    line = `<line x1="${lx.toFixed(2)}" y1="2" x2="${lx.toFixed(2)}" y2="${h-9}" stroke="var(--down)" stroke-width=".5" stroke-dasharray="1.6 1.4"/>`;
+  }
+  return `<svg class="ribbon" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img"
+    aria-label="Win distribution for ${team}, projected ${f2(t.proj_wins)} wins">
+    <line x1="${pad}" y1="${h-9}" x2="${w-pad}" y2="${h-9}" stroke="var(--line-strong)" stroke-width=".5"/>
+    ${ticks}${bars}${line}
+    <line x1="${px.toFixed(2)}" y1="1" x2="${px.toFixed(2)}" y2="${h-9}" stroke="var(--accent)" stroke-width=".55"/>
+  </svg>`;
+}
+
+/* Horizontal diverging bars. One row per item, zero anchored in the middle.
+   Positive uses the "model higher" blue, negative the "model lower" red -
+   the same two hues carry that meaning everywhere in the app. */
+function divergingBars(items, opts={}){
+  const rowH = opts.rowH || 22, labelW = opts.labelW || 46, valW = opts.valW || 62;
+  const H = items.length*rowH + 26;
+  const max = Math.max(...items.map(d=>Math.abs(d.v)), .0001) * 1.08;
+  const plotW = 1000 - labelW - valW;
+  const mid = labelW + plotW/2;
+  const sc = v => (v/max)*(plotW/2);
+  let rows='';
+  items.forEach((d,i)=>{
+    const y = 22 + i*rowH, bh = Math.min(rowH-7, 13);
+    const len = Math.abs(sc(d.v));
+    const x = d.v>=0 ? mid : mid-len;
+    const col = d.v>=0 ? 'var(--up)' : 'var(--down)';
+    rows += `<g class="dvrow" data-k="${esc(d.key||d.label)}">
+      <rect x="0" y="${y-4}" width="1000" height="${rowH}" fill="transparent"/>
+      <text x="${labelW-8}" y="${y+bh/2+1}" text-anchor="end" font-size="11" font-family="var(--f-mono)"
+        fill="var(--ink-2)" dominant-baseline="middle">${esc(d.label)}</text>
+      <rect x="${x.toFixed(1)}" y="${y}" width="${Math.max(len,1).toFixed(1)}" height="${bh}" rx="3" fill="${col}"/>
+      <text x="${(d.v>=0? mid+len+7 : mid-len-7).toFixed(1)}" y="${y+bh/2+1}"
+        text-anchor="${d.v>=0?'start':'end'}" font-size="11" font-family="var(--f-mono)"
+        fill="var(--ink-3)" dominant-baseline="middle">${esc(d.vLabel!=null?d.vLabel:sgn(d.v))}</text>
+    </g>`;
+  });
+  return `<svg viewBox="0 0 1000 ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Diverging bar chart')}">
+    <line x1="${mid}" y1="14" x2="${mid}" y2="${H-6}" stroke="var(--line-strong)" stroke-width="1"/>
+    <text x="${mid}" y="10" text-anchor="middle" font-size="9.5" font-family="var(--f-mono)"
+      letter-spacing=".1em" fill="var(--ink-4)">${esc(opts.zeroLabel||'')}</text>
+    ${rows}</svg>`;
+}
+
+/* Ranked single-hue bars, for magnitude with no meaningful zero crossing. */
+function rankBars(items, opts={}){
+  const rowH = opts.rowH||20, labelW=opts.labelW||120;
+  const H = items.length*rowH + 8;
+  const max = Math.max(...items.map(d=>d.v), .0001);
+  // Reserve room for the longest value label, or the widest bar's label runs
+  // straight off the right edge of the viewBox.
+  const valW = opts.valW || Math.max(56, 7.2*Math.max(...items.map(d=>String(d.vLabel!=null?d.vLabel:'').length)));
+  const plotW = 1000-labelW-valW;
+  let rows='';
+  items.forEach((d,i)=>{
+    const y=4+i*rowH, bh=Math.min(rowH-6,12), len=(d.v/max)*plotW;
+    rows += `<g>
+      <text x="${labelW-8}" y="${y+bh/2}" text-anchor="end" font-size="11" font-family="var(--f-mono)" fill="var(--ink-2)" dominant-baseline="middle">${esc(d.label)}</text>
+      <rect x="${labelW}" y="${y}" width="${Math.max(len,1).toFixed(1)}" height="${bh}" rx="3" fill="${d.color||'var(--q4)'}"/>
+      <text x="${(labelW+len+7).toFixed(1)}" y="${y+bh/2}" font-size="11" font-family="var(--f-mono)" fill="var(--ink-3)" dominant-baseline="middle">${esc(d.vLabel!=null?d.vLabel:f1(d.v))}</text>
+    </g>`;
+  });
+  return `<svg viewBox="0 0 1000 ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Ranked bars')}">${rows}</svg>`;
+}
+
+/* Stacked probability bar - used for playoff seeding. */
+function seedBar(team){
+  const s = D.seed_dist[team]||[];
+  const tot = s.reduce((a,b)=>a+b,0);
+  const ramp = ['--q6','--q5','--q4','--q3','--q2','--q1','--mid'];
+  let x=0, segs='';
+  s.forEach((p,i)=>{
+    const w = p*100;
+    if(w>.15){
+      segs += `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(w-.35,.2).toFixed(2)}" height="14" rx="1.5" fill="var(${ramp[i]})"><title>Seed ${i+1}: ${pct(p)}</title></rect>`;
+    }
+    x += w;
+  });
+  const miss = Math.max(0,100-x);
+  segs += `<rect x="${x.toFixed(2)}" y="0" width="${miss.toFixed(2)}" height="14" rx="1.5" fill="var(--sunken)" stroke="var(--line)" stroke-width=".3"><title>Misses playoffs: ${pct(1-tot)}</title></rect>`;
+  return `<svg viewBox="0 0 100 14" preserveAspectRatio="none" style="width:100%;height:16px" role="img"
+    aria-label="Seed distribution for ${team}: makes the playoffs ${pct(tot)} of the time">${segs}</svg>`;
+}
+
+/* Percentile band - a player's simulated outcome range with the median marked. */
+function bandChart(p){
+  const lo=p.p10, hi=p.p90, q1=p.p25, q3=p.p75, med=p.p50;
+  const min=0, max=Math.max(hi*1.06, 10);
+  const sc = v => ((v-min)/(max-min))*100;
+  return `<svg viewBox="0 0 100 26" preserveAspectRatio="none" style="width:100%;height:34px" role="img"
+    aria-label="Outcome range: 10th percentile ${f0(lo)}, median ${f0(med)}, 90th percentile ${f0(hi)} points">
+    <line x1="${sc(lo)}" y1="13" x2="${sc(hi)}" y2="13" stroke="var(--line-strong)" stroke-width="1"/>
+    <rect x="${sc(q1)}" y="6" width="${Math.max(sc(q3)-sc(q1),.5)}" height="14" rx="2" fill="var(--q4)" opacity=".34"/>
+    <rect x="${sc(med)-.4}" y="4" width=".8" height="18" fill="var(--accent)"/>
+  </svg>`;
+}
+
+/* Scatter with axes. Used for the draft board and the backtest. */
+function scatter(pts, opts){
+  const W=1000,H=opts.h||520, m={t:16,r:16,b:44,l:52};
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const x0=opts.x0!=null?opts.x0:Math.min(...xs), x1=opts.x1!=null?opts.x1:Math.max(...xs);
+  const y0=opts.y0!=null?opts.y0:Math.min(...ys), y1=opts.y1!=null?opts.y1:Math.max(...ys);
+  const sx=v=>m.l+((v-x0)/(x1-x0))*(W-m.l-m.r);
+  const sy=v=>H-m.b-((v-y0)/(y1-y0))*(H-m.t-m.b);
+  const tk=(a,b,n)=>{const s=[];for(let i=0;i<=n;i++)s.push(a+(b-a)*i/n);return s;};
+  let grid='',ax='';
+  tk(x0,x1,6).forEach(v=>{
+    grid+=`<line x1="${sx(v)}" y1="${m.t}" x2="${sx(v)}" y2="${H-m.b}" stroke="var(--line)" stroke-width=".7"/>`;
+    ax+=`<text x="${sx(v)}" y="${H-m.b+17}" text-anchor="middle" font-size="11" font-family="var(--f-mono)" fill="var(--ink-4)">${f0(v)}</text>`;
+  });
+  tk(y0,y1,5).forEach(v=>{
+    grid+=`<line x1="${m.l}" y1="${sy(v)}" x2="${W-m.r}" y2="${sy(v)}" stroke="var(--line)" stroke-width=".7"/>`;
+    ax+=`<text x="${m.l-9}" y="${sy(v)+4}" text-anchor="end" font-size="11" font-family="var(--f-mono)" fill="var(--ink-4)">${f0(v)}</text>`;
+  });
+  let ref='';
+  if(opts.diagonal){
+    const a=Math.max(x0,y0), b=Math.min(x1,y1);
+    ref=`<line x1="${sx(a)}" y1="${sy(a)}" x2="${sx(b)}" y2="${sy(b)}" stroke="var(--ink-4)" stroke-width="1" stroke-dasharray="5 4"/>`;
+  }
+  const dots = pts.map((p,i)=>
+    `<circle class="pt" data-i="${i}" cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="${p.r||4.5}"
+      fill="${p.c}" opacity="${p.o||.82}" stroke="var(--surface)" stroke-width="1.2"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Scatter plot')}">
+    ${grid}${ref}${dots}${ax}
+    <text x="${(m.l+W-m.r)/2}" y="${H-6}" text-anchor="middle" font-size="11" font-family="var(--f-mono)"
+      letter-spacing=".08em" fill="var(--ink-4)">${esc(opts.xLabel||'')}</text>
+    <text x="14" y="${(m.t+H-m.b)/2}" text-anchor="middle" font-size="11" font-family="var(--f-mono)"
+      letter-spacing=".08em" fill="var(--ink-4)" transform="rotate(-90 14 ${(m.t+H-m.b)/2})">${esc(opts.yLabel||'')}</text>
+  </svg>`;
+}
+
+/* Multi-series lines for the compare view. Capped at four and every line is
+   direct-labelled at its peak, which is the secondary encoding the categorical
+   palette requires. */
+function multiLine(series, opts={}){
+  const W=1000,H=opts.h||300,m={t:18,r:74,b:34,l:44};
+  const n = series[0].y.length;
+  const ymax = Math.max(...series.flatMap(s=>s.y))*1.14;
+  const sx=i=>m.l+(i/(n-1))*(W-m.l-m.r);
+  const sy=v=>H-m.b-(v/ymax)*(H-m.t-m.b);
+  let grid='',ax='';
+  for(let i=0;i<n;i+=2){
+    grid+=`<line x1="${sx(i)}" y1="${m.t}" x2="${sx(i)}" y2="${H-m.b}" stroke="var(--line)" stroke-width=".7"/>`;
+    ax+=`<text x="${sx(i)}" y="${H-m.b+16}" text-anchor="middle" font-size="11" font-family="var(--f-mono)" fill="var(--ink-4)">${i}</text>`;
+  }
+  const paths = series.map((s,k)=>{
+    const d = s.y.map((v,i)=>`${i?'L':'M'}${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join('');
+    const peak = s.y.indexOf(Math.max(...s.y));
+    return `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="${sx(peak).toFixed(1)}" cy="${sy(s.y[peak]).toFixed(1)}" r="3.6" fill="${s.c}" stroke="var(--surface)" stroke-width="1.4"/>
+      <text x="${(sx(peak)+8).toFixed(1)}" y="${(sy(s.y[peak])-8).toFixed(1)}" font-size="11.5" font-family="var(--f-mono)"
+        font-weight="600" fill="${s.c}">${esc(s.name)}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Win distributions')}">
+    ${grid}${paths}${ax}
+    <text x="${(m.l+W-m.r)/2}" y="${H-3}" text-anchor="middle" font-size="11" font-family="var(--f-mono)"
+      letter-spacing=".08em" fill="var(--ink-4)">REGULAR SEASON WINS</text></svg>`;
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   SHARED UI
+   ========================================================================== */
+const SHEET=document.getElementById('sheet'), SCRIM=document.getElementById('scrim');
+function openSheet(html){
+  SHEET.innerHTML=html; SHEET.classList.add('on'); SHEET.setAttribute('aria-hidden','false');
+  SCRIM.classList.add('on'); SHEET.scrollTop=0;
+  const c=SHEET.querySelector('[data-close]'); if(c) c.focus();
+}
+function closeSheet(){ SHEET.classList.remove('on'); SHEET.setAttribute('aria-hidden','true'); SCRIM.classList.remove('on'); }
+SCRIM.addEventListener('click',closeSheet);
+addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSheet(); closePal(); } });
+
+/* Team mark. The logo sits on a tinted plate mixed from the team's own colours
+   so a dark logo still reads on a dark surface and a light one still reads on
+   light. Size is the only knob callers need. */
+function crest(t, size){
+  const s = size || 44;
+  const src = LOGOS[t.team];
+  if(!src) return `<div class="crest" style="width:${s}px;height:${s}px;background:linear-gradient(140deg,${t.c1},${t.c2})">${t.team}</div>`;
+  return `<span class="crest logo" style="width:${s}px;height:${s}px" title="${esc(t.name)}">
+    <span class="plate" style="background:linear-gradient(140deg,${t.c1}22,${t.c2}22)"></span>
+    <img src="${src}" alt="${esc(t.name)} logo" width="${Math.round(s*.78)}" height="${Math.round(s*.78)}" loading="lazy" decoding="async">
+  </span>`;
+}
+/* Inline mark for table rows and dense lists. */
+function mark(code, size){
+  const s = size || 18, src = LOGOS[code];
+  if(!src) return `<span class="num dim">${code}</span>`;
+  return `<img class="mk" src="${src}" alt="${code}" width="${s}" height="${s}" loading="lazy" decoding="async">`;
+}
+function posColor(p){ return p==='QB'?'var(--s1)':p==='RB'?'var(--s2)':p==='WR'?'var(--s3)':'var(--s4)'; }
+function verdictTag(v){
+  if(!v||v==='UNRANKED') return '<span class="tag">unranked</span>';
+  if(v==='FAIR') return '<span class="tag">fair</span>';
+  const up = v.includes('BUY');
+  return `<span class="tag ${up?'up':'down'}">${v.toLowerCase()}</span>`;
+}
+
+/* Sortable table. Pass column defs; returns a wired element. */
+function makeTable(rows, cols, opts={}){
+  let sortKey = opts.sort || cols[0].k, sortDir = opts.dir || -1;
+  const wrap = el('<div class="tw"><table><thead><tr></tr></thead><tbody></tbody></table></div>');
+  const thead = wrap.querySelector('thead tr'), tbody = wrap.querySelector('tbody');
+  cols.forEach(c=>{
+    const th = el(`<th class="${c.left?'l':''}" title="${esc(c.title||c.h)}">${esc(c.h)}</th>`);
+    th.addEventListener('click',()=>{
+      if(sortKey===c.k) sortDir=-sortDir; else { sortKey=c.k; sortDir=c.asc?1:-1; }
+      draw();
+    });
+    thead.appendChild(th);
+  });
+  function draw(){
+    [...thead.children].forEach((th,i)=>{
+      if(cols[i].k===sortKey){ th.dataset.sorted=''; th.textContent=cols[i].h+(sortDir>0?' ↑':' ↓'); }
+      else { delete th.dataset.sorted; th.textContent=cols[i].h; }
+    });
+    const s=[...rows].sort((a,b)=>{
+      const x=a[sortKey], y=b[sortKey];
+      if(x==null) return 1; if(y==null) return -1;
+      if(typeof x==='string') return sortDir*x.localeCompare(y);
+      return sortDir*(x-y);
+    });
+    const lim = opts.limit || s.length;
+    tbody.innerHTML = s.slice(0,lim).map((r,i)=>
+      `<tr data-i="${i}">${cols.map(c=>`<td class="${c.left?'l':''}">${c.f?c.f(r):(r[c.k]??'–')}</td>`).join('')}</tr>`
+    ).join('');
+    if(opts.onRow){
+      [...tbody.children].forEach((tr,i)=>tr.addEventListener('click',()=>opts.onRow(s[i])));
+    }
+    if(opts.count) opts.count.textContent = s.length.toLocaleString()+' '+(opts.noun||'rows');
+  }
+  draw();
+  wrap.refresh = (newRows)=>{ rows=newRows; draw(); };
+  return wrap;
+}
+
+/* ==========================================================================
+   TEAM DETAIL SHEET
+   ========================================================================== */
+function teamSheet(code){
+  const t = BYTEAM[code];
+  const wtEdge = EDGES.find(e=>e.team===code && e.market.startsWith('Win Total'));
+  const line = wtEdge ? parseFloat(wtEdge.market.replace('Win Total O','')) : null;
+  const mkts = EDGES.filter(e=>e.team===code);
+  const roster = PLAYERS.filter(p=>p.team===code && POS.includes(p.position))
+                        .sort((a,b)=>b.proj_points-a.proj_points).slice(0,14);
+  const sch = D.schedule[code]||[];
+  const prior = D.priors[code];
+  const dist = D.win_dist[code];
+  const p11 = dist.slice(11).reduce((a,b)=>a+b,0);
+  const p7  = dist.slice(0,8).reduce((a,b)=>a+b,0);
+
+  const mktRows = mkts.map(m=>`<tr>
+      <td class="l">${esc(m.market)}</td>
+      <td>${pct(m.model_prob)}</td><td>${pct(m.market_prob_fair)}</td>
+      <td style="color:${m.edge_pp>0?'var(--up)':'var(--down)'}">${pp(m.edge_pp)}</td>
+    </tr>`).join('');
+
+  openSheet(`
+   <div class="sheet-head">
+     ${crest(t)}
+     <div style="flex:1;min-width:0">
+       <div class="eyebrow">${esc(t.division)} &middot; power rank ${TEAMS.slice().sort((a,b)=>b.power_rating-a.power_rating).findIndex(x=>x.team===code)+1} of 32</div>
+       <h3 style="font-size:22px;margin-top:2px">${esc(t.name)}</h3>
+     </div>
+     <button class="iconbtn" data-close onclick="closeSheet()" aria-label="Close">&times;</button>
+   </div>
+   <div class="sheet-body">
+
+     <div class="dl">
+       <div><dt>Power rating</dt><dd style="color:${t.power_rating>0?'var(--up)':'var(--down)'}">${sgn(t.power_rating)}</dd></div>
+       <div><dt>Projected wins</dt><dd>${f2(t.proj_wins)}</dd></div>
+       <div><dt>Make playoffs</dt><dd>${pct(t.make_playoffs)}</dd></div>
+       <div><dt>Win division</dt><dd>${pct(t.win_division)}</dd></div>
+       <div><dt>Conference</dt><dd>${pct(t.conf_champ)}</dd></div>
+       <div><dt>Super Bowl</dt><dd>${pct(t.super_bowl,1)}</dd></div>
+     </div>
+
+     <div class="blk">
+       <h4>Win distribution &middot; 25,000 simulated seasons</h4>
+       ${winRibbon(code,{h:74, line:line})}
+       <div class="legend" style="margin-top:8px">
+         <span><i style="background:var(--accent)"></i>projected ${f2(t.proj_wins)}</span>
+         ${line!=null?`<span><i style="background:var(--down)"></i>market line ${line}</span>`:''}
+         <span class="dim">11+ wins ${pct(p11)} &middot; 7 or fewer ${pct(p7)} &middot; SD ${f2(t.win_sd)}</span>
+       </div>
+     </div>
+
+     <div class="blk">
+       <h4>Playoff seed</h4>
+       ${seedBar(code)}
+       <div class="legend" style="margin-top:7px">
+         <span><i style="background:var(--q6)"></i>1 seed ${pct(t.one_seed)}</span>
+         <span><i style="background:var(--q3)"></i>lower seeds</span>
+         <span><i style="background:var(--sunken);border:1px solid var(--line)"></i>misses ${pct(1-t.make_playoffs)}</span>
+       </div>
+     </div>
+
+     <div class="blk">
+       <h4>Model versus market</h4>
+       <div class="tw"><table><thead><tr><th class="l">Market</th><th>Pylon</th><th>Fair price</th><th>Edge</th></tr></thead>
+       <tbody>${mktRows}</tbody></table></div>
+     </div>
+
+     <div class="blk">
+       <h4>Where this rating comes from</h4>
+       ${divergingBars([
+          {label:'DATA', v:t.pts_from_data, vLabel:sgn(t.pts_from_data)},
+          {label:'JUDGMENT', v:t.pts_from_prior, vLabel:sgn(t.pts_from_prior)}
+        ],{rowH:26,labelW:78,valW:64,zeroLabel:'0'})}
+       <p class="muted" style="font-size:12.5px;margin:6px 0 10px">
+         ${Math.round(t.prior_share*100)}% of this team's rating is analyst judgment rather than measured play-by-play.
+         Turning the judgment layer off entirely moves the projection by ${f2(t.swing)} wins.
+       </p>
+       <div class="note">${esc(prior? prior.note : '')}</div>
+     </div>
+
+     <div class="blk">
+       <h4>Projected volume per game</h4>
+       <div class="dl">
+         <div><dt>Plays</dt><dd>${f1(t.proj_plays_per_game)}</dd></div>
+         <div><dt>Pass attempts</dt><dd>${f1(t.proj_pass_att_per_game)}</dd></div>
+         <div><dt>Rush attempts</dt><dd>${f1(t.proj_rush_att_per_game)}</dd></div>
+         <div><dt>Offensive TDs</dt><dd>${f2(t.proj_off_td_per_game)}</dd></div>
+         <div><dt>Offense rank</dt><dd>${t.off_rank}</dd></div>
+         <div><dt>Defense rank</dt><dd>${t.def_rank}</dd></div>
+       </div>
+     </div>
+
+     <div class="blk">
+       <h4>Fantasy roster &middot; top ${roster.length} by projected points</h4>
+       <div class="tw"><table><thead><tr>
+         <th class="l">Player</th><th>Pos</th><th>Pts</th><th>PPG</th><th>Top 5</th><th>ADP</th>
+       </tr></thead><tbody>${roster.map(p=>`<tr data-p="${esc(p.player)}">
+         <td class="l">${esc(p.player)}</td>
+         <td><span class="pos-dot" style="background:${posColor(p.position)}"></span>${p.position}</td>
+         <td>${f1(p.proj_points)}</td><td>${f1(p.proj_ppg)}</td>
+         <td>${p.p_top5!=null?pct(p.p_top5,0):'–'}</td>
+         <td>${p.adp_formatted||'–'}</td></tr>`).join('')}</tbody></table></div>
+     </div>
+
+     <div class="blk">
+       <h4>2026 schedule</h4>
+       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:5px">
+         ${sch.map(g=>{
+            const opp=BYTEAM[g[1]];
+            return `<button class="card" style="padding:7px 8px;text-align:left;cursor:pointer" data-t="${g[1]}" title="${esc(opp.name)}">
+              <div class="eyebrow" style="font-size:9px">WK ${g[0]}</div>
+              <div class="num" style="font-size:12.5px;font-weight:500">${mark(g[1],18)}${g[2]?'':'@'}</div>
+              <div class="dim num" style="font-size:10px">${sgn(opp.power_rating)}</div>
+            </button>`;
+         }).join('')}
+       </div>
+     </div>
+   </div>`);
+
+  SHEET.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>teamSheet(b.dataset.t)));
+  SHEET.querySelectorAll('[data-p]').forEach(r=>r.addEventListener('click',()=>{
+    const p=PLAYERS.find(x=>x.player===r.dataset.p); if(p) playerSheet(p);
+  }));
+}
+
+/* ==========================================================================
+   PLAYER DETAIL SHEET
+   ========================================================================== */
+function playerSheet(p){
+  const t = BYTEAM[p.team];
+  const same = PLAYERS.filter(x=>x.team===p.team && x.position===p.position)
+                      .sort((a,b)=>b.proj_points-a.proj_points);
+  const rank = same.findIndex(x=>x.player===p.player)+1;
+  const isQB = p.position==='QB';
+  openSheet(`
+   <div class="sheet-head">
+     ${t?crest(t):''}
+     <div style="flex:1;min-width:0">
+       <div class="eyebrow">${esc(p.position)}${p.pos_rank&&p.pos_rank<900?' '+p.pos_rank:''} &middot; ${t?esc(t.name):esc(p.team)}${p.bye?' &middot; bye '+p.bye:''}</div>
+       <h3 style="font-size:22px;margin-top:2px">${esc(p.player)}</h3>
+     </div>
+     <button class="iconbtn" data-close onclick="closeSheet()" aria-label="Close">&times;</button>
+   </div>
+   <div class="sheet-body">
+     <div class="dl">
+       <div><dt>Projected points</dt><dd>${f1(p.proj_points)}</dd></div>
+       <div><dt>Per game</dt><dd>${f1(p.proj_ppg)}</dd></div>
+       <div><dt>17-game pace</dt><dd>${f1(p.proj_points_17g)}</dd></div>
+       <div><dt>Expected games</dt><dd>${f1(p.games)}</dd></div>
+       <div><dt>Value over repl.</dt><dd>${p.vorp!=null?f1(p.vorp):'–'}</dd></div>
+       <div><dt>Depth chart</dt><dd>${rank} of ${same.length}</dd></div>
+     </div>
+
+     <div class="blk">
+       <h4>Outcome range &middot; 10,000 simulated seasons</h4>
+       ${bandChart(p)}
+       <div class="legend" style="margin-top:6px">
+         <span class="num">p10 ${f0(p.p10)}</span><span class="num">p25 ${f0(p.p25)}</span>
+         <span class="num" style="color:var(--accent)">median ${f0(p.p50)}</span>
+         <span class="num">p75 ${f0(p.p75)}</span><span class="num">p90 ${f0(p.p90)}</span>
+       </div>
+     </div>
+
+     <div class="blk">
+       <h4>Finish probability at ${esc(p.position)}</h4>
+       ${rankBars([
+         {label:'TOP 3', v:p.p_top3||0, vLabel:pct(p.p_top3,0), color:'var(--q5)'},
+         {label:'TOP 5', v:p.p_top5||0, vLabel:pct(p.p_top5,0), color:'var(--q4)'},
+         {label:'TOP 12', v:p.p_top12||0, vLabel:pct(p.p_top12,0), color:'var(--q3)'},
+         {label:'BUST', v:p.p_bust||0, vLabel:pct(p.p_bust,0), color:'var(--down)'}
+       ],{rowH:24,labelW:74})}
+       <p class="muted" style="font-size:12.5px;margin:2px 0 0">
+         Bust means finishing outside the startable range in a 12-team league. These are
+         probabilities, not point estimates, and they are the number a draft board should run on.
+       </p>
+     </div>
+
+     <div class="blk">
+       <h4>Projected production</h4>
+       <div class="dl">
+         ${isQB?`
+           <div><dt>Pass attempts</dt><dd>${f0(p.pass_att)}</dd></div>
+           <div><dt>Pass yards</dt><dd>${f0(p.pass_yards)}</dd></div>
+           <div><dt>Pass TD</dt><dd>${f1(p.pass_td)}</dd></div>
+           <div><dt>Interceptions</dt><dd>${f1(p.interceptions)}</dd></div>
+           <div><dt>Rush yards</dt><dd>${f0(p.rush_yards)}</dd></div>
+           <div><dt>Rush TD</dt><dd>${f1(p.rush_td)}</dd></div>`
+         :`
+           <div><dt>Targets</dt><dd>${f1(p.targets)}</dd></div>
+           <div><dt>Receptions</dt><dd>${f1(p.receptions)}</dd></div>
+           <div><dt>Rec yards</dt><dd>${f0(p.rec_yards)}</dd></div>
+           <div><dt>Rec TD</dt><dd>${f1(p.rec_td)}</dd></div>
+           <div><dt>Carries</dt><dd>${f1(p.rush_att)}</dd></div>
+           <div><dt>Rush yards</dt><dd>${f0(p.rush_yards)}</dd></div>
+           <div><dt>Rush TD</dt><dd>${f1(p.rush_td)}</dd></div>
+           <div><dt>Target share</dt><dd>${p.target_share_eb?pct(p.target_share_eb,1):'–'}</dd></div>`}
+       </div>
+     </div>
+
+     ${p.adp_rank? `<div class="blk">
+       <h4>Model versus the draft room</h4>
+       ${divergingBars([{label:'SLOTS', v:p.arb, vLabel:(p.arb>0?'+':'')+p.arb}],
+          {rowH:30,labelW:66,valW:70,zeroLabel:'FAIR'})}
+       <div class="dl" style="margin-top:8px">
+         <div><dt>Live ADP</dt><dd>${esc(p.adp_formatted)}</dd></div>
+         <div><dt>ADP rank</dt><dd>${p.adp_rank}</dd></div>
+         <div><dt>Model value rank</dt><dd>${p.value_rank}</dd></div>
+         <div><dt>Verdict</dt><dd style="font-size:13px">${verdictTag(p.verdict)}</dd></div>
+       </div>
+       <p class="muted" style="font-size:12.5px;margin:8px 0 0">
+         ${p.arb>0
+           ? `The model wants ${esc(p.player.split(' ').slice(-1)[0])} ${p.arb} picks earlier than the room is taking him.`
+           : p.arb<0
+             ? `The room is taking ${esc(p.player.split(' ').slice(-1)[0])} ${Math.abs(p.arb)} picks earlier than the model would.`
+             : 'The model and the market agree on this one.'}
+       </p>
+     </div>`:''}
+
+     ${p.override? `<div class="blk"><h4>Analyst note</h4><div class="note">${esc(p.override)}</div></div>`:''}
+
+     <div class="blk">
+       <h4>Same position, same team</h4>
+       <div class="tw"><table><thead><tr><th class="l">Player</th><th>Pts</th><th>Games</th><th>Top 5</th></tr></thead>
+       <tbody>${same.slice(0,6).map(x=>`<tr data-p="${esc(x.player)}" ${x.player===p.player?'style="background:var(--accent-wash)"':''}>
+         <td class="l">${esc(x.player)}</td><td>${f1(x.proj_points)}</td>
+         <td>${f1(x.games)}</td><td>${x.p_top5!=null?pct(x.p_top5,0):'–'}</td></tr>`).join('')}</tbody></table></div>
+     </div>
+   </div>`);
+  SHEET.querySelectorAll('[data-p]').forEach(r=>r.addEventListener('click',()=>{
+    const q=PLAYERS.find(x=>x.player===r.dataset.p); if(q&&q.player!==p.player) playerSheet(q);
+  }));
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   PAGES
+   ========================================================================== */
+const SHRINK = D.calibration.shrinkage, TRANS = D.calibration.translation, BT = D.backtest;
+const sortedPower = TEAMS.slice().sort((a,b)=>b.power_rating-a.power_rating);
+
+function head(title, sub){
+  return `<div class="sec-head"><div><h2>${title}</h2><p>${sub}</p></div></div><div class="yards"></div>`;
+}
+
+/* ---------------------------------------------------------------- OVERVIEW */
+function pageOverview(){
+  const topEdges = EDGES.filter(e=>e.market==='Make Playoffs')
+    .sort((a,b)=>Math.abs(b.edge_pp)-Math.abs(a.edge_pp)).slice(0,10)
+    .map(e=>({key:e.team, label:e.team, v:e.edge_pp, vLabel:pp(e.edge_pp)}));
+  const sb = TEAMS.slice().sort((a,b)=>b.super_bowl-a.super_bowl).slice(0,10)
+    .map(t=>({label:t.team, v:t.super_bowl, vLabel:pct(t.super_bowl,1), color:'var(--q4)'}));
+  const races = Object.entries(D.divisions).map(([name,members])=>{
+    const s = members.map(c=>BYTEAM[c]).sort((a,b)=>b.win_division-a.win_division);
+    const gap = s[0].win_division - s[1].win_division;
+    return {label:name.toUpperCase(), v:gap,
+            vLabel:`${s[0].team} +${(100*gap).toFixed(gap<0.05?1:0)}`,
+            color:'var(--q3)'};
+  }).sort((a,b)=>a.v-b.v);
+
+  const p = document.getElementById('pg-overview');
+  p.innerHTML = `
+   <div class="hero">
+     <div class="hero-copy">
+       <div class="eyebrow">Pylon &middot; play-level yield and league outcome network</div>
+       <div class="byline">by <a href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener">Joshua Powers</a></div>
+       <h2>An NFL projection engine you can argue with</h2>
+       <p>
+         Nine seasons of play-by-play, an opponent-adjusted ridge model, shrinkage measured out of
+         sample rather than assumed, and 25,000 simulated seasons on the real 2026 schedule. Then the
+         part almost nobody ships: the same simulator runs in this page, so you can move a team and
+         watch the league re-solve, and the backtest that says how often it is wrong is on the site
+         instead of in a footnote.
+       </p>
+       <div class="hero-cta">
+         <button class="chip go" data-go="sim">Run your own scenario</button>
+         <button class="chip go" data-go="draft">Open the draft room</button>
+         <button class="chip go" data-go="market">Price a market</button>
+       </div>
+       <div class="stack">
+         ${['Python','pandas','scikit-learn ridge','Monte Carlo','nflverse play-by-play','Polymarket API','vanilla JS','hand-built SVG']
+           .map(x=>`<span>${x}</span>`).join('')}
+       </div>
+     </div>
+     <div class="hero-side">
+       <div class="eyebrow" style="margin-bottom:8px">Live model, right now</div>
+       ${TEAMS.slice().sort((a,b)=>b.super_bowl-a.super_bowl).slice(0,5).map((t,i)=>`
+         <button class="hero-row" data-t="${t.team}">
+           <span class="num dim" style="width:16px">${i+1}</span>
+           ${mark(t.team,22)}
+           <span style="flex:1;text-align:left;font-weight:500">${esc(t.nick)}</span>
+           <span class="num">${pct(t.super_bowl,1)}</span>
+         </button>`).join('')}
+       <div class="dim" style="font-size:11px;margin-top:8px">Championship odds &middot; click any team</div>
+     </div>
+   </div>
+   <div class="yards"></div>
+
+   <div class="kpis">
+     <div class="kpi"><div class="v">0.57<small> / 0.14</small></div><div class="l">Offense carries over. Defense barely does. The engine's core finding.</div></div>
+     <div class="kpi"><div class="v">${BT.mae_wins}</div><div class="l">Average win-total miss across 160 backtested team-seasons</div></div>
+     <div class="kpi"><div class="v">${(BT.straight_up_game_accuracy*100).toFixed(1)}%</div><div class="l">Straight-up game accuracy. A closing Vegas line hits near 66%.</div></div>
+     <div class="kpi"><div class="v">25,000</div><div class="l">Simulated seasons on the real 2026 schedule</div></div>
+     <div class="kpi"><div class="v">${D.meta.n_players}</div><div class="l">Players projected, each with 10,000 of their own simulations</div></div>
+     <div class="kpi"><div class="v">${VIG[1]? VIG[1].overround_pct.toFixed(1)+'%':'–'}</div><div class="l">Sportsbook vig stripped out before a single comparison is made</div></div>
+   </div>
+
+   <div class="two" style="margin-bottom:12px">
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">The thesis</div>
+       <h3 style="font-size:17px;margin-bottom:8px">Last year's defense tells you almost nothing</h3>
+       <p class="muted" style="font-size:13px;margin:0 0 14px">
+         Every unit's opponent-adjusted efficiency was regressed on a blend built only from the three
+         seasons before it, across 2021 to 2025. The slope is how much actually repeats.
+       </p>
+       ${rankBars([
+         {label:'OFF PASS', v:SHRINK.off_pass.shrinkage, vLabel:SHRINK.off_pass.shrinkage.toFixed(2), color:'var(--q4)'},
+         {label:'OFF RUSH', v:SHRINK.off_rush.shrinkage, vLabel:SHRINK.off_rush.shrinkage.toFixed(2), color:'var(--q4)'},
+         {label:'DEF PASS', v:SHRINK.def_pass.shrinkage, vLabel:SHRINK.def_pass.shrinkage.toFixed(2), color:'var(--down)'},
+         {label:'DEF RUSH', v:SHRINK.def_rush.shrinkage, vLabel:SHRINK.def_rush.shrinkage.toFixed(2), color:'var(--down)'}
+       ],{rowH:26,labelW:90})}
+       <p class="muted" style="font-size:12.5px;margin:8px 0 0">
+         A team whose season was built on offense is a far better bet to repeat than one built on
+         defense. The market prices both close to the same. That gap drives nearly every
+         disagreement on this site.
+       </p>
+     </div>
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">Biggest disagreements</div>
+       <h3 style="font-size:17px;margin-bottom:8px">Playoff odds, model minus market</h3>
+       ${divergingBars(topEdges,{rowH:24,labelW:52,valW:58,zeroLabel:'AGREE',aria:'Playoff odds edge by team'})}
+       <div class="legend" style="margin-top:8px">
+         <span><i style="background:var(--up)"></i>model higher than the market</span>
+         <span><i style="background:var(--down)"></i>model lower</span>
+       </div>
+     </div>
+   </div>
+
+   <div class="two" style="margin-bottom:12px">
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:8px">Championship odds</div>
+       ${rankBars(sb,{rowH:22,labelW:52})}
+     </div>
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:8px">Tightest division races</div>
+       ${rankBars(races,{rowH:22,labelW:104})}
+       <p class="muted" style="font-size:12.5px;margin:8px 0 0">
+         The gap between the favourite and the second team in each division, in points of win probability.
+         A small gap is a division nobody owns.
+       </p>
+     </div>
+   </div>
+
+   <div class="card" style="margin-bottom:12px">
+     <div class="eyebrow" style="margin-bottom:3px">Build notes</div>
+     <h3 style="font-size:17px;margin-bottom:12px">What was actually hard</h3>
+     <div class="two" style="gap:22px">
+       <div>
+         <h4 style="font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);font-weight:500;margin-bottom:7px">The bugs that mattered</h4>
+         <ol style="margin:0;padding-left:17px;font-size:13px;line-height:1.6;color:var(--ink-2)">
+           <li><b>Shares divided by full-season totals.</b> Every player who missed games looked like he had lost a third of his role. One receiver read a 12% target share instead of 33%. Fixing the denominator to games actually played moved dozens of players sixty or more draft slots.</li>
+           <li><b>Quarterback scrambles vanished.</b> A scramble is logged as a dropback, so the rushing filter dropped it, and it is credited to the rusher field, so the passing query dropped it too. It fell through both. That is 40% of a mobile quarterback's carries.</li>
+           <li><b>The simulator was overconfident.</b> Modelling only game-level noise produced win distributions a third too narrow. The fix was splitting the residual into a season-long team error and a per-game error, and solving for the split by matching the model's own measured miss.</li>
+         </ol>
+       </div>
+       <div>
+         <h4 style="font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);font-weight:500;margin-bottom:7px">Decisions worth defending</h4>
+         <ol style="margin:0;padding-left:17px;font-size:13px;line-height:1.6;color:var(--ink-2)">
+           <li><b>Fit it, do not assume it.</b> Shrinkage, the points-per-rating constant, home field, and the variance split are all measured out of sample. The only hand-set numbers are the offseason roster priors, and every team's data-versus-judgment split is published.</li>
+           <li><b>Publish the error bar.</b> ${BT.mae_wins} wins of average miss and ${pct(BT.straight_up_game_accuracy,1)} straight up, against roughly 66% for a closing line. The model is worse than the market and the site says so on the front page.</li>
+           <li><b>Ship the engine, not a screenshot.</b> The scenario lab is the same Monte Carlo, reimplemented in the browser. It reproduces the Python results to within a tenth of a win, which is itself the test.</li>
+         </ol>
+       </div>
+     </div>
+   </div>
+
+   <div class="card">
+     <div class="eyebrow" style="margin-bottom:3px">Power ratings</div>
+     <h3 style="font-size:17px;margin-bottom:4px">Points per game against a league-average opponent</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 12px">Hover any row for the full projection. Click to open the team.</p>
+     <div class="two">
+       <div>
+         <div class="eyebrow" style="margin-bottom:6px">AFC</div>
+         ${divergingBars(sortedPower.filter(t=>t.conf==='AFC').map(t=>({key:t.team,label:t.team,v:t.power_rating,vLabel:sgn(t.power_rating)})),
+            {rowH:19,labelW:56,valW:60,zeroLabel:'AVG',aria:'AFC power ratings'})}
+       </div>
+       <div>
+         <div class="eyebrow" style="margin-bottom:6px">NFC</div>
+         ${divergingBars(sortedPower.filter(t=>t.conf==='NFC').map(t=>({key:t.team,label:t.team,v:t.power_rating,vLabel:sgn(t.power_rating)})),
+            {rowH:19,labelW:56,valW:60,zeroLabel:'AVG',aria:'NFC power ratings'})}
+       </div>
+     </div>
+   </div>`;
+  wireDiverging(p);
+}
+
+/* ------------------------------------------------------------------- TEAMS */
+let teamSortKey='power_rating', teamFilter='ALL';
+function pageTeams(){
+  const p=document.getElementById('pg-teams');
+  p.innerHTML = `
+   ${head('All 32 teams','Every team carries a projected record, a full win distribution, a seed breakdown, its market comparison, and an honest split of how much of its rating is data versus judgment. Click any card.')}
+   <div class="bar">
+     <div class="seg" id="tSort">
+       <button data-k="power_rating" aria-pressed="true">Power</button>
+       <button data-k="proj_wins">Wins</button>
+       <button data-k="make_playoffs">Playoffs</button>
+       <button data-k="super_bowl">Title odds</button>
+       <button data-k="prior_share">Most judgment</button>
+     </div>
+     <div class="seg" id="tConf">
+       <button data-c="ALL" aria-pressed="true">All</button>
+       <button data-c="AFC">AFC</button>
+       <button data-c="NFC">NFC</button>
+     </div>
+     <span class="dim" style="font-size:12px;margin-left:auto" id="tCount"></span>
+   </div>
+   <div class="grid" id="tGrid" style="grid-template-columns:repeat(auto-fill,minmax(268px,1fr))"></div>`;
+
+  function render(){
+    let list = TEAMS.filter(t=>teamFilter==='ALL'||t.conf===teamFilter)
+                    .sort((a,b)=>b[teamSortKey]-a[teamSortKey]);
+    document.getElementById('tCount').textContent = list.length+' teams';
+    document.getElementById('tGrid').innerHTML = list.map((t,i)=>`
+      <button class="card" data-t="${t.team}" style="text-align:left;display:flex;flex-direction:column;gap:9px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${crest(t,40)}
+          <div style="flex:1;min-width:0">
+            <div class="eyebrow">${i+1} &middot; ${esc(t.division)}</div>
+            <div style="font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:-.02em">${esc(t.nick)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="num" style="font-size:19px;font-weight:600;color:${t.power_rating>0?'var(--up)':'var(--down)'}">${sgn(t.power_rating)}</div>
+            <div class="eyebrow">rating</div>
+          </div>
+        </div>
+        ${winRibbon(t.team,{h:44})}
+        <div style="display:flex;gap:12px;font-size:11.5px" class="muted">
+          <span><b class="num" style="color:var(--ink)">${f1(t.proj_wins)}</b> wins</span>
+          <span><b class="num" style="color:var(--ink)">${pct(t.make_playoffs,0)}</b> playoffs</span>
+          <span><b class="num" style="color:var(--ink)">${pct(t.super_bowl,1)}</b> title</span>
+        </div>
+      </button>`).join('');
+    p.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>teamSheet(b.dataset.t)));
+  }
+  p.querySelector('#tSort').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    teamSortKey=b.dataset.k;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+    render();
+  });
+  p.querySelector('#tConf').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    teamFilter=b.dataset.c;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+    render();
+  });
+  render();
+}
+
+/* ----------------------------------------------------------------- PLAYERS */
+function pagePlayers(){
+  const p=document.getElementById('pg-players');
+  p.innerHTML = `
+   ${head('Every projected player','${n} players with a projected role in 2026. Sort any column, filter by position or team, and click a row for the full simulated outcome range. Point totals are risk-adjusted for expected games played rather than assuming everyone plays seventeen.'.replace('${n}', D.meta.n_players))}
+   <div class="bar">
+     <input class="txt" id="plQ" placeholder="Filter by name…" style="width:190px">
+     <div class="seg" id="plPos">
+       <button data-p="ALL" aria-pressed="true">All</button>
+       ${POS.map(x=>`<button data-p="${x}">${x}</button>`).join('')}
+     </div>
+     <select class="sel" id="plTeam"><option value="ALL">All teams</option>
+       ${TEAMS.slice().sort((a,b)=>a.team.localeCompare(b.team)).map(t=>`<option value="${t.team}">${t.team} · ${esc(t.nick)}</option>`).join('')}
+     </select>
+     <label class="chip" style="cursor:pointer"><input type="checkbox" id="plDrafted" style="vertical-align:-1px;margin-right:5px">Drafted only</label>
+     <span class="dim" style="font-size:12px;margin-left:auto" id="plCount"></span>
+   </div>
+   <div id="plTable"></div>`;
+
+  const cols = [
+    {h:'Player', k:'player', left:true, f:r=>`<span class="pos-dot" style="background:${posColor(r.position)}"></span>${esc(r.player)}`},
+    {h:'Pos', k:'pos_rank', f:r=>`${r.position}${r.pos_rank&&r.pos_rank<900?r.pos_rank:''}`, asc:true},
+    {h:'Team', k:'team', f:r=>`${mark(r.team,17)}${r.team}`, asc:true},
+    {h:'Pts', k:'proj_points', f:r=>f1(r.proj_points), title:'Projected PPR points, risk-adjusted for games played'},
+    {h:'PPG', k:'proj_ppg', f:r=>f1(r.proj_ppg)},
+    {h:'17g', k:'proj_points_17g', f:r=>f1(r.proj_points_17g), title:'Points at a healthy 17-game pace, for comparing to industry sets'},
+    {h:'G', k:'games', f:r=>f1(r.games), title:'Expected games played'},
+    {h:'Tgt', k:'targets', f:r=>r.targets>0?f0(r.targets):'–'},
+    {h:'Rec', k:'receptions', f:r=>r.receptions>0?f0(r.receptions):'–'},
+    {h:'RecYd', k:'rec_yards', f:r=>r.rec_yards>0?f0(r.rec_yards):'–'},
+    {h:'Car', k:'rush_att', f:r=>r.rush_att>0?f0(r.rush_att):'–'},
+    {h:'RuYd', k:'rush_yards', f:r=>r.rush_yards>0?f0(r.rush_yards):'–'},
+    {h:'TD', k:'td', f:r=>f1((r.rec_td||0)+(r.rush_td||0)+(r.pass_td||0))},
+    {h:'Top5', k:'p_top5', f:r=>r.p_top5!=null?pct(r.p_top5,0):'–', title:'Share of 10,000 simulations finishing top 5 at the position'},
+    {h:'Bust', k:'p_bust', f:r=>r.p_bust!=null?`<span style="color:${r.p_bust>.6?'var(--down)':'inherit'}">${pct(r.p_bust,0)}</span>`:'–'},
+    {h:'ADP', k:'adp', f:r=>r.adp_formatted||'–', asc:true},
+    {h:'Val', k:'value_rank', f:r=>r.value_rank||'–', asc:true, title:'Model rank by value over replacement'},
+    {h:'Gap', k:'arb', f:r=>r.arb==null?'–':`<span style="color:${r.arb>9?'var(--up)':r.arb<-9?'var(--down)':'inherit'}">${(r.arb>0?'+':'')+r.arb}</span>`, title:'ADP rank minus model value rank. Positive means the model wants him earlier.'},
+  ];
+  PLAYERS.forEach(r=>r.td=(r.rec_td||0)+(r.rush_td||0)+(r.pass_td||0));
+
+  const mount=p.querySelector('#plTable'), count=p.querySelector('#plCount');
+  let tbl = makeTable(PLAYERS, cols, {sort:'proj_points', count, noun:'players', onRow:playerSheet});
+  mount.appendChild(tbl);
+
+  let q='', pos='ALL', tm='ALL', drafted=false;
+  function apply(){
+    const s=q.toLowerCase();
+    tbl.refresh(PLAYERS.filter(r=>
+      (!s || r.player.toLowerCase().includes(s)) &&
+      (pos==='ALL' || r.position===pos) &&
+      (tm==='ALL' || r.team===tm) &&
+      (!drafted || r.adp_rank!=null)));
+  }
+  p.querySelector('#plQ').addEventListener('input',e=>{q=e.target.value; apply();});
+  p.querySelector('#plPos').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; pos=b.dataset.p;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); apply();});
+  p.querySelector('#plTeam').addEventListener('change',e=>{tm=e.target.value; apply();});
+  p.querySelector('#plDrafted').addEventListener('change',e=>{drafted=e.target.checked; apply();});
+}
+</script>
+<script>
+"use strict";
+/* ------------------------------------------------------------------- DRAFT */
+function pageDraft(target){
+  const p = target || document.getElementById('pg-draft');
+  const drafted = PLAYERS.filter(r=>r.adp_rank!=null && r.verdict!=='UNRANKED');
+  p.innerHTML = `
+   <div class="bar">
+     <div class="seg" id="dPos"><button data-p="ALL" aria-pressed="true">All</button>${POS.map(x=>`<button data-p="${x}">${x}</button>`).join('')}</div>
+     <button class="chip up" id="dBuy" aria-pressed="false">Buys only</button>
+     <button class="chip down" id="dFade" aria-pressed="false">Fades only</button>
+     <span class="dim" style="font-size:12px;margin-left:auto" id="dCount"></span>
+   </div>
+   <div class="card" style="padding:12px 12px 4px">
+     <div id="dScatter"></div>
+     <div class="legend" style="margin:2px 0 10px 4px">
+       <span><i style="background:var(--up)"></i>model wants him earlier</span>
+       <span><i style="background:var(--down)"></i>market is taking him too early</span>
+       <span><i style="background:var(--mid)"></i>priced fairly</span>
+       <span class="dim">dashed line = agreement &middot; below it the model wants him earlier</span>
+     </div>
+   </div>
+   <div class="two" style="margin:14px 0">
+     <div class="card"><div class="eyebrow" style="margin-bottom:8px">Ten biggest buys</div><div id="dBuys"></div></div>
+     <div class="card"><div class="eyebrow" style="margin-bottom:8px">Ten biggest fades</div><div id="dFades"></div></div>
+   </div>
+   <div id="dTable"></div>
+   <p class="muted" style="font-size:12.5px;margin-top:12px;max-width:70ch">
+     One caveat the model will not tell you itself. Value over replacement overstates quarterbacks in
+     a one-quarterback league, because the position is streamable in a way the replacement-level math
+     cannot see. The arithmetic is right. The draft strategy is a judgment call.
+   </p>`;
+
+  const cols=[
+    {h:'Player',k:'player',left:true,f:r=>`<span class="pos-dot" style="background:${posColor(r.position)}"></span>${esc(r.player)}`},
+    {h:'Pos',k:'position',f:r=>r.position,asc:true},
+    {h:'Team',k:'team',f:r=>`${mark(r.team,17)}${r.team}`,asc:true},
+    {h:'ADP',k:'adp',f:r=>r.adp_formatted,asc:true},
+    {h:'ADP #',k:'adp_rank',f:r=>r.adp_rank,asc:true},
+    {h:'Model #',k:'value_rank',f:r=>r.value_rank,asc:true},
+    {h:'Gap',k:'arb',f:r=>`<span style="color:${r.arb>9?'var(--up)':r.arb<-9?'var(--down)':'inherit'}">${(r.arb>0?'+':'')+r.arb}</span>`},
+    {h:'Verdict',k:'verdict',f:r=>verdictTag(r.verdict),asc:true},
+    {h:'Pts',k:'proj_points',f:r=>f1(r.proj_points)},
+    {h:'Top5',k:'p_top5',f:r=>pct(r.p_top5,0)},
+    {h:'Bust',k:'p_bust',f:r=>pct(r.p_bust,0)},
+  ];
+  const mount=p.querySelector('#dTable'), count=p.querySelector('#dCount');
+  let tbl=makeTable(drafted,cols,{sort:'arb',count,noun:'drafted players',onRow:playerSheet});
+  mount.appendChild(tbl);
+
+  let pos='ALL', side=null;
+  function subset(){
+    return drafted.filter(r=>(pos==='ALL'||r.position===pos) &&
+      (side===null || (side==='buy'? r.arb>=10 : r.arb<=-10)));
+  }
+  function draw(){
+    const s=subset();
+    const pts=s.map(r=>({x:r.adp_rank, y:r.value_rank,
+      c: r.arb>=10?'var(--up)': r.arb<=-10?'var(--down)':'var(--mid)',
+      r: 3.4+Math.min(Math.abs(r.arb)/22,3.6), o:.8, ref:r}));
+    // Square the axes on the data's own range so the diagonal stays a true 45
+    // degrees and the plot does not leave a third of itself empty.
+    const lim = Math.ceil(Math.max(...pts.flatMap(q=>[q.x,q.y]), 40)/20)*20;
+    p.querySelector('#dScatter').innerHTML = scatter(pts,{
+      x0:0,x1:lim,y0:0,y1:lim,h:470,diagonal:true,
+      xLabel:'LIVE ADP RANK   1 = FIRST OFF THE BOARD',
+      yLabel:'MODEL VALUE RANK   1 = MOST VALUABLE',
+      aria:'Model value rank versus average draft position'});
+    const svg=p.querySelector('#dScatter svg');
+    svg.querySelectorAll('.pt').forEach(c=>{
+      const r=pts[+c.dataset.i].ref;
+      c.style.cursor='pointer';
+      c.addEventListener('mousemove',e=>tipShow(e,
+        `<b>${esc(r.player)}</b> ${r.position} · ${r.team}<br>ADP ${esc(r.adp_formatted)} (#${r.adp_rank}) · model #${r.value_rank}<br>gap <b>${(r.arb>0?'+':'')+r.arb}</b> · ${f1(r.proj_points)} pts`));
+      c.addEventListener('mouseleave',tipHide);
+      c.addEventListener('click',()=>playerSheet(r));
+    });
+    const mk=(list)=>divergingBars(list.map(r=>({key:r.player,label:r.player.split(' ').slice(-1)[0].slice(0,9).toUpperCase(),
+        v:r.arb, vLabel:(r.arb>0?'+':'')+r.arb})),{rowH:21,labelW:96,valW:52,zeroLabel:'FAIR'});
+    p.querySelector('#dBuys').innerHTML  = mk(subset().slice().sort((a,b)=>b.arb-a.arb).slice(0,10));
+    p.querySelector('#dFades').innerHTML = mk(subset().slice().sort((a,b)=>a.arb-b.arb).slice(0,10));
+    tbl.refresh(s);
+  }
+  p.querySelector('#dPos').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; pos=b.dataset.p;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
+  const bBuy=p.querySelector('#dBuy'), bFade=p.querySelector('#dFade');
+  bBuy.addEventListener('click',()=>{ side = side==='buy'?null:'buy';
+    bBuy.setAttribute('aria-pressed',side==='buy'); bFade.setAttribute('aria-pressed','false'); draw();});
+  bFade.addEventListener('click',()=>{ side = side==='fade'?null:'fade';
+    bFade.setAttribute('aria-pressed',side==='fade'); bBuy.setAttribute('aria-pressed','false'); draw();});
+  draw();
+}
+
+/* ------------------------------------------------------------------ MARKET */
+function pageMarket(){
+  const p=document.getElementById('pg-market');
+  const markets=[...new Set(EDGES.map(e=>e.market))];
+  const groups=[
+    {n:'Super Bowl LXI', m:['Super Bowl LXI']},
+    {n:'Conference', m:['AFC Champion','NFC Champion']},
+    {n:'Make playoffs', m:['Make Playoffs']},
+    {n:'Divisions', m:markets.filter(x=>x.startsWith('Division'))},
+    {n:'Win totals', m:markets.filter(x=>x.startsWith('Win Total'))},
+  ];
+  p.innerHTML = `
+   ${head('Model versus market',
+     'Every price here is de-vigged before it is compared to anything. A sportsbook\'s 32 Super Bowl prices sum to well over 100%, and comparing a model to raw prices produces an edge on all 32 teams, which is arithmetic rather than insight.')}
+   <div class="bar">
+     <div class="seg" id="mSel">${groups.map((g,i)=>`<button data-i="${i}" aria-pressed="${i===0}">${g.n}</button>`).join('')}</div>
+     <span class="dim" style="font-size:12px;margin-left:auto" id="mCount"></span>
+   </div>
+   <div class="card" style="margin-bottom:14px"><div id="mChart"></div>
+     <div class="legend" style="margin-top:6px">
+       <span><i style="background:var(--up)"></i>model higher than the fair price</span>
+       <span><i style="background:var(--down)"></i>model lower</span>
+     </div>
+   </div>
+   <div id="mTable"></div>
+   <div class="card" style="margin-top:18px">
+     <div class="eyebrow" style="margin-bottom:3px">The house edge</div>
+     <h3 style="font-size:17px;margin-bottom:6px">What a book's prices actually add up to</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 12px;max-width:72ch">
+       A fair book sums to exactly 1.00. Anything above that is the operator's margin. De-vigging here
+       uses the power method, solving for the exponent k that makes the prices sum to one, because the
+       margin sits disproportionately in the longshots and proportional scaling would smear it evenly.
+       Note the two conference books: they sum to <em>under</em> one hundred, which means the same event
+       priced two ways disagrees with itself.
+     </p>
+     <div class="tw"><table><thead><tr><th class="l">Book</th><th>Outcomes</th><th>Raw sum</th><th>Overround</th><th>Power k</th></tr></thead>
+     <tbody>${VIG.map(v=>`<tr><td class="l">${esc(v.book)}</td><td>${v.n_outcomes}</td>
+       <td>${v.raw_sum.toFixed(4)}</td>
+       <td style="color:${v.overround_pct>10?'var(--down)':v.overround_pct<0?'var(--up)':'inherit'}">${pp(v.overround_pct)}%</td>
+       <td>${v.power_k.toFixed(4)}</td></tr>`).join('')}</tbody></table></div>
+   </div>`;
+
+  const cols=[
+    {h:'Market',k:'market',left:true,f:r=>esc(r.market),asc:true},
+    {h:'Team',k:'team',f:r=>r.team,asc:true},
+    {h:'Pylon',k:'model_prob',f:r=>pct(r.model_prob)},
+    {h:'Raw price',k:'market_price_raw',f:r=>pct(r.market_price_raw)},
+    {h:'Fair price',k:'market_prob_fair',f:r=>pct(r.market_prob_fair)},
+    {h:'Edge',k:'edge_pp',f:r=>`<span style="color:${r.edge_pp>0?'var(--up)':'var(--down)'}">${pp(r.edge_pp)}</span>`},
+    {h:'Conviction',k:'conviction',f:r=>r.conviction==='STRONG'?'<span class="tag acc">strong</span>':r.conviction==='LEAN'?'<span class="tag">lean</span>':'<span class="dim">–</span>',asc:true},
+    {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'–'},
+    {h:'Note',k:'note',left:true,f:r=>`<span class="dim" style="font-size:11.5px">${esc(r.note||'')}</span>`,asc:true},
+  ];
+  const mount=p.querySelector('#mTable'), count=p.querySelector('#mCount');
+  let tbl=makeTable(EDGES.filter(e=>e.market==='Super Bowl LXI'),cols,{sort:'edge_pp',count,noun:'lines',
+    onRow:r=>{ if(BYTEAM[r.team]) teamSheet(r.team); }});
+  mount.appendChild(tbl);
+
+  function draw(i){
+    const g=groups[i];
+    const rows=EDGES.filter(e=>g.m.includes(e.market))
+      .sort((a,b)=>Math.abs(b.edge_pp)-Math.abs(a.edge_pp)).slice(0,26);
+    p.querySelector('#mChart').innerHTML = divergingBars(
+      rows.map(r=>({key:r.team,label:g.m.length>1&&!g.n.includes('Win')? r.team+' '+r.market.replace('Division: ','').replace(' Champion','') : r.team,
+                    v:r.edge_pp, vLabel:pp(r.edge_pp)})),
+      {rowH:19,labelW:g.m.length>1?118:52,valW:56,zeroLabel:'FAIR',aria:g.n+' edges'});
+    tbl.refresh(EDGES.filter(e=>g.m.includes(e.market)));
+    wireDiverging(p);
+  }
+  p.querySelector('#mSel').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    draw(+b.dataset.i);});
+  draw(0);
+}
+
+/* ----------------------------------------------------------------- COMPARE */
+let cmp=['SEA','ATL','BUF','MIA'];
+function pageCompare(){
+  const p=document.getElementById('pg-compare');
+  p.innerHTML = `
+   ${head('Compare','Teams or players, up to four at a time. A win total is a distribution rather than a number, and overlaying them is the fastest way to see that a nine-win team and a twelve-win team are frequently the same team having a different year.')}
+   <div class="bar"><div class="seg" id="cMode">
+     <button data-m="teams" aria-pressed="true">Teams</button>
+     <button data-m="players">Players</button>
+   </div></div>
+   <div id="cTeams">
+     <div class="bar" id="cPick" style="gap:5px"></div>
+     <div class="card" style="margin-bottom:14px"><div id="cLines"></div></div>
+     <div id="cTable"></div>
+   </div>
+   <div id="cPlayers" style="display:none"></div>`;
+  p.querySelector('#cMode').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    const players = b.dataset.m==='players';
+    p.querySelector('#cTeams').style.display   = players?'none':'';
+    p.querySelector('#cPlayers').style.display = players?'':'none';
+    if(players && !p.querySelector('#cPlayers').dataset.built){
+      playerCompare(p.querySelector('#cPlayers'));
+      p.querySelector('#cPlayers').dataset.built='1';
+    }
+  });
+
+  function render(){
+    p.querySelector('#cPick').innerHTML = TEAMS.slice().sort((a,b)=>a.team.localeCompare(b.team))
+      .map(t=>`<button class="chip" data-t="${t.team}" aria-pressed="${cmp.includes(t.team)}" title="${esc(t.name)}">${mark(t.team,16)}${t.team}</button>`).join('');
+    p.querySelectorAll('#cPick [data-t]').forEach(b=>b.addEventListener('click',()=>{
+      const c=b.dataset.t;
+      if(cmp.includes(c)) cmp=cmp.filter(x=>x!==c);
+      else { if(cmp.length>=4) cmp.shift(); cmp.push(c); }
+      render();
+    }));
+    const hues=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+    if(cmp.length){
+      p.querySelector('#cLines').innerHTML = multiLine(
+        cmp.map((c,i)=>({name:c, c:hues[i], y:D.win_dist[c]})),{h:320,aria:'Win distributions compared'});
+    } else {
+      p.querySelector('#cLines').innerHTML = '<p class="muted" style="padding:40px;text-align:center">Pick a team above.</p>';
+    }
+    const rows=cmp.map(c=>BYTEAM[c]);
+    const metrics=[
+      ['Power rating', t=>sgn(t.power_rating)],
+      ['Projected wins', t=>f2(t.proj_wins)],
+      ['Win SD', t=>f2(t.win_sd)],
+      ['Make playoffs', t=>pct(t.make_playoffs)],
+      ['Win division', t=>pct(t.win_division)],
+      ['Top seed', t=>pct(t.one_seed)],
+      ['Conference title', t=>pct(t.conf_champ)],
+      ['Super Bowl', t=>pct(t.super_bowl,1)],
+      ['Offense rank', t=>t.off_rank],
+      ['Defense rank', t=>t.def_rank],
+      ['Plays per game', t=>f1(t.proj_plays_per_game)],
+      ['Pass attempts', t=>f1(t.proj_pass_att_per_game)],
+      ['Rush attempts', t=>f1(t.proj_rush_att_per_game)],
+      ['P(11+ wins)', t=>pct(D.win_dist[t.team].slice(11).reduce((a,b)=>a+b,0))],
+      ['P(7 or fewer)', t=>pct(D.win_dist[t.team].slice(0,8).reduce((a,b)=>a+b,0))],
+      ['Judgment share', t=>pct(t.prior_share,0)],
+    ];
+    p.querySelector('#cTable').innerHTML = `<div class="tw"><table>
+      <thead><tr><th class="l">Metric</th>${rows.map((t,i)=>`<th style="color:${hues[i]}">${mark(t.team,17)}${t.team}</th>`).join('')}</tr></thead>
+      <tbody>${metrics.map(([n,fn])=>`<tr><td class="l">${n}</td>${rows.map(t=>`<td>${fn(t)}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+  render();
+}
+</script>
+<script>
+"use strict";
+/* ------------------------------------------------------------------- MODEL */
+function pageModel(){
+  const p=document.getElementById('pg-model');
+  const decs = TEAMS.slice().sort((a,b)=>b.prior_share-a.prior_share);
+  const btPts = BTPTS.map(r=>({x:r.pred_wins, y:r.actual_wins, c:'var(--q4)', r:4, o:.55, ref:r}));
+
+  p.innerHTML = `
+   ${head('How it works, and where it fails',
+     'Six steps, each of which fits something instead of assuming it. The uncomfortable numbers are on this page too, because a projection system that cannot tell you its error bar is a spreadsheet with confidence.')}
+
+   <div class="two" style="margin-bottom:14px">
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">Step one</div>
+       <h3 style="font-size:16px;margin-bottom:7px">Strip out the schedule</h3>
+       <p class="muted" style="font-size:13px;margin:0">
+         Raw efficiency leaderboards are schedule artefacts. A team that drew six bottom-five
+         defenses looks elite and is not. So every play's expected-points added is regressed on a
+         one-hot design of offense, defense and home field, with an L2 penalty, fit separately for
+         pass and rush across ${D.meta.plays_in_fit.toLocaleString()} competitive plays. Each team
+         comes out with a coefficient in points per play, strength of schedule already divided out.
+       </p>
+     </div>
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">Step two</div>
+       <h3 style="font-size:16px;margin-bottom:7px">Measure what repeats</h3>
+       ${rankBars([
+         {label:'OFF PASS', v:SHRINK.off_pass.shrinkage, vLabel:SHRINK.off_pass.shrinkage.toFixed(2), color:'var(--q4)'},
+         {label:'OFF RUSH', v:SHRINK.off_rush.shrinkage, vLabel:SHRINK.off_rush.shrinkage.toFixed(2), color:'var(--q4)'},
+         {label:'DEF PASS', v:SHRINK.def_pass.shrinkage, vLabel:SHRINK.def_pass.shrinkage.toFixed(2), color:'var(--down)'},
+         {label:'DEF RUSH', v:SHRINK.def_rush.shrinkage, vLabel:SHRINK.def_rush.shrinkage.toFixed(2), color:'var(--down)'}
+       ],{rowH:24,labelW:88})}
+       <p class="muted" style="font-size:12.5px;margin:8px 0 0">
+         Each unit's rating is shrunk toward league average by exactly this much. Nothing here is a
+         chosen constant. The slope came out of regressing 2021 through 2025 on prior years only.
+       </p>
+     </div>
+   </div>
+
+   <div class="card" style="margin-bottom:14px">
+     <div class="eyebrow" style="margin-bottom:3px">Steps three and four</div>
+     <h3 style="font-size:16px;margin-bottom:7px">Translate ratings into points, then simulate</h3>
+     <div class="dl" style="margin-bottom:12px">
+       <div><dt>Points per rating unit</dt><dd>${TRANS.points_per_rating}</dd></div>
+       <div><dt>Home field</dt><dd>${TRANS.hfa}</dd></div>
+       <div><dt>Total sigma</dt><dd>${TRANS.sigma}</dd></div>
+       <div><dt>Game sigma</dt><dd>${BT.variance_split.sigma_game_pts}</dd></div>
+       <div><dt>Team sigma</dt><dd>${BT.variance_split.sigma_team_pts}</dd></div>
+       <div><dt>Games fitted on</dt><dd>${TRANS.n_games.toLocaleString()}</dd></div>
+     </div>
+     <p class="muted" style="font-size:13px;margin:0;max-width:80ch">
+       Home-field advantage of ${TRANS.hfa} points is the post-2020 reality, not the historical 2.6 that
+       most public models still carry. The detail that matters more: the residual is split in two.
+       A team sigma of ${BT.variance_split.sigma_team_pts} points is drawn <em>once per team per simulated
+       season</em> and applied to all seventeen of that team's games, because a team that is secretly two
+       points better than its rating is two points better every week, not independently lucky seventeen
+       times. Modelling only game-level noise produces win distributions about a third too narrow, which
+       makes every playoff probability on this site overconfident. That value is not guessed either: it is
+       solved for by matching the simulator's spread to the model's own measured error.
+     </p>
+   </div>
+
+   <div class="two" style="margin-bottom:14px">
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">The uncomfortable part</div>
+       <h3 style="font-size:16px;margin-bottom:8px">The backtest</h3>
+       <div id="btScatter"></div>
+       <div class="dl" style="margin-top:10px">
+         <div><dt>Team-seasons</dt><dd>${BT.n_team_seasons}</dd></div>
+         <div><dt>Mean error</dt><dd>${BT.mae_wins} wins</dd></div>
+         <div><dt>RMSE</dt><dd>${BT.rmse_wins}</dd></div>
+         <div><dt>Correlation</dt><dd>${BT.correlation_pred_actual}</dd></div>
+         <div><dt>Within 2 wins</dt><dd>${pct(BT.within_2_wins_pct,0)}</dd></div>
+         <div><dt>Straight up</dt><dd>${pct(BT.straight_up_game_accuracy,1)}</dd></div>
+       </div>
+       <p class="muted" style="font-size:12.5px;margin:10px 0 0">
+         Every projection above was built with zero information from the season it predicts.
+         Read it honestly: ${pct(BT.straight_up_game_accuracy,1)} straight up is well above a coin
+         flip and well below a closing Vegas line, which lands near 66%. This model is a serious
+         estimate that disagrees with the market in specific places. It is not an edge-printing
+         machine.
+       </p>
+     </div>
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">Trust calibration</div>
+       <h3 style="font-size:16px;margin-bottom:8px">Data versus judgment, by team</h3>
+       ${rankBars(decs.slice(0,16).map(t=>({label:t.team, v:t.prior_share, vLabel:pct(t.prior_share,0),
+          color: t.prior_share>.8?'var(--q6)': t.prior_share>.6?'var(--q5)': t.prior_share>.4?'var(--q4)':'var(--q3)'})),{rowH:19,labelW:50})}
+       <div class="legend" style="margin-top:7px">
+         <span><i style="background:var(--q6)"></i>above 80% judgment</span>
+         <span><i style="background:var(--q4)"></i>mixed</span>
+         <span><i style="background:var(--q3)"></i>mostly measured</span>
+       </div>
+       <p class="muted" style="font-size:12.5px;margin:8px 0 0">
+         Play-by-play cannot know that a receiver was traded or that a new coordinator is calling
+         plays. Those are priced by hand, one entry per team, each with a written justification. The
+         share above is how much of each rating came from that layer rather than from measured data.
+         Anything above eighty percent is an opinion with a model attached, and you should treat it that way.
+       </p>
+     </div>
+   </div>
+
+   <div class="card" style="margin-bottom:14px">
+     <div class="eyebrow" style="margin-bottom:3px">Sensitivity</div>
+     <h3 style="font-size:16px;margin-bottom:8px">How far each projection moves when the judgment layer is dialled from zero to full</h3>
+     ${rankBars(TEAMS.slice().sort((a,b)=>b.swing-a.swing).slice(0,14)
+        .map(t=>({label:t.team, v:t.swing, vLabel:t.swing.toFixed(2)+' wins',
+                  color:t.swing>2?'var(--down)':'var(--q4)'})),{rowH:20,labelW:50})}
+   </div>
+
+   <div class="card" style="margin-bottom:14px">
+     <div class="eyebrow" style="margin-bottom:3px">About</div>
+     <h3 style="font-size:16px;margin-bottom:8px">Who built this</h3>
+     <div class="two" style="gap:22px;align-items:start">
+       <div>
+         <p class="muted" style="font-size:13.5px;margin:0 0 12px;line-height:1.62">
+           I am Joshua Powers. I build things at the intersection of data and product, and Pylon
+           started as a question I could not find an honest answer to: how much of an NFL team's
+           season actually carries into the next one. Everything here follows from measuring that
+           instead of assuming it, including the parts that make the model look worse.
+         </p>
+         <p class="muted" style="font-size:13.5px;margin:0 0 14px;line-height:1.62">
+           The whole thing is open source under the MIT license. If you disagree with a number, the
+           code that produced it is one click away and I would rather hear the argument than not.
+         </p>
+         <div class="foot-links" style="font-size:13.5px">
+           <a href="mailto:joshpowersbiz@gmail.com">joshpowersbiz@gmail.com</a>
+           <a href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener">LinkedIn</a>
+           <a href="https://github.com/Joshuapowers1/pylon-nfl" target="_blank" rel="noopener">Source on GitHub</a>
+           <a href="https://instagram.com/joshuampowers" target="_blank" rel="noopener">@joshuampowers</a>
+         </div>
+       </div>
+       <div>
+         <h4 style="font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);font-weight:500;margin-bottom:8px">Stack</h4>
+         <div class="stack" style="margin-bottom:14px">
+           ${['Python','pandas','NumPy','scikit-learn','SciPy','matplotlib','nflverse','Polymarket API','vanilla JS','inline SVG','Playwright']
+             .map(x=>`<span>${x}</span>`).join('')}
+         </div>
+         <h4 style="font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);font-weight:500;margin-bottom:8px">By the numbers</h4>
+         <div class="dl">
+           <div><dt>Plays in the fit</dt><dd>${(D.meta.plays_in_fit/1000).toFixed(1)}k</dd></div>
+           <div><dt>Seasons of data</dt><dd>9</dd></div>
+           <div><dt>Python modules</dt><dd>17</dd></div>
+           <div><dt>Team-seasons tested</dt><dd>${BT.n_team_seasons}</dd></div>
+           <div><dt>Players projected</dt><dd>${D.meta.n_players}</dd></div>
+           <div><dt>Dependencies at runtime</dt><dd>0</dd></div>
+         </div>
+       </div>
+     </div>
+   </div>
+
+   <div class="card">
+     <div class="eyebrow" style="margin-bottom:3px">Known limitations</div>
+     <h3 style="font-size:16px;margin-bottom:10px">Six ways this model is wrong</h3>
+     <ol style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.65;color:var(--ink-2);max-width:80ch">
+       <li><b>The judgment layer is judgment.</b> Five teams are more than 80% prior-driven. Those projections are opinions with a model attached, and the chart above names them.</li>
+       <li><b>Defensive ratings are nearly information-free from data alone.</b> With a measured carry-over of ${SHRINK.def_pass.shrinkage.toFixed(2)}, the play-by-play supplies almost no defensive differentiation, so the prior does proportionally more work there.</li>
+       <li><b>No in-season updating.</b> Every rating is frozen at the start of the season. A live version would re-fit weekly.</li>
+       <li><b>Point totals are risk-adjusted, not healthy-season.</b> Expected games played is projected rather than assumed at seventeen, which is why these totals sit below published industry sets. The 17-game column exists for like-for-like comparison.</li>
+       <li><b>Quarterback value over replacement overstates draft-day value</b> in one-quarterback leagues, because the position is streamable in a way replacement-level math cannot capture.</li>
+       <li><b>Rookies and role-changers are asserted, not measured.</b> Fifty-eight of them, each with a stated reason attached to the player.</li>
+     </ol>
+   </div>`;
+
+  p.querySelector('#btScatter').innerHTML = scatter(btPts,
+    {x0:3,x1:13,y0:0,y1:17,h:340,diagonal:true,
+     xLabel:'PROJECTED WINS  (prior seasons only)', yLabel:'ACTUAL WINS',
+     aria:'Backtest: projected versus actual wins, 160 team-seasons'});
+  p.querySelectorAll('#btScatter .pt').forEach(c=>{
+    const r=btPts[+c.dataset.i].ref;
+    c.addEventListener('mousemove',e=>tipShow(e,`<b>${r.team} ${r.season}</b><br>projected ${f2(r.pred_wins)} · actual ${f1(r.actual_wins)}<br>miss <b>${sgn(r.actual_wins-r.pred_wins)}</b>`));
+    c.addEventListener('mouseleave',tipHide);
+  });
+}
+
+/* Hook up hover + click on any diverging bar chart that carries a team key. */
+function wireDiverging(root){
+  root.querySelectorAll('.dvrow').forEach(g=>{
+    const k=g.dataset.k, t=BYTEAM[k];
+    if(!t) return;
+    g.style.cursor='pointer';
+    g.addEventListener('mousemove',e=>tipShow(e,
+      `<b>${esc(t.name)}</b><br>${sgn(t.power_rating)} rating · ${f2(t.proj_wins)} wins<br>${pct(t.make_playoffs,0)} playoffs · ${pct(t.super_bowl,1)} title`));
+    g.addEventListener('mouseleave',tipHide);
+    g.addEventListener('click',()=>teamSheet(k));
+  });
+}
+
+/* ==========================================================================
+   ROUTER, SEARCH, THEME
+   ========================================================================== */
+/* A registry rather than a literal, so feature modules further down the file
+   can add their own page without this block needing to know about them. */
+const PAGES=[];
+function registerPage(id,label,build,opts){
+  PAGES.push([id,label,build,opts||{}]);
+  if(!document.getElementById('pg-'+id)){
+    const sec=document.createElement('section'); sec.className='page'; sec.id='pg-'+id;
+    document.querySelector('.foot').before(sec);
+  }
+  renderTabs();
+}
+registerPage('overview','Overview',pageOverview);
+registerPage('teams','Teams',pageTeams);
+registerPage('players','Players',pagePlayers);
+const built={};
+/* Feature pages are defined in later script blocks, so they register from
+   there once their code exists. See the boot block at the end of the file. */
+/* Resolved per call rather than captured in a const, because registerPage runs
+   during this block and a const declared below it would still be in its
+   temporal dead zone. */
+function renderTabs(){
+  const tabs=document.getElementById('tabs');
+  if(!tabs) return;
+  const cur=location.hash.slice(1)||'overview';
+  tabs.innerHTML = PAGES.map(([id,label,,o])=>
+    `<button data-id="${id}" aria-current="${id===cur}">${label}${o&&o.badge?`<em>${o.badge}</em>`:''}</button>`).join('');
+}
+renderTabs();
+const tabs=document.getElementById('tabs');
+function go(id, push=true){
+  if(!PAGES.some(p=>p[0]===id)) id='overview';
+  if(!built[id]){ PAGES.find(p=>p[0]===id)[2](); built[id]=1; }
+  document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('on', s.id==='pg-'+id));
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current', String(b.dataset.id===id)));
+  if(push && location.hash.slice(1)!==id) history.replaceState(null,'','#'+id);
+  renderTabs();
+  scrollTo({top:0,behavior:'instant'});
+}
+tabs.addEventListener('click',e=>{const b=e.target.closest('button'); if(b) go(b.dataset.id);});
+addEventListener('hashchange',()=>go(location.hash.slice(1)||'overview',false));
+
+/* ---- theme ---- */
+const THEME_KEY='pylon-theme';
+try{ const s=localStorage.getItem(THEME_KEY); if(s) document.documentElement.setAttribute('data-theme',s); }catch(e){}
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const sysDark=matchMedia('(prefers-color-scheme: dark)').matches;
+  const next = cur ? (cur==='dark'?'light':'dark') : (sysDark?'light':'dark');
+  document.documentElement.setAttribute('data-theme',next);
+  try{ localStorage.setItem(THEME_KEY,next); }catch(e){}
+});
+
+/* ---- command palette ---- */
+const PAL=document.getElementById('pal'), PALQ=document.getElementById('palQ'), PALL=document.getElementById('palList');
+function buildIndex(){
+  return [
+    ...PAGES.map(([id,label])=>({t:'page', label, sub:'section', k:id, go:()=>{closePal(); go(id);}})),
+    ...TEAMS.map(t=>({t:'team', label:t.name, sub:t.division, k:t.team, logo:t.team, go:()=>{closePal(); go('teams'); teamSheet(t.team);}})),
+    ...PLAYERS.map(p=>({t:'player', label:p.player, sub:`${p.position} · ${p.team}`, k:p.player, logo:p.team, go:()=>{closePal(); go('players'); playerSheet(p);}})),
+  ];
+}
+let INDEX=[];
+let palSel=0, palHits=[];
+function openPal(){ INDEX=buildIndex(); PAL.classList.add('on'); PALQ.value=''; PALQ.focus(); palRender(''); }
+function closePal(){ PAL.classList.remove('on'); }
+function palRender(q){
+  const s=q.toLowerCase().trim();
+  palHits = (!s ? INDEX.filter(x=>x.t==='page').concat(sortedPower.slice(0,8).map(t=>INDEX.find(x=>x.t==='team'&&x.k===t.team)))
+                : INDEX.filter(x=>x.label.toLowerCase().includes(s)||x.k.toLowerCase()===s)
+                       .sort((a,b)=>a.label.toLowerCase().indexOf(s)-b.label.toLowerCase().indexOf(s))
+          ).slice(0,40);
+  palSel=0;
+  PALL.innerHTML = palHits.length ? palHits.map((h,i)=>
+    `<li role="option" aria-selected="${i===0}" data-i="${i}">
+       ${h.logo? mark(h.logo,20) : `<span class="tag" style="min-width:40px;text-align:center">${h.t}</span>`}
+       <span>${esc(h.label)}</span><span class="k">${esc(h.sub)}</span></li>`).join('')
+    : '<li class="muted" style="cursor:default">Nothing matches that.</li>';
+  PALL.querySelectorAll('li[data-i]').forEach(li=>li.addEventListener('click',()=>palHits[+li.dataset.i].go()));
+}
+PALQ.addEventListener('input',e=>palRender(e.target.value));
+PALQ.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    palSel=Math.max(0,Math.min(palHits.length-1, palSel+(e.key==='ArrowDown'?1:-1)));
+    PALL.querySelectorAll('li[data-i]').forEach((li,i)=>li.setAttribute('aria-selected',String(i===palSel)));
+    const a=PALL.querySelector('[aria-selected="true"]'); if(a) a.scrollIntoView({block:'nearest'});
+  } else if(e.key==='Enter' && palHits[palSel]) palHits[palSel].go();
+});
+document.getElementById('openPal').addEventListener('click',openPal);
+PAL.addEventListener('click',e=>{ if(e.target===PAL) closePal(); });
+addEventListener('keydown',e=>{
+  const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+  if((e.key==='/'||((e.metaKey||e.ctrlKey)&&e.key==='k')) && !typing){ e.preventDefault(); openPal(); }
+});
+
+/* ---- boot happens in the final block, once every page has registered ---- */
+window.PYLON_BOOT = ()=>go(location.hash.slice(1)||'overview', false);
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   SIMULATOR ENGINE
+   A full re-implementation of the season Monte Carlo in the browser, so the
+   page is not a picture of a model but the model itself. Everything the Python
+   engine does per simulated season happens here: a team-constant strength draw
+   held across all seventeen games, per-game noise, the real 2026 schedule,
+   division tiebreakers, and the seven-team bracket.
+
+   The one documented simplification against the Python version: head-to-head
+   is not used as a tiebreaker here (division record, then conference record,
+   then a jitter). It changes a division title by well under a percentage point
+   and it keeps a 20,000-season run inside a couple of seconds.
+   ========================================================================== */
+const SIM = (()=>{
+  const codes = TEAMS.map(t=>t.team);
+  const ix = Object.fromEntries(codes.map((c,i)=>[c,i]));
+  const nT = codes.length;
+  const conf = Uint8Array.from(codes.map(c=>BYTEAM[c].conf==='AFC'?0:1));
+  const divNames = Object.keys(D.divisions);
+  const div = Uint8Array.from(codes.map(c=>divNames.indexOf(BYTEAM[c].division)));
+  const baseNet = Float64Array.from(codes.map(c=>BYTEAM[c].power_rating));  // already in points
+
+  // Flatten the real schedule into typed arrays once.
+  const H=[],A=[];
+  const seen=new Set();
+  codes.forEach(c=>(D.schedule[c]||[]).forEach(g=>{
+    const home = g[2] ? c : g[1], away = g[2] ? g[1] : c;
+    const key = g[0]+':'+home+':'+away;
+    if(seen.has(key)) return; seen.add(key);
+    H.push(ix[home]); A.push(ix[away]);
+  }));
+  const hIdx = Int32Array.from(H), aIdx = Int32Array.from(A), nG = hIdx.length;
+
+  const HFA = D.calibration.translation.hfa;
+  const SG  = D.backtest.variance_split.sigma_game_pts;
+  const ST  = D.backtest.variance_split.sigma_team_pts;
+
+  /* Deterministic PRNG so a given scenario always returns the same numbers. */
+  function mulberry32(a){ return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296; };}
+
+  function run(adj, nSims, seed, onChunk){
+    const rnd = mulberry32(seed>>>0);
+    let spare=null;
+    const gauss=()=>{ // Box-Muller with the second value kept
+      if(spare!==null){ const v=spare; spare=null; return v; }
+      let u=0,v=0,s=0;
+      do{ u=rnd()*2-1; v=rnd()*2-1; s=u*u+v*v; }while(s>=1||s===0);
+      const m=Math.sqrt(-2*Math.log(s)/s); spare=v*m; return u*m;
+    };
+    const net = new Float64Array(nT);
+    for(let i=0;i<nT;i++) net[i]=baseNet[i]+(adj[i]||0);
+
+    const wins=new Float64Array(nT), po=new Float64Array(nT), dv=new Float64Array(nT),
+          s1=new Float64Array(nT), cc=new Float64Array(nT), sb=new Float64Array(nT),
+          winsSq=new Float64Array(nT);
+    const W=new Float64Array(nT), DW=new Float64Array(nT), DL=new Float64Array(nT),
+          CW=new Float64Array(nT), CL=new Float64Array(nT), eff=new Float64Array(nT),
+          jit=new Float64Array(nT);
+
+    const play=(h,a,neutral)=>{
+      const m=(neutral?0:HFA)+net[h]-net[a]+gauss()*SG;
+      return m>0?h:a;
+    };
+
+    for(let s=0;s<nSims;s++){
+      W.fill(0); DW.fill(0); DL.fill(0); CW.fill(0); CL.fill(0);
+      for(let i=0;i<nT;i++){ eff[i]=gauss()*ST; jit[i]=rnd()*1e-7; }
+      for(let g=0;g<nG;g++){
+        const h=hIdx[g], a=aIdx[g];
+        const m = HFA + (net[h]+eff[h]) - (net[a]+eff[a]) + gauss()*SG;
+        const hw = m>0;
+        if(hw) W[h]++; else W[a]++;
+        if(div[h]===div[a]){ if(hw){DW[h]++;DL[a]++;} else {DW[a]++;DL[h]++;} }
+        if(conf[h]===conf[a]){ if(hw){CW[h]++;CL[a]++;} else {CW[a]++;CL[h]++;} }
+      }
+      for(let i=0;i<nT;i++){ wins[i]+=W[i]; winsSq[i]+=W[i]*W[i]; }
+
+      const key=i=>((W[i]/17)*1e12)+((DW[i]/Math.max(DW[i]+DL[i],1))*1e8)+
+                   ((CW[i]/Math.max(CW[i]+CL[i],1))*1e4)+jit[i];
+      const champs=[0,0];
+      for(let c=0;c<2;c++){
+        const winners=[], rest=[];
+        for(let d=0;d<8;d++){
+          if(divNames[d].startsWith(c===0?'AFC':'NFC')===false) continue;
+          const mem=[]; for(let i=0;i<nT;i++) if(div[i]===d) mem.push(i);
+          mem.sort((x,y)=>key(y)-key(x));
+          winners.push(mem[0]); for(let k=1;k<mem.length;k++) rest.push(mem[k]);
+        }
+        winners.sort((x,y)=>key(y)-key(x));
+        rest.sort((x,y)=>key(y)-key(x));
+        const seeds=winners.concat(rest.slice(0,3));
+        for(let k=0;k<seeds.length;k++){ po[seeds[k]]++; if(k<4) dv[seeds[k]]++; }
+        s1[seeds[0]]++;
+        // 7-team bracket, reseeded each round
+        const rank=new Map(seeds.map((t,k)=>[t,k]));
+        const w27=play(seeds[1],seeds[6]), w36=play(seeds[2],seeds[5]), w45=play(seeds[3],seeds[4]);
+        const rd2=[w27,w36,w45].sort((x,y)=>rank.get(x)-rank.get(y));
+        const wa=play(seeds[0],rd2[2]), wb=play(rd2[0],rd2[1]);
+        const hi = rank.get(wa)<rank.get(wb)?wa:wb, lo = hi===wa?wb:wa;
+        champs[c]=play(hi,lo);
+      }
+      cc[champs[0]]++; cc[champs[1]]++;
+      sb[play(champs[0],champs[1],true)]++;
+      if(onChunk && (s&255)===255) onChunk(s/nSims);
+    }
+    return codes.map((c,i)=>({
+      team:c,
+      proj_wins:wins[i]/nSims,
+      win_sd:Math.sqrt(Math.max(winsSq[i]/nSims-(wins[i]/nSims)**2,0)),
+      make_playoffs:po[i]/nSims, win_division:dv[i]/nSims,
+      one_seed:s1[i]/nSims, conf_champ:cc[i]/nSims, super_bowl:sb[i]/nSims,
+    }));
+  }
+  return {run, codes, ix, nGames:nG, HFA, SG, ST};
+})();
+
+/* ---------------------------------------------------------------- SIMULATOR */
+let simAdj = {}, simResult = null, simRunning = false;
+function pageSim(){
+  const p=document.getElementById('pg-sim');
+  p.innerHTML = `
+   ${head('Scenario lab',
+     'This is not a picture of the model, it is the model. The same Monte Carlo that produced every number on this site runs in your browser. Move a team and the whole league re-solves, because a season is a closed system and one team getting better makes seventeen opponents worse.')}
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+     <div class="kpi"><div class="v" id="simN">10,000</div><div class="l">seasons per run</div></div>
+     <div class="kpi"><div class="v">${SIM.nGames}</div><div class="l">real games simulated each season</div></div>
+     <div class="kpi"><div class="v">${SIM.ST}</div><div class="l">team sigma, drawn once per season and held all year</div></div>
+     <div class="kpi"><div class="v">${SIM.SG}</div><div class="l">game sigma, redrawn every week</div></div>
+     <div class="kpi"><div class="v" id="simMs">–</div><div class="l">last run time</div></div>
+   </div>
+
+   <div class="bar">
+     <span class="eyebrow" style="align-self:center">Scenario</span>
+     <button class="chip" data-sc="reset">Baseline</button>
+     <button class="chip" data-sc="qb">Star QB goes down in KC</button>
+     <button class="chip" data-sc="sea">Seattle repeats its defense</button>
+     <button class="chip" data-sc="chalk">Every team regresses halfway</button>
+     <div class="seg" id="simPrec" style="margin-left:auto">
+       <button data-n="4000" aria-pressed="true">Fast</button>
+       <button data-n="10000">Standard</button>
+       <button data-n="25000">Precise</button>
+     </div>
+     <button class="chip" id="simRun" style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600">Run simulation</button>
+   </div>
+   <div id="simBar" style="height:2px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:14px">
+     <div id="simBarIn" style="height:100%;width:0;background:var(--accent);transition:width .1s"></div>
+   </div>
+   <div id="simTable"></div>
+   <p class="muted" style="font-size:12.5px;margin-top:12px;max-width:74ch">
+     The slider moves a team's rating in points per game against an average opponent. For scale, the
+     gap between the best and worst team in the league is about eleven points, and losing a starting
+     quarterback is worth roughly three to six. Deltas compare against the published baseline, which
+     was itself 25,000 seasons.
+   </p>`;
+
+  const cols=[
+    {h:'Team',k:'team',left:true,f:r=>`${mark(r.team,20)}<b>${esc(BYTEAM[r.team].nick)}</b>`},
+    {h:'Adjust',k:'adj',left:true,f:r=>
+      `<input class="slider" type="range" min="-8" max="8" step="0.5" value="${simAdj[r.team]||0}" data-t="${r.team}"
+        aria-label="Rating adjustment for ${esc(BYTEAM[r.team].name)}">
+       <span class="num adjv" data-v="${r.team}" style="width:34px;display:inline-block;text-align:right">${(simAdj[r.team]||0)>0?'+':''}${(simAdj[r.team]||0).toFixed(1)}</span>`},
+    {h:'Rating',k:'rating',f:r=>{const v=BYTEAM[r.team].power_rating+(simAdj[r.team]||0);
+       return `<span style="color:${v>0?'var(--up)':'var(--down)'}">${sgn(v)}</span>`;}},
+    {h:'Wins',k:'proj_wins',f:r=>f2(r.proj_wins)},
+    {h:'Δ',k:'dWins',f:r=>deltaCell(r.dWins,2)},
+    {h:'Playoffs',k:'make_playoffs',f:r=>pct(r.make_playoffs)},
+    {h:'Δ',k:'dPO',f:r=>deltaCell(r.dPO*100,1,'pp')},
+    {h:'Division',k:'win_division',f:r=>pct(r.win_division)},
+    {h:'1 seed',k:'one_seed',f:r=>pct(r.one_seed)},
+    {h:'Conference',k:'conf_champ',f:r=>pct(r.conf_champ)},
+    {h:'Super Bowl',k:'super_bowl',f:r=>pct(r.super_bowl,1)},
+    {h:'Δ',k:'dSB',f:r=>deltaCell(r.dSB*100,1,'pp')},
+  ];
+  let tbl=makeTable(decorate(TEAMS.map(t=>({...t}))),cols,{sort:'proj_wins',onRow:r=>teamSheet(r.team)});
+  p.querySelector('#simTable').appendChild(tbl);
+
+  function decorate(rows){
+    return rows.map(r=>{
+      const b=BYTEAM[r.team];
+      return {...r, adj:simAdj[r.team]||0, rating:b.power_rating+(simAdj[r.team]||0),
+        dWins:r.proj_wins-b.proj_wins, dPO:r.make_playoffs-b.make_playoffs, dSB:r.super_bowl-b.super_bowl};
+    });
+  }
+  function wireSliders(){
+    p.querySelectorAll('.slider').forEach(sl=>{
+      sl.addEventListener('input',e=>{
+        const t=e.target.dataset.t, v=parseFloat(e.target.value);
+        simAdj[t]=v;
+        const lab=p.querySelector(`.adjv[data-v="${t}"]`);
+        if(lab) lab.textContent=(v>0?'+':'')+v.toFixed(1);
+      });
+      sl.addEventListener('change',()=>run());
+    });
+  }
+  let nSims=4000;
+  function run(){
+    if(simRunning) return;
+    simRunning=true;
+    const btn=p.querySelector('#simRun'); btn.textContent='Running…';
+    const bar=p.querySelector('#simBarIn');
+    const adj=SIM.codes.map(c=>simAdj[c]||0);
+    const t0=performance.now();
+    // Yield once so the button state paints before the loop blocks the thread.
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      const res=SIM.run(adj,nSims,1207,f=>{bar.style.width=(f*100).toFixed(0)+'%';});
+      const ms=Math.round(performance.now()-t0);
+      p.querySelector('#simMs').textContent=ms+'ms';
+      p.querySelector('#simN').textContent=nSims.toLocaleString();
+      bar.style.width='100%'; setTimeout(()=>bar.style.width='0',400);
+      simResult=res; tbl.refresh(decorate(res)); wireSliders();
+      btn.textContent='Run simulation'; simRunning=false;
+    }));
+  }
+  p.querySelector('#simRun').addEventListener('click',run);
+  p.querySelector('#simPrec').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; nSims=+b.dataset.n;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); run();});
+  p.querySelectorAll('[data-sc]').forEach(b=>b.addEventListener('click',()=>{
+    const sc=b.dataset.sc;
+    simAdj={};
+    if(sc==='qb') simAdj['KC']=-5.5;
+    if(sc==='sea') simAdj['SEA']=3.5;
+    if(sc==='chalk') TEAMS.forEach(t=>simAdj[t.team]=-t.power_rating*0.5);
+    tbl.refresh(decorate(simResult||TEAMS.map(t=>({...t})))); wireSliders(); run();
+  }));
+  wireSliders(); run();
+}
+function deltaCell(v,d,suf){
+  if(v==null||Math.abs(v)<(d===2?0.005:0.05)) return '<span class="dim">–</span>';
+  return `<span style="color:${v>0?'var(--up)':'var(--down)'}">${v>0?'+':''}${v.toFixed(d)}${suf||''}</span>`;
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   DRAFT ROOM
+   A working draft assistant, not a static cheat sheet. Value over replacement
+   is recomputed live for the league size and scoring you actually play, the
+   board updates as picks come off it, and positional scarcity is measured as
+   "how many startable players are left", which is the only version of scarcity
+   that changes a decision.
+   ========================================================================== */
+const DRAFT_KEY='pylon-draft-v1';
+let DRAFT = {teams:12, scoring:'ppr', mine:[], gone:[], pick:1};
+try{ const raw=localStorage.getItem(DRAFT_KEY); if(raw) DRAFT={...DRAFT, ...JSON.parse(raw)}; }catch(e){}
+function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(DRAFT)); }catch(e){} }
+
+/* Scoring conversion. Projections are built in full PPR, so a half-point or
+   standard league is the same projection with reception credit removed. */
+function scoredPoints(p){
+  const r = p.receptions || 0;
+  return DRAFT.scoring==='ppr' ? p.proj_points
+       : DRAFT.scoring==='half' ? p.proj_points - 0.5*r
+       : p.proj_points - r;
+}
+/* Replacement level scales with league size: a 10-team league starts fewer
+   players, so the bar a pick has to clear is higher. */
+function replacementRanks(){
+  const k = DRAFT.teams/12;
+  return {QB:Math.round(14*k), RB:Math.round(30*k), WR:Math.round(38*k), TE:Math.round(13*k)};
+}
+function draftPool(){
+  const pool = PLAYERS.filter(p=>POS.includes(p.position) && p.proj_points>0)
+                      .map(p=>({...p, pts:scoredPoints(p)}));
+  const rep = replacementRanks(), base={};
+  POS.forEach(pos=>{
+    const g = pool.filter(p=>p.position===pos).sort((a,b)=>b.pts-a.pts);
+    base[pos] = g[rep[pos]-1] ? g[rep[pos]-1].pts : 0;
+    g.forEach((p,i)=>{ p.posRank=i+1; });
+  });
+  pool.forEach(p=>p.v = p.pts - base[p.position]);
+  pool.sort((a,b)=>b.v-a.v);
+  pool.forEach((p,i)=>p.boardRank=i+1);
+  // Tier break where the drop to the next player at the position is unusually large.
+  POS.forEach(pos=>{
+    const g = pool.filter(p=>p.position===pos);
+    const gaps = g.slice(0,-1).map((p,i)=>p.pts-g[i+1].pts);
+    const mean = gaps.reduce((a,b)=>a+b,0)/Math.max(gaps.length,1);
+    const sd = Math.sqrt(gaps.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(gaps.length,1));
+    let tier=1;
+    g.forEach((p,i)=>{ p.tier=tier; if(gaps[i]!=null && gaps[i]>mean+1.15*sd) tier++; });
+  });
+  return pool;
+}
+
+function pageDraftRoom(){
+  const p=document.getElementById('pg-draft');
+  p.innerHTML = `
+   ${head('Draft room',
+     'Set your league up, then take players off the board as they go. Value over replacement recomputes for your size and scoring on every pick, and the scarcity meter tells you what is actually running out. Your board is saved in this browser.')}
+   <div class="bar">
+     <label class="eyebrow" style="align-self:center">League</label>
+     <select class="sel" id="dTeams">${[8,10,12,14,16].map(n=>`<option ${n===DRAFT.teams?'selected':''}>${n}</option>`).join('')}</select>
+     <div class="seg" id="dScore">
+       ${[['ppr','Full PPR'],['half','Half PPR'],['std','Standard']].map(([k,l])=>
+         `<button data-s="${k}" aria-pressed="${DRAFT.scoring===k}">${l}</button>`).join('')}
+     </div>
+     <input class="txt" id="dQ" placeholder="Find a player…" style="width:170px">
+     <div class="seg" id="dPos2"><button data-p="ALL" aria-pressed="true">All</button>${POS.map(x=>`<button data-p="${x}">${x}</button>`).join('')}</div>
+     <button class="chip" id="dUndo">Undo</button>
+     <button class="chip" id="dReset">Reset board</button>
+   </div>
+
+   <div id="dScarcity" class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+
+   <div class="two split" style="align-items:start">
+     <div>
+       <div class="eyebrow" style="margin-bottom:7px">Best available</div>
+       <div id="dBoard"></div>
+     </div>
+     <div style="display:flex;flex-direction:column;gap:12px">
+       <div class="card">
+         <div class="eyebrow" style="margin-bottom:6px">The pick</div>
+         <div id="dRec"></div>
+       </div>
+       <div class="card">
+         <div class="eyebrow" style="margin-bottom:8px">My roster <span id="dCount" class="dim"></span></div>
+         <div id="dMine"></div>
+       </div>
+     </div>
+   </div>
+
+   <div style="margin-top:26px">
+     <div class="sec-head"><div><h2 style="font-size:20px">Where the room is wrong</h2>
+       <p>The same board, plotted against what ${D.meta.adp_drafts.toLocaleString()} real drafts are actually doing.</p></div></div>
+     <div class="yards"></div>
+     <div id="dArb"></div>
+   </div>`;
+
+  const $=(q)=>p.querySelector(q);
+  let q='', posF='ALL';
+
+  function render(){
+    const pool = draftPool();
+    const goneSet = new Set([...DRAFT.gone, ...DRAFT.mine]);
+    const avail = pool.filter(x=>!goneSet.has(x.player));
+    const rep = replacementRanks();
+
+    // scarcity: startable players left, and how deep the cliff is
+    $('#dScarcity').innerHTML = POS.map(pos=>{
+      const left = avail.filter(x=>x.position===pos && x.v>0).length;
+      const total = rep[pos];
+      const share = Math.max(0,Math.min(1,left/total));
+      const col = share<.25?'var(--down)':share<.5?'var(--q4)':'var(--q3)';
+      return `<div class="kpi">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div class="v" style="font-size:24px;color:${col}">${left}</div>
+          <span class="dim num" style="font-size:12px">/ ${total}</span>
+        </div>
+        <div class="l">startable ${pos}s left above replacement</div>
+        <div style="height:3px;background:var(--sunken);border-radius:2px;overflow:hidden;margin-top:4px">
+          <div style="height:100%;width:${(share*100).toFixed(0)}%;background:${col}"></div></div>
+      </div>`;
+    }).join('');
+
+    // recommendation
+    const top = avail.filter(x=>posF==='ALL'||x.position===posF)[0];
+    if(top){
+      const nextAtPos = avail.filter(x=>x.position===top.position)[1];
+      const drop = nextAtPos ? top.pts-nextAtPos.pts : 0;
+      const nextTier = avail.filter(x=>x.position===top.position && x.tier===top.tier).length;
+      $('#dRec').innerHTML = `
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:10px">
+          ${mark(top.team,30)}
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:-.02em">${esc(top.player)}</div>
+            <div class="eyebrow">${top.position}${top.posRank} &middot; tier ${top.tier} &middot; ${esc(BYTEAM[top.team]?BYTEAM[top.team].nick:top.team)}</div>
+          </div>
+          <div style="text-align:right"><div class="num" style="font-size:19px;font-weight:600">${f1(top.v)}</div><div class="eyebrow">VORP</div></div>
+        </div>
+        <p class="muted" style="font-size:12.5px;margin:0 0 10px">
+          ${f1(top.pts)} projected points, ${nextTier-1} player${nextTier===2?'':'s'} left in his tier, and a
+          ${f1(drop)}-point drop to the next ${top.position} on the board.
+          ${top.p_top5!=null?`He finishes top five at the position in ${pct(top.p_top5,0)} of simulations and busts in ${pct(top.p_bust,0)}.`:''}
+        </p>
+        <div style="display:flex;gap:6px">
+          <button class="chip" style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600" data-take="${esc(top.player)}">Draft to my team</button>
+          <button class="chip" data-gone="${esc(top.player)}">Someone took him</button>
+        </div>`;
+    } else { $('#dRec').innerHTML='<p class="muted" style="font-size:13px;margin:0">No players left matching that filter.</p>'; }
+
+    // my roster
+    const mine = DRAFT.mine.map(n=>pool.find(x=>x.player===n)).filter(Boolean);
+    $('#dCount').textContent = mine.length? `· ${mine.length} picks · ${f1(mine.reduce((a,b)=>a+b.pts,0))} pts` : '';
+    $('#dMine').innerHTML = mine.length ? `<div class="tw"><table><tbody>${
+      mine.map(x=>`<tr><td class="l">${mark(x.team,17)}${esc(x.player)}</td>
+        <td><span class="pos-dot" style="background:${posColor(x.position)}"></span>${x.position}${x.posRank}</td>
+        <td>${f1(x.pts)}</td>
+        <td><button class="chip" style="padding:2px 7px;font-size:11px" data-undraft="${esc(x.player)}">×</button></td></tr>`).join('')
+    }</tbody></table></div>` : '<p class="muted" style="font-size:12.5px;margin:0">Nothing drafted yet. Take the recommendation or click any row on the board.</p>';
+
+    // board
+    const s=q.toLowerCase();
+    const rows = avail.filter(x=>(posF==='ALL'||x.position===posF) && (!s||x.player.toLowerCase().includes(s))).slice(0,120);
+    $('#dBoard').innerHTML = `<div class="tw"><table><thead><tr>
+        <th class="l">#</th><th class="l">Player</th><th>Pos</th><th>Tier</th><th>Pts</th><th>VORP</th>
+        <th>ADP</th><th>Top5</th><th>Bust</th><th></th></tr></thead><tbody>${
+      rows.map(x=>{
+        const reach = x.adp_rank ? x.boardRank - x.adp_rank : null;
+        return `<tr data-row="${esc(x.player)}">
+        <td class="l num dim">${x.boardRank}</td>
+        <td class="l">${mark(x.team,17)}${esc(x.player)}</td>
+        <td><span class="pos-dot" style="background:${posColor(x.position)}"></span>${x.position}${x.posRank}</td>
+        <td class="dim">${x.tier}</td>
+        <td>${f1(x.pts)}</td><td><b>${f1(x.v)}</b></td>
+        <td>${x.adp_formatted||'–'}${reach!=null&&reach<-14?' <span class="tag down">early</span>':reach!=null&&reach>14?' <span class="tag up">value</span>':''}</td>
+        <td>${x.p_top5!=null?pct(x.p_top5,0):'–'}</td>
+        <td>${x.p_bust!=null?pct(x.p_bust,0):'–'}</td>
+        <td><button class="chip" style="padding:2px 7px;font-size:11px" data-take="${esc(x.player)}">+</button>
+            <button class="chip" style="padding:2px 7px;font-size:11px" data-gone="${esc(x.player)}">×</button></td>
+      </tr>`;}).join('')}</tbody></table></div>`;
+
+    p.querySelectorAll('[data-take]').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation(); DRAFT.mine.push(b.dataset.take); saveDraft(); render();}));
+    p.querySelectorAll('[data-gone]').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation(); DRAFT.gone.push(b.dataset.gone); saveDraft(); render();}));
+    p.querySelectorAll('[data-undraft]').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation(); DRAFT.mine=DRAFT.mine.filter(n=>n!==b.dataset.undraft); saveDraft(); render();}));
+    p.querySelectorAll('tr[data-row]').forEach(tr=>tr.addEventListener('click',()=>{
+      const pl=PLAYERS.find(x=>x.player===tr.dataset.row); if(pl) playerSheet(pl);}));
+  }
+
+  $('#dTeams').addEventListener('change',e=>{DRAFT.teams=+e.target.value; saveDraft(); render();});
+  $('#dScore').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    DRAFT.scoring=b.dataset.s; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    saveDraft(); render();});
+  $('#dQ').addEventListener('input',e=>{q=e.target.value; render();});
+  $('#dPos2').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    posF=b.dataset.p; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); render();});
+  $('#dUndo').addEventListener('click',()=>{
+    if(DRAFT.gone.length||DRAFT.mine.length){
+      if(DRAFT.gone.length>=DRAFT.mine.length) DRAFT.gone.pop(); else DRAFT.mine.pop();
+      saveDraft(); render();
+    }});
+  $('#dReset').addEventListener('click',()=>{DRAFT.mine=[]; DRAFT.gone=[]; saveDraft(); render();});
+
+  render();
+  pageDraft($('#dArb'));                      // reuse the arbitrage view inside this page
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   EDGE AND EV
+   The market page, made usable. Every line becomes an editable price, and the
+   page returns expected value and a Kelly stake against your own bankroll.
+
+   For a binary contract bought at price p that settles at $1:
+       EV per contract  = model - p
+       EV per dollar    = (model - p) / p
+       Kelly fraction   = (model - p) / (1 - p)
+   Kelly assumes your probability is right. This model's own backtest says it is
+   worse than a closing line, so the page defaults to quarter Kelly and says so.
+   ========================================================================== */
+let EVBANK = 1000, EVPRICES = {};
+try{ const r=localStorage.getItem('pylon-ev'); if(r){ const o=JSON.parse(r); EVBANK=o.bank||1000; EVPRICES=o.prices||{}; } }catch(e){}
+function saveEV(){ try{ localStorage.setItem('pylon-ev', JSON.stringify({bank:EVBANK, prices:EVPRICES})); }catch(e){} }
+const evKey = r => r.market+'|'+r.team;
+
+function pageEV(){
+  const p=document.getElementById('pg-market');
+  const markets=[...new Set(EDGES.map(e=>e.market))];
+  const groups=[
+    {n:'Super Bowl', m:['Super Bowl LXI']},
+    {n:'All markets', m:markets},
+    {n:'Conference', m:['AFC Champion','NFC Champion']},
+    {n:'Playoffs', m:['Make Playoffs']},
+    {n:'Divisions', m:markets.filter(x=>x.startsWith('Division'))},
+    {n:'Win totals', m:markets.filter(x=>x.startsWith('Win Total'))},
+  ];
+  p.innerHTML = `
+   ${head('Edge and expected value',
+     "Every price here is de-vigged before anything is compared to it. Edit any price to your live one and the expected value and stake recompute. A sportsbook's thirty-two Super Bowl prices sum to well over a hundred percent, and comparing a model to raw prices manufactures an edge on all thirty-two teams, which is arithmetic rather than insight.")}
+
+   <div class="bar">
+     <div class="seg" id="mSel">${groups.map((g,i)=>`<button data-i="${i}" aria-pressed="${i===0}">${g.n}</button>`).join('')}</div>
+     <label class="eyebrow" style="align-self:center;margin-left:8px">Bankroll $</label>
+     <input class="txt" id="evBank" type="number" min="0" step="50" value="${EVBANK}" style="width:96px">
+     <div class="seg" id="evK">
+       <button data-k="0.25" aria-pressed="true">¼ Kelly</button>
+       <button data-k="0.5">½ Kelly</button>
+       <button data-k="1">Full</button>
+     </div>
+     <label class="eyebrow" style="align-self:center">Max deployed</label>
+     <div class="seg" id="evCap">
+       <button data-c="0.1">10%</button>
+       <button data-c="0.25" aria-pressed="true">25%</button>
+       <button data-c="0.5">50%</button>
+     </div>
+     <button class="chip" id="evPos" aria-pressed="false">Positive EV only</button>
+     <span class="dim" style="font-size:12px;margin-left:auto" id="mCount"></span>
+   </div>
+
+   <div class="kpis" id="evKpis" style="grid-template-columns:repeat(auto-fit,minmax(158px,1fr))"></div>
+   <div class="card" style="margin-bottom:14px"><div id="mChart"></div>
+     <div class="legend" style="margin-top:6px">
+       <span><i style="background:var(--up)"></i>model higher than the fair price</span>
+       <span><i style="background:var(--down)"></i>model lower</span>
+     </div>
+   </div>
+   <div id="mTable"></div>
+
+   <div class="card" style="margin-top:16px;border-color:var(--down)">
+     <div class="eyebrow" style="margin-bottom:4px;color:var(--down)">Read this before you use the stake column</div>
+     <p class="muted" style="font-size:13px;margin:0 0 8px;max-width:80ch">
+       Kelly sizing assumes the probability you feed it is correct. This model's own backtest puts it
+       at ${pct(D.backtest.straight_up_game_accuracy,1)} straight up against roughly 66% for a closing
+       line, so its probabilities are a serious estimate and not a better one than the market's. The
+       page defaults to quarter Kelly for that reason.
+     </p>
+     <p class="muted" style="font-size:13px;margin:0;max-width:80ch">
+       These markets are also nested rather than independent. A team's Super Bowl, conference,
+       division and playoff lines all resolve off the same season, so four "separate" positive-EV
+       positions on one team is one position at four times the size. The correlation column flags it.
+     </p>
+   </div>
+
+   <div class="card" style="margin-top:14px">
+     <div class="eyebrow" style="margin-bottom:3px">The house edge</div>
+     <h3 style="font-size:17px;margin-bottom:6px">What each book's prices actually add up to</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 12px;max-width:74ch">
+       A fair book sums to exactly 1.00. Anything above is the operator's margin. De-vigging here uses
+       the power method, solving for the exponent that makes prices sum to one, because the margin
+       sits disproportionately in the longshots. Note the two conference books sum to
+       <em>under</em> a hundred, which means the same event priced two ways disagrees with itself.
+     </p>
+     <div class="tw"><table><thead><tr><th class="l">Book</th><th>Outcomes</th><th>Raw sum</th><th>Overround</th><th>Power k</th></tr></thead>
+     <tbody>${VIG.map(v=>`<tr><td class="l">${esc(v.book)}</td><td>${v.n_outcomes}</td>
+       <td>${v.raw_sum.toFixed(4)}</td>
+       <td style="color:${v.overround_pct>10?'var(--down)':v.overround_pct<0?'var(--up)':'inherit'}">${pp(v.overround_pct)}%</td>
+       <td>${v.power_k.toFixed(4)}</td></tr>`).join('')}</tbody></table></div>
+   </div>`;
+
+  let kFrac=0.25, posOnly=false, gi=0, evCap=0.25;
+  function enrich(rows){
+    // how many other markets on this same team also show positive EV
+    const posByTeam={};
+    rows.forEach(r=>{
+      const price = EVPRICES[evKey(r)] ?? r.market_prob_fair;
+      if(r.model_prob>price) posByTeam[r.team]=(posByTeam[r.team]||0)+1;
+    });
+    return rows.map(r=>{
+      const price = EVPRICES[evKey(r)] ?? r.market_prob_fair;
+      const edge = r.model_prob - price;
+      const evD  = price>0 ? edge/price : 0;
+      const kelly = price<1 ? edge/(1-price) : 0;
+      const stake = Math.max(0, kelly*kFrac)*EVBANK;
+      return {...r, price, edge, evD, kelly, stake, corr:posByTeam[r.team]||0};
+    });
+  }
+  const cols=[
+    {h:'Market',k:'market',left:true,f:r=>esc(r.market),asc:true},
+    {h:'Team',k:'team',left:true,f:r=>`${mark(r.team,18)}${r.team}`,asc:true},
+    {h:'Pylon',k:'model_prob',f:r=>pct(r.model_prob)},
+    {h:'Fair',k:'market_prob_fair',f:r=>pct(r.market_prob_fair)},
+    {h:'Your price',k:'price',f:r=>
+      `<input class="txt evp" data-k="${esc(evKey(r))}" type="number" min="0.1" max="99.9" step="0.1"
+        value="${(r.price*100).toFixed(1)}" style="width:62px;padding:3px 5px;text-align:right">`},
+    {h:'Edge',k:'edge',f:r=>`<span style="color:${r.edge>0?'var(--up)':'var(--down)'}">${pp(r.edge*100)}pp</span>`},
+    {h:'EV / $1',k:'evD',f:r=>`<span style="color:${r.evD>0?'var(--up)':'var(--down)'}">${r.evD>0?'+':''}${(r.evD*100).toFixed(1)}%</span>`},
+    {h:'Kelly',k:'kelly',f:r=>r.kelly>0?pct(r.kelly,1):'<span class="dim">–</span>'},
+    {h:'Stake',k:'stake',f:r=>r.stake>0.5?`<b>$${r.stake.toFixed(0)}</b>`:'<span class="dim">–</span>'},
+    {h:'Corr',k:'corr',f:r=>r.corr>1?`<span class="tag down" title="This team shows positive EV on ${r.corr} nested markets. They resolve off the same season.">${r.corr}×</span>`:'<span class="dim">–</span>'},
+    {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'<span class="dim">–</span>'},
+  ];
+  const mount=p.querySelector('#mTable'), count=p.querySelector('#mCount');
+  let tbl=makeTable([],cols,{sort:'evD',count,noun:'lines'});
+  mount.appendChild(tbl);
+
+  function draw(){
+    const g=groups[gi];
+    let rows=enrich(EDGES.filter(e=>g.m.includes(e.market)));
+    if(posOnly) rows=rows.filter(r=>r.evD>0);
+    scaleAndSummarise(rows);
+    tbl.refresh(rows);
+    drawChart();
+    p.querySelectorAll('.evp').forEach(inp=>{
+      inp.addEventListener('click',e=>e.stopPropagation());
+      inp.addEventListener('change',e=>{
+        const v=parseFloat(e.target.value);
+        if(isFinite(v)&&v>0&&v<100){ EVPRICES[e.target.dataset.k]=v/100; saveEV(); draw(); }
+      });
+    });
+  }
+  function scaleAndSummarise(rows){
+    const pos=rows.filter(r=>r.evD>0);
+    const rawStake=pos.reduce((a,b)=>a+b.stake,0);
+    // Kelly sized line by line assumes each bet is independent. These are not:
+    // they are nested resolutions of the same season. Summing them straight
+    // produces allocations well over 100% of a bankroll, which is not a plan,
+    // it is an artefact. So the book is scaled to a hard deployment cap and the
+    // scaling factor is shown rather than hidden.
+    const capDollars = EVBANK*evCap;
+    const scale = rawStake>capDollars && rawStake>0 ? capDollars/rawStake : 1;
+    const deployed = rawStake*scale;
+    // Longshots make EV-per-dollar explode: a contract at half a cent that the
+    // model likes returns a headline number that means very little. Lead with
+    // the edge in probability points and exclude sub-2-cent lines from the
+    // best-EV tile.
+    const liquidPos = pos.filter(r=>r.price>=0.02);
+    const bestEdge = pos.length?pos.reduce((a,b)=>b.edge>a.edge?b:a):null;
+    const bestEv = liquidPos.length?liquidPos.reduce((a,b)=>b.evD>a.evD?b:a):null;
+    p.querySelector('#evKpis').innerHTML=`
+      <div class="kpi"><div class="v">${pos.length}<small> / ${rows.length}</small></div><div class="l">lines the model prices above the market</div></div>
+      <div class="kpi"><div class="v">${bestEdge?pp(bestEdge.edge*100)+'pp':'–'}</div><div class="l">largest edge${bestEdge?` &middot; ${bestEdge.team} ${esc(bestEdge.market.replace('Division: ','').replace('Super Bowl LXI','Super Bowl'))}`:''}</div></div>
+      <div class="kpi"><div class="v">${bestEv?'+'+(bestEv.evD*100).toFixed(0)+'%':'–'}</div><div class="l">best EV per dollar above 2c${bestEv?` &middot; ${bestEv.team}`:''}</div></div>
+      <div class="kpi"><div class="v">$${deployed.toFixed(0)}</div><div class="l">deployed at ${kFrac===1?'full':kFrac===0.5?'half':'quarter'} Kelly, capped at ${(evCap*100).toFixed(0)}% of $${EVBANK.toLocaleString()}</div></div>
+      <div class="kpi"><div class="v" style="color:${scale<1?'var(--down)':'inherit'}">${scale<1?(scale).toFixed(2)+'×':'none'}</div><div class="l">${scale<1?`every stake scaled down: unconstrained Kelly wanted $${rawStake.toFixed(0)}`:'no scaling needed at this cap'}</div></div>`;
+  }
+  function drawChart(){
+    const g=groups[gi];
+    const chartRows=enrich(EDGES.filter(e=>g.m.includes(e.market)))
+      .sort((a,b)=>Math.abs(b.edge)-Math.abs(a.edge)).slice(0,24);
+    p.querySelector('#mChart').innerHTML = divergingBars(
+      chartRows.map(r=>({key:r.team, label: g.m.length>1 ? r.team+' '+r.market.replace('Division: ','').replace(' Champion','').replace('Super Bowl LXI','SB').replace('Make Playoffs','PO').replace('Win Total ','') : r.team,
+                         v:r.edge*100, vLabel:pp(r.edge*100)})),
+      {rowH:19, labelW: g.m.length>1?128:52, valW:56, zeroLabel:'FAIR', aria:g.n+' edges'});
+    wireDiverging(p);
+  }
+  p.querySelector('#mSel').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    gi=+b.dataset.i; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
+  p.querySelector('#evK').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    kFrac=+b.dataset.k; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
+  p.querySelector('#evCap').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    evCap=+b.dataset.c; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
+  p.querySelector('#evBank').addEventListener('change',e=>{EVBANK=Math.max(0,+e.target.value||0); saveEV(); draw();});
+  const bp=p.querySelector('#evPos');
+  bp.addEventListener('click',()=>{posOnly=!posOnly; bp.setAttribute('aria-pressed',posOnly); draw();});
+  draw();
+}
+
+/* ==========================================================================
+   PLAYER COMPARE - added to the compare page as a second mode
+   ========================================================================== */
+let cmpPlayers=['Bijan Robinson','Jahmyr Gibbs','Ja\'Marr Chase'];
+function playerCompare(mountEl){
+  const hues=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+  function render(){
+    const rows=cmpPlayers.map(n=>PLAYERS.find(x=>x.player===n)).filter(Boolean);
+    const metrics=[
+      ['Projected points', p=>f1(p.proj_points)],
+      ['Points per game', p=>f1(p.proj_ppg)],
+      ['17-game pace', p=>f1(p.proj_points_17g)],
+      ['Expected games', p=>f1(p.games)],
+      ['Floor (p10)', p=>f0(p.p10)],
+      ['Median (p50)', p=>f0(p.p50)],
+      ['Ceiling (p90)', p=>f0(p.p90)],
+      ['Top 3 at position', p=>p.p_top3!=null?pct(p.p_top3,0):'–'],
+      ['Top 5 at position', p=>p.p_top5!=null?pct(p.p_top5,0):'–'],
+      ['Bust rate', p=>p.p_bust!=null?pct(p.p_bust,0):'–'],
+      ['Value over repl.', p=>p.vorp!=null?f1(p.vorp):'–'],
+      ['Targets', p=>p.targets>0?f0(p.targets):'–'],
+      ['Receptions', p=>p.receptions>0?f0(p.receptions):'–'],
+      ['Receiving yards', p=>p.rec_yards>0?f0(p.rec_yards):'–'],
+      ['Carries', p=>p.rush_att>0?f0(p.rush_att):'–'],
+      ['Rushing yards', p=>p.rush_yards>0?f0(p.rush_yards):'–'],
+      ['Total TDs', p=>f1((p.rec_td||0)+(p.rush_td||0)+(p.pass_td||0))],
+      ['Live ADP', p=>p.adp_formatted||'–'],
+      ['Model value rank', p=>p.value_rank||'–'],
+      ['Gap vs the room', p=>p.arb==null?'–':(p.arb>0?'+':'')+p.arb],
+    ];
+    mountEl.innerHTML = `
+      <div class="bar">
+        <input class="txt" id="cpQ" placeholder="Add a player…" list="cpList" style="width:230px">
+        <datalist id="cpList">${PLAYERS.slice(0,320).map(x=>`<option value="${esc(x.player)}">`).join('')}</datalist>
+        ${rows.map((x,i)=>`<button class="chip" data-drop="${esc(x.player)}" style="border-color:${hues[i]};color:${hues[i]}">${esc(x.player)} ×</button>`).join('')}
+      </div>
+      ${rows.length? `<div class="cmpcards" style="--n:${Math.min(rows.length,4)}">
+        ${rows.map((x,i)=>`<div class="card" style="border-top:2px solid ${hues[i]}">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+            ${mark(x.team,26)}
+            <div style="min-width:0"><div style="font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:-.02em">${esc(x.player)}</div>
+            <div class="eyebrow">${x.position}${x.pos_rank&&x.pos_rank<900?x.pos_rank:''} &middot; ${x.team}</div></div>
+          </div>
+          ${bandChart(x)}
+          <div class="legend" style="margin-top:4px;font-size:10.5px"><span class="num">${f0(x.p10)}</span>
+            <span class="num" style="color:var(--accent);margin-left:auto">${f0(x.p50)}</span>
+            <span class="num" style="margin-left:auto">${f0(x.p90)}</span></div>
+        </div>`).join('')}
+      </div>
+      <div class="tw"><table><thead><tr><th class="l">Metric</th>
+        ${rows.map((x,i)=>`<th style="color:${hues[i]}">${esc(x.player.split(' ').slice(-1)[0])}</th>`).join('')}</tr></thead>
+        <tbody>${metrics.map(([n,fn])=>{
+          const vals=rows.map(fn);
+          const nums=vals.map(v=>parseFloat(String(v).replace(/[^0-9.\-]/g,'')));
+          const best=Math.max(...nums.filter(isFinite));
+          return `<tr><td class="l">${n}</td>${vals.map((v,i)=>
+            `<td${nums[i]===best&&isFinite(best)&&rows.length>1?' style="color:var(--accent);font-weight:600"':''}>${v}</td>`).join('')}</tr>`;
+        }).join('')}</tbody></table></div>`
+      : '<p class="muted">Add a player to compare.</p>'}`;
+
+    mountEl.querySelectorAll('[data-drop]').forEach(b=>b.addEventListener('click',()=>{
+      cmpPlayers=cmpPlayers.filter(n=>n!==b.dataset.drop); render();}));
+    const q=mountEl.querySelector('#cpQ');
+    q.addEventListener('change',()=>{
+      const hit=PLAYERS.find(x=>x.player.toLowerCase()===q.value.toLowerCase().trim());
+      if(hit && !cmpPlayers.includes(hit.player)){ if(cmpPlayers.length>=4) cmpPlayers.shift(); cmpPlayers.push(hit.player); render(); }
+    });
+  }
+  render();
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   BOOT
+   Every page module is defined by now, so register the rest in nav order and
+   start the router.
+   ========================================================================== */
+registerPage('draft','Draft room',pageDraftRoom,{badge:'tool'});
+registerPage('market','Markets',pageEV,{badge:'tool'});
+registerPage('sim','Scenario lab',pageSim,{badge:'live'});
+registerPage('compare','Compare',pageCompare);
+registerPage('model','The model',pageModel);
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
+  const h=e.target.closest('.hero-row'); if(h) teamSheet(h.dataset.t);
+});
+window.PYLON_BOOT();
+</script>
