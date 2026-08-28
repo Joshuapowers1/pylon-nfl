@@ -325,6 +325,32 @@ tbody tr:hover td{background:var(--sunken);}
 .pal li .k{margin-left:auto; font-family:var(--f-mono); font-size:10px; color:var(--ink-4);}
 
 /* ---------- misc ---------- */
+.mk-team{
+  display:flex; align-items:center; gap:9px; width:100%; background:none; border:0;
+  padding:6px 4px; border-radius:var(--r-sm); color:inherit; font-size:14px; text-align:left;
+}
+.mk-team:hover{background:var(--sunken);}
+/* Projected scores are shown as whole numbers, so a one-point edge can render
+   as a tie. Mark the favoured side so the card never looks self-contradictory. */
+.mk-team.fav{color:var(--ink);}
+.mk-team.fav b{color:var(--accent);}
+.mk-team:not(.fav){color:var(--ink-3);}
+.mk-team span{flex:1; min-width:0; font-weight:500;}
+.mk-team b{font-size:17px; font-weight:600;}
+.mk-line{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;
+  padding-top:10px; border-top:1px solid var(--line);
+}
+.mk-edge{
+  margin-top:9px; padding-top:9px; border-top:1px solid var(--line);
+  font-size:12px; color:var(--ink-2); display:flex; flex-direction:column; gap:2px;
+}
+.mk-edge b{color:var(--ink);}
+.formula{
+  font-family:var(--f-mono); font-size:12.5px; background:var(--sunken); color:var(--ink-2);
+  padding:11px 13px; border-radius:var(--r-sm); white-space:pre-wrap; line-height:1.7;
+  border-left:2px solid var(--accent);
+}
 .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3); align-items:center;}
 .legend i{width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:-1px;}
 .tip{
@@ -433,7 +459,7 @@ tbody tr:hover td{background:var(--sunken);}
 <aside class="sheet" id="sheet" aria-hidden="true" role="dialog" aria-label="Detail"></aside>
 <div class="pal" id="pal" role="dialog" aria-label="Search">
   <div class="pal-in">
-    <input id="palQ" placeholder="Search any team or player&hellip;" autocomplete="off" spellcheck="false">
+    <input id="palQ" placeholder="Search any team or player..." autocomplete="off" spellcheck="false">
     <ul id="palList" role="listbox"></ul>
   </div>
 </div>
@@ -462,11 +488,11 @@ const BYTEAM  = Object.fromEntries(TEAMS.map(t=>[t.team,t]));
 const POS     = ['QB','RB','WR','TE'];
 
 /* ---- formatting ---- */
-const f1 = v => v==null? '–' : (+v).toFixed(1);
-const f2 = v => v==null? '–' : (+v).toFixed(2);
-const f0 = v => v==null? '–' : Math.round(+v).toString();
-const pct = (v,d=1) => v==null? '–' : (100*+v).toFixed(d)+'%';
-const pp  = v => v==null? '–' : (v>0?'+':'')+(+v).toFixed(1);
+const f1 = v => v==null? '&ndash;' : (+v).toFixed(1);
+const f2 = v => v==null? '&ndash;' : (+v).toFixed(2);
+const f0 = v => v==null? '&ndash;' : Math.round(+v).toString();
+const pct = (v,d=1) => v==null? '&ndash;' : (100*+v).toFixed(d)+'%';
+const pp  = v => v==null? '&ndash;' : (v>0?'+':'')+(+v).toFixed(1);
 const sgn = v => v>0? '+'+(+v).toFixed(1) : (+v).toFixed(1);
 const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -731,7 +757,7 @@ function makeTable(rows, cols, opts={}){
   });
   function draw(){
     [...thead.children].forEach((th,i)=>{
-      if(cols[i].k===sortKey){ th.dataset.sorted=''; th.textContent=cols[i].h+(sortDir>0?' ↑':' ↓'); }
+      if(cols[i].k===sortKey){ th.dataset.sorted=''; th.textContent=cols[i].h+(sortDir>0?' \u25B2':' \u25BC'); }
       else { delete th.dataset.sorted; th.textContent=cols[i].h; }
     });
     const s=[...rows].sort((a,b)=>{
@@ -742,7 +768,7 @@ function makeTable(rows, cols, opts={}){
     });
     const lim = opts.limit || s.length;
     tbody.innerHTML = s.slice(0,lim).map((r,i)=>
-      `<tr data-i="${i}">${cols.map(c=>`<td class="${c.left?'l':''}">${c.f?c.f(r):(r[c.k]??'–')}</td>`).join('')}</tr>`
+      `<tr data-i="${i}">${cols.map(c=>`<td class="${c.left?'l':''}">${c.f?c.f(r):(r[c.k]??'&ndash;')}</td>`).join('')}</tr>`
     ).join('');
     if(opts.onRow){
       [...tbody.children].forEach((tr,i)=>tr.addEventListener('click',()=>opts.onRow(s[i])));
@@ -855,8 +881,8 @@ function teamSheet(code){
          <td class="l">${esc(p.player)}</td>
          <td><span class="pos-dot" style="background:${posColor(p.position)}"></span>${p.position}</td>
          <td>${f1(p.proj_points)}</td><td>${f1(p.proj_ppg)}</td>
-         <td>${p.p_top5!=null?pct(p.p_top5,0):'–'}</td>
-         <td>${p.adp_formatted||'–'}</td></tr>`).join('')}</tbody></table></div>
+         <td>${p.p_top5!=null?pct(p.p_top5,0):'&ndash;'}</td>
+         <td>${p.adp_formatted||'&ndash;'}</td></tr>`).join('')}</tbody></table></div>
      </div>
 
      <div class="blk">
@@ -904,7 +930,7 @@ function playerSheet(p){
        <div><dt>Per game</dt><dd>${f1(p.proj_ppg)}</dd></div>
        <div><dt>17-game pace</dt><dd>${f1(p.proj_points_17g)}</dd></div>
        <div><dt>Expected games</dt><dd>${f1(p.games)}</dd></div>
-       <div><dt>Value over repl.</dt><dd>${p.vorp!=null?f1(p.vorp):'–'}</dd></div>
+       <div><dt>Value over repl.</dt><dd>${p.vorp!=null?f1(p.vorp):'&ndash;'}</dd></div>
        <div><dt>Depth chart</dt><dd>${rank} of ${same.length}</dd></div>
      </div>
 
@@ -950,7 +976,7 @@ function playerSheet(p){
            <div><dt>Carries</dt><dd>${f1(p.rush_att)}</dd></div>
            <div><dt>Rush yards</dt><dd>${f0(p.rush_yards)}</dd></div>
            <div><dt>Rush TD</dt><dd>${f1(p.rush_td)}</dd></div>
-           <div><dt>Target share</dt><dd>${p.target_share_eb?pct(p.target_share_eb,1):'–'}</dd></div>`}
+           <div><dt>Target share</dt><dd>${p.target_share_eb?pct(p.target_share_eb,1):'&ndash;'}</dd></div>`}
        </div>
      </div>
 
@@ -980,7 +1006,7 @@ function playerSheet(p){
        <div class="tw"><table><thead><tr><th class="l">Player</th><th>Pts</th><th>Games</th><th>Top 5</th></tr></thead>
        <tbody>${same.slice(0,6).map(x=>`<tr data-p="${esc(x.player)}" ${x.player===p.player?'style="background:var(--accent-wash)"':''}>
          <td class="l">${esc(x.player)}</td><td>${f1(x.proj_points)}</td>
-         <td>${f1(x.games)}</td><td>${x.p_top5!=null?pct(x.p_top5,0):'–'}</td></tr>`).join('')}</tbody></table></div>
+         <td>${f1(x.games)}</td><td>${x.p_top5!=null?pct(x.p_top5,0):'&ndash;'}</td></tr>`).join('')}</tbody></table></div>
      </div>
    </div>`);
   SHEET.querySelectorAll('[data-p]').forEach(r=>r.addEventListener('click',()=>{
@@ -1059,7 +1085,7 @@ function pageOverview(){
      <div class="kpi"><div class="v">${(BT.straight_up_game_accuracy*100).toFixed(1)}%</div><div class="l">Straight-up game accuracy. A closing Vegas line hits near 66%.</div></div>
      <div class="kpi"><div class="v">25,000</div><div class="l">Simulated seasons on the real 2026 schedule</div></div>
      <div class="kpi"><div class="v">${D.meta.n_players}</div><div class="l">Players projected, each with 10,000 of their own simulations</div></div>
-     <div class="kpi"><div class="v">${VIG[1]? VIG[1].overround_pct.toFixed(1)+'%':'–'}</div><div class="l">Sportsbook vig stripped out before a single comparison is made</div></div>
+     <div class="kpi"><div class="v">${VIG[1]? VIG[1].overround_pct.toFixed(1)+'%':'&ndash;'}</div><div class="l">Sportsbook vig stripped out before a single comparison is made</div></div>
    </div>
 
    <div class="two" style="margin-bottom:12px">
@@ -1221,13 +1247,13 @@ function pagePlayers(){
   p.innerHTML = `
    ${head('Every projected player','${n} players with a projected role in 2026. Sort any column, filter by position or team, and click a row for the full simulated outcome range. Point totals are risk-adjusted for expected games played rather than assuming everyone plays seventeen.'.replace('${n}', D.meta.n_players))}
    <div class="bar">
-     <input class="txt" id="plQ" placeholder="Filter by name…" style="width:190px">
+     <input class="txt" id="plQ" placeholder="Filter by name..." style="width:190px">
      <div class="seg" id="plPos">
        <button data-p="ALL" aria-pressed="true">All</button>
        ${POS.map(x=>`<button data-p="${x}">${x}</button>`).join('')}
      </div>
      <select class="sel" id="plTeam"><option value="ALL">All teams</option>
-       ${TEAMS.slice().sort((a,b)=>a.team.localeCompare(b.team)).map(t=>`<option value="${t.team}">${t.team} · ${esc(t.nick)}</option>`).join('')}
+       ${TEAMS.slice().sort((a,b)=>a.team.localeCompare(b.team)).map(t=>`<option value="${t.team}">${t.team} &middot; ${esc(t.nick)}</option>`).join('')}
      </select>
      <label class="chip" style="cursor:pointer"><input type="checkbox" id="plDrafted" style="vertical-align:-1px;margin-right:5px">Drafted only</label>
      <span class="dim" style="font-size:12px;margin-left:auto" id="plCount"></span>
@@ -1242,17 +1268,17 @@ function pagePlayers(){
     {h:'PPG', k:'proj_ppg', f:r=>f1(r.proj_ppg)},
     {h:'17g', k:'proj_points_17g', f:r=>f1(r.proj_points_17g), title:'Points at a healthy 17-game pace, for comparing to industry sets'},
     {h:'G', k:'games', f:r=>f1(r.games), title:'Expected games played'},
-    {h:'Tgt', k:'targets', f:r=>r.targets>0?f0(r.targets):'–'},
-    {h:'Rec', k:'receptions', f:r=>r.receptions>0?f0(r.receptions):'–'},
-    {h:'RecYd', k:'rec_yards', f:r=>r.rec_yards>0?f0(r.rec_yards):'–'},
-    {h:'Car', k:'rush_att', f:r=>r.rush_att>0?f0(r.rush_att):'–'},
-    {h:'RuYd', k:'rush_yards', f:r=>r.rush_yards>0?f0(r.rush_yards):'–'},
+    {h:'Tgt', k:'targets', f:r=>r.targets>0?f0(r.targets):'&ndash;'},
+    {h:'Rec', k:'receptions', f:r=>r.receptions>0?f0(r.receptions):'&ndash;'},
+    {h:'RecYd', k:'rec_yards', f:r=>r.rec_yards>0?f0(r.rec_yards):'&ndash;'},
+    {h:'Car', k:'rush_att', f:r=>r.rush_att>0?f0(r.rush_att):'&ndash;'},
+    {h:'RuYd', k:'rush_yards', f:r=>r.rush_yards>0?f0(r.rush_yards):'&ndash;'},
     {h:'TD', k:'td', f:r=>f1((r.rec_td||0)+(r.rush_td||0)+(r.pass_td||0))},
-    {h:'Top5', k:'p_top5', f:r=>r.p_top5!=null?pct(r.p_top5,0):'–', title:'Share of 10,000 simulations finishing top 5 at the position'},
-    {h:'Bust', k:'p_bust', f:r=>r.p_bust!=null?`<span style="color:${r.p_bust>.6?'var(--down)':'inherit'}">${pct(r.p_bust,0)}</span>`:'–'},
-    {h:'ADP', k:'adp', f:r=>r.adp_formatted||'–', asc:true},
-    {h:'Val', k:'value_rank', f:r=>r.value_rank||'–', asc:true, title:'Model rank by value over replacement'},
-    {h:'Gap', k:'arb', f:r=>r.arb==null?'–':`<span style="color:${r.arb>9?'var(--up)':r.arb<-9?'var(--down)':'inherit'}">${(r.arb>0?'+':'')+r.arb}</span>`, title:'ADP rank minus model value rank. Positive means the model wants him earlier.'},
+    {h:'Top5', k:'p_top5', f:r=>r.p_top5!=null?pct(r.p_top5,0):'&ndash;', title:'Share of 10,000 simulations finishing top 5 at the position'},
+    {h:'Bust', k:'p_bust', f:r=>r.p_bust!=null?`<span style="color:${r.p_bust>.6?'var(--down)':'inherit'}">${pct(r.p_bust,0)}</span>`:'&ndash;'},
+    {h:'ADP', k:'adp', f:r=>r.adp_formatted||'&ndash;', asc:true},
+    {h:'Val', k:'value_rank', f:r=>r.value_rank||'&ndash;', asc:true, title:'Model rank by value over replacement'},
+    {h:'Gap', k:'arb', f:r=>r.arb==null?'&ndash;':`<span style="color:${r.arb>9?'var(--up)':r.arb<-9?'var(--down)':'inherit'}">${(r.arb>0?'+':'')+r.arb}</span>`, title:'ADP rank minus model value rank. Positive means the model wants him earlier.'},
   ];
   PLAYERS.forEach(r=>r.td=(r.rec_td||0)+(r.rush_td||0)+(r.pass_td||0));
 
@@ -1350,7 +1376,7 @@ function pageDraft(target){
       const r=pts[+c.dataset.i].ref;
       c.style.cursor='pointer';
       c.addEventListener('mousemove',e=>tipShow(e,
-        `<b>${esc(r.player)}</b> ${r.position} · ${r.team}<br>ADP ${esc(r.adp_formatted)} (#${r.adp_rank}) · model #${r.value_rank}<br>gap <b>${(r.arb>0?'+':'')+r.arb}</b> · ${f1(r.proj_points)} pts`));
+        `<b>${esc(r.player)}</b> ${r.position} &middot; ${r.team}<br>ADP ${esc(r.adp_formatted)} (#${r.adp_rank}) &middot; model #${r.value_rank}<br>gap <b>${(r.arb>0?'+':'')+r.arb}</b> &middot; ${f1(r.proj_points)} pts`));
       c.addEventListener('mouseleave',tipHide);
       c.addEventListener('click',()=>playerSheet(r));
     });
@@ -1420,8 +1446,8 @@ function pageMarket(){
     {h:'Raw price',k:'market_price_raw',f:r=>pct(r.market_price_raw)},
     {h:'Fair price',k:'market_prob_fair',f:r=>pct(r.market_prob_fair)},
     {h:'Edge',k:'edge_pp',f:r=>`<span style="color:${r.edge_pp>0?'var(--up)':'var(--down)'}">${pp(r.edge_pp)}</span>`},
-    {h:'Conviction',k:'conviction',f:r=>r.conviction==='STRONG'?'<span class="tag acc">strong</span>':r.conviction==='LEAN'?'<span class="tag">lean</span>':'<span class="dim">–</span>',asc:true},
-    {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'–'},
+    {h:'Conviction',k:'conviction',f:r=>r.conviction==='STRONG'?'<span class="tag acc">strong</span>':r.conviction==='LEAN'?'<span class="tag">lean</span>':'<span class="dim">&ndash;</span>',asc:true},
+    {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'&ndash;'},
     {h:'Note',k:'note',left:true,f:r=>`<span class="dim" style="font-size:11.5px">${esc(r.note||'')}</span>`,asc:true},
   ];
   const mount=p.querySelector('#mTable'), count=p.querySelector('#mCount');
@@ -1689,7 +1715,7 @@ function pageModel(){
      aria:'Backtest: projected versus actual wins, 160 team-seasons'});
   p.querySelectorAll('#btScatter .pt').forEach(c=>{
     const r=btPts[+c.dataset.i].ref;
-    c.addEventListener('mousemove',e=>tipShow(e,`<b>${r.team} ${r.season}</b><br>projected ${f2(r.pred_wins)} · actual ${f1(r.actual_wins)}<br>miss <b>${sgn(r.actual_wins-r.pred_wins)}</b>`));
+    c.addEventListener('mousemove',e=>tipShow(e,`<b>${r.team} ${r.season}</b><br>projected ${f2(r.pred_wins)} &middot; actual ${f1(r.actual_wins)}<br>miss <b>${sgn(r.actual_wins-r.pred_wins)}</b>`));
     c.addEventListener('mouseleave',tipHide);
   });
 }
@@ -1701,7 +1727,7 @@ function wireDiverging(root){
     if(!t) return;
     g.style.cursor='pointer';
     g.addEventListener('mousemove',e=>tipShow(e,
-      `<b>${esc(t.name)}</b><br>${sgn(t.power_rating)} rating · ${f2(t.proj_wins)} wins<br>${pct(t.make_playoffs,0)} playoffs · ${pct(t.super_bowl,1)} title`));
+      `<b>${esc(t.name)}</b><br>${sgn(t.power_rating)} rating &middot; ${f2(t.proj_wins)} wins<br>${pct(t.make_playoffs,0)} playoffs &middot; ${pct(t.super_bowl,1)} title`));
     g.addEventListener('mouseleave',tipHide);
     g.addEventListener('click',()=>teamSheet(k));
   });
@@ -1768,7 +1794,7 @@ function buildIndex(){
   return [
     ...PAGES.map(([id,label])=>({t:'page', label, sub:'section', k:id, go:()=>{closePal(); go(id);}})),
     ...TEAMS.map(t=>({t:'team', label:t.name, sub:t.division, k:t.team, logo:t.team, go:()=>{closePal(); go('teams'); teamSheet(t.team);}})),
-    ...PLAYERS.map(p=>({t:'player', label:p.player, sub:`${p.position} · ${p.team}`, k:p.player, logo:p.team, go:()=>{closePal(); go('players'); playerSheet(p);}})),
+    ...PLAYERS.map(p=>({t:'player', label:p.player, sub:`${p.position} &middot; ${p.team}`, k:p.player, logo:p.team, go:()=>{closePal(); go('players'); playerSheet(p);}})),
   ];
 }
 let INDEX=[];
@@ -1941,7 +1967,7 @@ function pageSim(){
      <div class="kpi"><div class="v">${SIM.nGames}</div><div class="l">real games simulated each season</div></div>
      <div class="kpi"><div class="v">${SIM.ST}</div><div class="l">team sigma, drawn once per season and held all year</div></div>
      <div class="kpi"><div class="v">${SIM.SG}</div><div class="l">game sigma, redrawn every week</div></div>
-     <div class="kpi"><div class="v" id="simMs">–</div><div class="l">last run time</div></div>
+     <div class="kpi"><div class="v" id="simMs">&ndash;</div><div class="l">last run time</div></div>
    </div>
 
    <div class="bar">
@@ -1977,14 +2003,14 @@ function pageSim(){
     {h:'Rating',k:'rating',f:r=>{const v=BYTEAM[r.team].power_rating+(simAdj[r.team]||0);
        return `<span style="color:${v>0?'var(--up)':'var(--down)'}">${sgn(v)}</span>`;}},
     {h:'Wins',k:'proj_wins',f:r=>f2(r.proj_wins)},
-    {h:'Δ',k:'dWins',f:r=>deltaCell(r.dWins,2)},
+    {h:'CHG',k:'dWins',f:r=>deltaCell(r.dWins,2)},
     {h:'Playoffs',k:'make_playoffs',f:r=>pct(r.make_playoffs)},
-    {h:'Δ',k:'dPO',f:r=>deltaCell(r.dPO*100,1,'pp')},
+    {h:'CHG',k:'dPO',f:r=>deltaCell(r.dPO*100,1,'pp')},
     {h:'Division',k:'win_division',f:r=>pct(r.win_division)},
     {h:'1 seed',k:'one_seed',f:r=>pct(r.one_seed)},
     {h:'Conference',k:'conf_champ',f:r=>pct(r.conf_champ)},
     {h:'Super Bowl',k:'super_bowl',f:r=>pct(r.super_bowl,1)},
-    {h:'Δ',k:'dSB',f:r=>deltaCell(r.dSB*100,1,'pp')},
+    {h:'CHG',k:'dSB',f:r=>deltaCell(r.dSB*100,1,'pp')},
   ];
   let tbl=makeTable(decorate(TEAMS.map(t=>({...t}))),cols,{sort:'proj_wins',onRow:r=>teamSheet(r.team)});
   p.querySelector('#simTable').appendChild(tbl);
@@ -2011,7 +2037,7 @@ function pageSim(){
   function run(){
     if(simRunning) return;
     simRunning=true;
-    const btn=p.querySelector('#simRun'); btn.textContent='Running…';
+    const btn=p.querySelector('#simRun'); btn.textContent='Running...';
     const bar=p.querySelector('#simBarIn');
     const adj=SIM.codes.map(c=>simAdj[c]||0);
     const t0=performance.now();
@@ -2041,7 +2067,7 @@ function pageSim(){
   wireSliders(); run();
 }
 function deltaCell(v,d,suf){
-  if(v==null||Math.abs(v)<(d===2?0.005:0.05)) return '<span class="dim">–</span>';
+  if(v==null||Math.abs(v)<(d===2?0.005:0.05)) return '<span class="dim">&ndash;</span>';
   return `<span style="color:${v>0?'var(--up)':'var(--down)'}">${v>0?'+':''}${v.toFixed(d)}${suf||''}</span>`;
 }
 </script>
@@ -2110,7 +2136,7 @@ function pageDraftRoom(){
        ${[['ppr','Full PPR'],['half','Half PPR'],['std','Standard']].map(([k,l])=>
          `<button data-s="${k}" aria-pressed="${DRAFT.scoring===k}">${l}</button>`).join('')}
      </div>
-     <input class="txt" id="dQ" placeholder="Find a player…" style="width:170px">
+     <input class="txt" id="dQ" placeholder="Find a player..." style="width:170px">
      <div class="seg" id="dPos2"><button data-p="ALL" aria-pressed="true">All</button>${POS.map(x=>`<button data-p="${x}">${x}</button>`).join('')}</div>
      <button class="chip" id="dUndo">Undo</button>
      <button class="chip" id="dReset">Reset board</button>
@@ -2196,12 +2222,12 @@ function pageDraftRoom(){
 
     // my roster
     const mine = DRAFT.mine.map(n=>pool.find(x=>x.player===n)).filter(Boolean);
-    $('#dCount').textContent = mine.length? `· ${mine.length} picks · ${f1(mine.reduce((a,b)=>a+b.pts,0))} pts` : '';
+    $('#dCount').textContent = mine.length? `\u00B7 ${mine.length} picks \u00B7 ${f1(mine.reduce((a,b)=>a+b.pts,0))} pts` : '';
     $('#dMine').innerHTML = mine.length ? `<div class="tw"><table><tbody>${
       mine.map(x=>`<tr><td class="l">${mark(x.team,17)}${esc(x.player)}</td>
         <td><span class="pos-dot" style="background:${posColor(x.position)}"></span>${x.position}${x.posRank}</td>
         <td>${f1(x.pts)}</td>
-        <td><button class="chip" style="padding:2px 7px;font-size:11px" data-undraft="${esc(x.player)}">×</button></td></tr>`).join('')
+        <td><button class="chip" style="padding:2px 7px;font-size:11px" data-undraft="${esc(x.player)}">&times;</button></td></tr>`).join('')
     }</tbody></table></div>` : '<p class="muted" style="font-size:12.5px;margin:0">Nothing drafted yet. Take the recommendation or click any row on the board.</p>';
 
     // board
@@ -2218,11 +2244,11 @@ function pageDraftRoom(){
         <td><span class="pos-dot" style="background:${posColor(x.position)}"></span>${x.position}${x.posRank}</td>
         <td class="dim">${x.tier}</td>
         <td>${f1(x.pts)}</td><td><b>${f1(x.v)}</b></td>
-        <td>${x.adp_formatted||'–'}${reach!=null&&reach<-14?' <span class="tag down">early</span>':reach!=null&&reach>14?' <span class="tag up">value</span>':''}</td>
-        <td>${x.p_top5!=null?pct(x.p_top5,0):'–'}</td>
-        <td>${x.p_bust!=null?pct(x.p_bust,0):'–'}</td>
+        <td>${x.adp_formatted||'&ndash;'}${reach!=null&&reach<-14?' <span class="tag down">early</span>':reach!=null&&reach>14?' <span class="tag up">value</span>':''}</td>
+        <td>${x.p_top5!=null?pct(x.p_top5,0):'&ndash;'}</td>
+        <td>${x.p_bust!=null?pct(x.p_bust,0):'&ndash;'}</td>
         <td><button class="chip" style="padding:2px 7px;font-size:11px" data-take="${esc(x.player)}">+</button>
-            <button class="chip" style="padding:2px 7px;font-size:11px" data-gone="${esc(x.player)}">×</button></td>
+            <button class="chip" style="padding:2px 7px;font-size:11px" data-gone="${esc(x.player)}">&times;</button></td>
       </tr>`;}).join('')}</tbody></table></div>`;
 
     p.querySelectorAll('[data-take]').forEach(b=>b.addEventListener('click',e=>{
@@ -2292,8 +2318,8 @@ function pageEV(){
      <label class="eyebrow" style="align-self:center;margin-left:8px">Bankroll $</label>
      <input class="txt" id="evBank" type="number" min="0" step="50" value="${EVBANK}" style="width:96px">
      <div class="seg" id="evK">
-       <button data-k="0.25" aria-pressed="true">¼ Kelly</button>
-       <button data-k="0.5">½ Kelly</button>
+       <button data-k="0.25" aria-pressed="true">1/4 Kelly</button>
+       <button data-k="0.5">1/2 Kelly</button>
        <button data-k="1">Full</button>
      </div>
      <label class="eyebrow" style="align-self:center">Max deployed</label>
@@ -2373,10 +2399,10 @@ function pageEV(){
         value="${(r.price*100).toFixed(1)}" style="width:62px;padding:3px 5px;text-align:right">`},
     {h:'Edge',k:'edge',f:r=>`<span style="color:${r.edge>0?'var(--up)':'var(--down)'}">${pp(r.edge*100)}pp</span>`},
     {h:'EV / $1',k:'evD',f:r=>`<span style="color:${r.evD>0?'var(--up)':'var(--down)'}">${r.evD>0?'+':''}${(r.evD*100).toFixed(1)}%</span>`},
-    {h:'Kelly',k:'kelly',f:r=>r.kelly>0?pct(r.kelly,1):'<span class="dim">–</span>'},
-    {h:'Stake',k:'stake',f:r=>r.stake>0.5?`<b>$${r.stake.toFixed(0)}</b>`:'<span class="dim">–</span>'},
-    {h:'Corr',k:'corr',f:r=>r.corr>1?`<span class="tag down" title="This team shows positive EV on ${r.corr} nested markets. They resolve off the same season.">${r.corr}×</span>`:'<span class="dim">–</span>'},
-    {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'<span class="dim">–</span>'},
+    {h:'Kelly',k:'kelly',f:r=>r.kelly>0?pct(r.kelly,1):'<span class="dim">&ndash;</span>'},
+    {h:'Stake',k:'stake',f:r=>r.stake>0.5?`<b>$${r.stake.toFixed(0)}</b>`:'<span class="dim">&ndash;</span>'},
+    {h:'Corr',k:'corr',f:r=>r.corr>1?`<span class="tag down" title="This team shows positive EV on ${r.corr} nested markets. They resolve off the same season.">${r.corr}x</span>`:'<span class="dim">&ndash;</span>'},
+    {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'<span class="dim">&ndash;</span>'},
   ];
   const mount=p.querySelector('#mTable'), count=p.querySelector('#mCount');
   let tbl=makeTable([],cols,{sort:'evD',count,noun:'lines'});
@@ -2417,10 +2443,10 @@ function pageEV(){
     const bestEv = liquidPos.length?liquidPos.reduce((a,b)=>b.evD>a.evD?b:a):null;
     p.querySelector('#evKpis').innerHTML=`
       <div class="kpi"><div class="v">${pos.length}<small> / ${rows.length}</small></div><div class="l">lines the model prices above the market</div></div>
-      <div class="kpi"><div class="v">${bestEdge?pp(bestEdge.edge*100)+'pp':'–'}</div><div class="l">largest edge${bestEdge?` &middot; ${bestEdge.team} ${esc(bestEdge.market.replace('Division: ','').replace('Super Bowl LXI','Super Bowl'))}`:''}</div></div>
-      <div class="kpi"><div class="v">${bestEv?'+'+(bestEv.evD*100).toFixed(0)+'%':'–'}</div><div class="l">best EV per dollar above 2c${bestEv?` &middot; ${bestEv.team}`:''}</div></div>
+      <div class="kpi"><div class="v">${bestEdge?pp(bestEdge.edge*100)+'pp':'&ndash;'}</div><div class="l">largest edge${bestEdge?` &middot; ${bestEdge.team} ${esc(bestEdge.market.replace('Division: ','').replace('Super Bowl LXI','Super Bowl'))}`:''}</div></div>
+      <div class="kpi"><div class="v">${bestEv?'+'+(bestEv.evD*100).toFixed(0)+'%':'&ndash;'}</div><div class="l">best EV per dollar above 2c${bestEv?` &middot; ${bestEv.team}`:''}</div></div>
       <div class="kpi"><div class="v">$${deployed.toFixed(0)}</div><div class="l">deployed at ${kFrac===1?'full':kFrac===0.5?'half':'quarter'} Kelly, capped at ${(evCap*100).toFixed(0)}% of $${EVBANK.toLocaleString()}</div></div>
-      <div class="kpi"><div class="v" style="color:${scale<1?'var(--down)':'inherit'}">${scale<1?(scale).toFixed(2)+'×':'none'}</div><div class="l">${scale<1?`every stake scaled down: unconstrained Kelly wanted $${rawStake.toFixed(0)}`:'no scaling needed at this cap'}</div></div>`;
+      <div class="kpi"><div class="v" style="color:${scale<1?'var(--down)':'inherit'}">${scale<1?(scale).toFixed(2)+'x':'none'}</div><div class="l">${scale<1?`every stake scaled down: unconstrained Kelly wanted $${rawStake.toFixed(0)}`:'no scaling needed at this cap'}</div></div>`;
   }
   function drawChart(){
     const g=groups[gi];
@@ -2460,25 +2486,25 @@ function playerCompare(mountEl){
       ['Floor (p10)', p=>f0(p.p10)],
       ['Median (p50)', p=>f0(p.p50)],
       ['Ceiling (p90)', p=>f0(p.p90)],
-      ['Top 3 at position', p=>p.p_top3!=null?pct(p.p_top3,0):'–'],
-      ['Top 5 at position', p=>p.p_top5!=null?pct(p.p_top5,0):'–'],
-      ['Bust rate', p=>p.p_bust!=null?pct(p.p_bust,0):'–'],
-      ['Value over repl.', p=>p.vorp!=null?f1(p.vorp):'–'],
-      ['Targets', p=>p.targets>0?f0(p.targets):'–'],
-      ['Receptions', p=>p.receptions>0?f0(p.receptions):'–'],
-      ['Receiving yards', p=>p.rec_yards>0?f0(p.rec_yards):'–'],
-      ['Carries', p=>p.rush_att>0?f0(p.rush_att):'–'],
-      ['Rushing yards', p=>p.rush_yards>0?f0(p.rush_yards):'–'],
+      ['Top 3 at position', p=>p.p_top3!=null?pct(p.p_top3,0):'&ndash;'],
+      ['Top 5 at position', p=>p.p_top5!=null?pct(p.p_top5,0):'&ndash;'],
+      ['Bust rate', p=>p.p_bust!=null?pct(p.p_bust,0):'&ndash;'],
+      ['Value over repl.', p=>p.vorp!=null?f1(p.vorp):'&ndash;'],
+      ['Targets', p=>p.targets>0?f0(p.targets):'&ndash;'],
+      ['Receptions', p=>p.receptions>0?f0(p.receptions):'&ndash;'],
+      ['Receiving yards', p=>p.rec_yards>0?f0(p.rec_yards):'&ndash;'],
+      ['Carries', p=>p.rush_att>0?f0(p.rush_att):'&ndash;'],
+      ['Rushing yards', p=>p.rush_yards>0?f0(p.rush_yards):'&ndash;'],
       ['Total TDs', p=>f1((p.rec_td||0)+(p.rush_td||0)+(p.pass_td||0))],
-      ['Live ADP', p=>p.adp_formatted||'–'],
-      ['Model value rank', p=>p.value_rank||'–'],
-      ['Gap vs the room', p=>p.arb==null?'–':(p.arb>0?'+':'')+p.arb],
+      ['Live ADP', p=>p.adp_formatted||'&ndash;'],
+      ['Model value rank', p=>p.value_rank||'&ndash;'],
+      ['Gap vs the room', p=>p.arb==null?'&ndash;':(p.arb>0?'+':'')+p.arb],
     ];
     mountEl.innerHTML = `
       <div class="bar">
-        <input class="txt" id="cpQ" placeholder="Add a player…" list="cpList" style="width:230px">
+        <input class="txt" id="cpQ" placeholder="Add a player..." list="cpList" style="width:230px">
         <datalist id="cpList">${PLAYERS.slice(0,320).map(x=>`<option value="${esc(x.player)}">`).join('')}</datalist>
-        ${rows.map((x,i)=>`<button class="chip" data-drop="${esc(x.player)}" style="border-color:${hues[i]};color:${hues[i]}">${esc(x.player)} ×</button>`).join('')}
+        ${rows.map((x,i)=>`<button class="chip" data-drop="${esc(x.player)}" style="border-color:${hues[i]};color:${hues[i]}">${esc(x.player)} &times;</button>`).join('')}
       </div>
       ${rows.length? `<div class="cmpcards" style="--n:${Math.min(rows.length,4)}">
         ${rows.map((x,i)=>`<div class="card" style="border-top:2px solid ${hues[i]}">
@@ -2515,6 +2541,256 @@ function playerCompare(mountEl){
   render();
 }
 </script>
+
+<script>
+"use strict";
+/* ==========================================================================
+   WEEK 1 MATCHUPS
+   The page a normal fan actually wants: what does the model think happens in
+   each game, and where does that disagree with the number the sportsbook is
+   posting. Written so it reads without a glossary.
+   ========================================================================== */
+const MATCHUPS = D.matchups && D.matchups.rows ? hydrate(D.matchups) : [];
+
+function spreadText(team, sp){
+  if(sp==null) return 'no line';
+  if(Math.abs(sp) < 0.25) return 'pick em';
+  return `${team} by ${Math.abs(sp).toFixed(1)}`;
+}
+function pageMatchups(){
+  const p=document.getElementById('pg-matchups');
+  if(!MATCHUPS.length){ p.innerHTML = head('Week 1','No schedule loaded.'); return; }
+  const withLines = MATCHUPS.filter(g=>g.market_spread_home!=null);
+  const biggestSp = withLines.slice().sort((a,b)=>Math.abs(b.spread_edge)-Math.abs(a.spread_edge))[0];
+  const biggestTot = withLines.slice().sort((a,b)=>Math.abs(b.total_edge)-Math.abs(a.total_edge))[0];
+  const meanSp = withLines.reduce((a,b)=>a+Math.abs(b.spread_edge),0)/Math.max(withLines.length,1);
+
+  p.innerHTML = `
+   ${head('Week 1, game by game',
+     'Every game with a projected score, a winner, and the sportsbook line next to it. The model and the market usually agree, which is the point. Where they do not is where it gets interesting.')}
+
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+     <div class="kpi"><div class="v">${MATCHUPS.length}</div><div class="l">games projected</div></div>
+     <div class="kpi"><div class="v">${meanSp.toFixed(1)}<small> pts</small></div><div class="l">average disagreement with the closing line</div></div>
+     <div class="kpi"><div class="v">${withLines.filter(g=>Math.abs(g.spread_edge)>=3).length}</div><div class="l">games the model disagrees by 3 points or more</div></div>
+     <div class="kpi"><div class="v">${biggestSp?esc(biggestSp.away+' at '+biggestSp.home):'&ndash;'}</div><div class="l">biggest gap on the spread, ${biggestSp?Math.abs(biggestSp.spread_edge).toFixed(1):''} points</div></div>
+     <div class="kpi"><div class="v">${biggestTot?esc(biggestTot.away+' at '+biggestTot.home):'&ndash;'}</div><div class="l">biggest gap on the total, ${biggestTot?Math.abs(biggestTot.total_edge).toFixed(1):''} points</div></div>
+   </div>
+
+   <div class="bar">
+     <div class="seg" id="mkSort">
+       <button data-k="kick" aria-pressed="true">Kickoff order</button>
+       <button data-k="spread">Biggest spread gap</button>
+       <button data-k="total">Biggest total gap</button>
+     </div>
+     <span class="dim" style="font-size:12px;margin-left:auto">Model line is what Pylon makes the game. Market line is what the book posted.</span>
+   </div>
+   <div class="grid" id="mkGrid" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))"></div>
+
+   <p class="muted" style="font-size:12.5px;margin-top:16px;max-width:78ch">
+     A word on reading these. The model agrees with the market within a point and a half on the
+     average game, which is what should happen: the closing line is the single best public estimate
+     in sports and a model that routinely disagreed with it by a touchdown would be broken, not
+     brilliant. Treat the two or three games with a real gap as questions worth asking, not as
+     answers.
+   </p>`;
+
+  let sortKey='kick';
+  function render(){
+    const list = MATCHUPS.slice().sort((a,b)=>
+      sortKey==='spread' ? Math.abs(b.spread_edge||0)-Math.abs(a.spread_edge||0)
+      : sortKey==='total' ? Math.abs(b.total_edge||0)-Math.abs(a.total_edge||0)
+      : String(a.kickoff||'').localeCompare(String(b.kickoff||'')));
+
+    document.getElementById('mkGrid').innerHTML = list.map(g=>{
+      const H=BYTEAM[g.home], A=BYTEAM[g.away];
+      const homeFav = g.model_spread_home < 0;
+      const favTeam = homeFav ? g.home : g.away;
+      const favBy = Math.abs(g.model_spread_home);
+      const wp = homeFav ? g.home_win_prob : 1-g.home_win_prob;
+      const spEdge = g.spread_edge, toEdge = g.total_edge;
+      const big = spEdge!=null && Math.abs(spEdge)>=3;
+      const kick = g.kickoff ? new Date(g.kickoff).toLocaleString(undefined,
+        {weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) : '';
+      return `<div class="card mk" ${big?'style="border-color:var(--accent)"':''}>
+        <div class="eyebrow" style="margin-bottom:9px">${esc(kick)}${big?' &middot; <span style="color:var(--accent)">model disagrees</span>':''}</div>
+        <button class="mk-team${homeFav?'':' fav'}" data-t="${g.away}">
+          ${mark(g.away,26)}<span>${esc(A?A.nick:g.away)}</span>
+          <b class="num">${f0(g.model_away_pts)}</b></button>
+        <button class="mk-team${homeFav?' fav':''}" data-t="${g.home}">
+          ${mark(g.home,26)}<span>${esc(H?H.nick:g.home)}</span>
+          <b class="num">${f0(g.model_home_pts)}</b></button>
+        <div class="mk-line">
+          <div><span class="eyebrow">Pylon makes it</span>
+            <div class="num" style="font-size:14px">${esc(spreadText(favTeam, favBy))}</div>
+            <div class="dim num" style="font-size:11.5px">${pct(wp,0)} to win &middot; ${f1(g.model_total)} total</div></div>
+          <div><span class="eyebrow">Book posted</span>
+            <div class="num" style="font-size:14px">${g.market_spread_home!=null
+              ? esc(spreadText(g.market_spread_home<0?g.home:g.away, Math.abs(g.market_spread_home)))
+              : 'no line'}</div>
+            <div class="dim num" style="font-size:11.5px">${g.market_total!=null?f1(g.market_total)+' total':''}</div></div>
+        </div>
+        ${spEdge!=null?`<div class="mk-edge">
+          <span>${Math.abs(spEdge)<0.5 ? 'Model and book agree on the spread'
+            : `Model likes <b>${esc(spEdge>0?g.home:g.away)}</b> by ${Math.abs(spEdge).toFixed(1)} vs the line`}</span>
+          <span>${Math.abs(toEdge)<0.5 ? 'and agree on the total'
+            : `and leans <b>${toEdge>0?'over':'under'}</b> by ${Math.abs(toEdge).toFixed(1)}`}</span>
+        </div>`:''}
+      </div>`;
+    }).join('');
+    p.querySelectorAll('.mk-team').forEach(b=>b.addEventListener('click',()=>teamSheet(b.dataset.t)));
+  }
+  p.querySelector('#mkSort').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; sortKey=b.dataset.k;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); render();});
+  render();
+}
+
+/* ==========================================================================
+   TRACK RECORD
+   The in-season updating result, and the ledger that makes this season
+   gradeable rather than deniable.
+   ========================================================================== */
+function pageRecord(){
+  const p=document.getElementById('pg-record');
+  const IS = D.inseason || {}, LED = D.ledger || {};
+  const curve = D.inseason_curve && D.inseason_curve.rows ? hydrate(D.inseason_curve) : [];
+  const weeks = [...new Set(curve.map(r=>r.week))].sort((a,b)=>a-b);
+  const ser = m => weeks.map(w=>{const r=curve.find(x=>x.week===w&&x.model===m); return r?r.accuracy:null;});
+  const gain = IS.frozen && IS.updated ? (IS.updated.accuracy-IS.frozen.accuracy)*100 : null;
+
+  p.innerHTML = `
+   ${head('Track record',
+     "Two things live here. Proof that updating the model during the season actually works, measured on completed seasons it never saw. And this year's predictions, frozen with a timestamp, so the record can be graded rather than argued about.")}
+
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(158px,1fr))">
+     <div class="kpi"><div class="v">${IS.frozen?pct(IS.frozen.accuracy,1):'&ndash;'}</div><div class="l">picking games with a preseason rating frozen all year</div></div>
+     <div class="kpi"><div class="v" style="color:var(--up)">${IS.updated?pct(IS.updated.accuracy,1):'&ndash;'}</div><div class="l">picking games with the rating updated each week</div></div>
+     <div class="kpi"><div class="v" style="color:var(--up)">${gain!=null?'+'+gain.toFixed(1):'&ndash;'}<small> pts</small></div><div class="l">what in-season updating is worth</div></div>
+     <div class="kpi"><div class="v">${IS.k_best!=null?IS.k_best:'&ndash;'}</div><div class="l">games before this season outweighs the preseason prior</div></div>
+     <div class="kpi"><div class="v">~66%</div><div class="l">what a closing Vegas line hits, for scale</div></div>
+   </div>
+
+   <div class="card" style="margin-bottom:14px">
+     <div class="eyebrow" style="margin-bottom:3px">The proof</div>
+     <h3 style="font-size:17px;margin-bottom:6px">Accuracy by week, frozen against updated</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 12px;max-width:80ch">
+       Three completed seasons replayed week by week. At each week the updated model is rebuilt from
+       only the games already played and then asked to pick the games that come next, so it never
+       sees the answer. Note what happens early: through week five the updated model is
+       <em>worse</em>, because four games of data is mostly noise. It takes about six weeks before
+       the season tells you more than the offseason did.
+     </p>
+     <div id="rcCurve"></div>
+     <div class="legend" style="margin-top:8px">
+       <span><i style="background:var(--s2)"></i>updated weekly</span>
+       <span><i style="background:var(--s1)"></i>frozen at week zero</span>
+       <span class="dim">${curve.length?curve.filter(r=>r.model==='updated').reduce((a,b)=>a+b.n,0).toLocaleString():''} games scored</span>
+     </div>
+   </div>
+
+   <div class="two" style="margin-bottom:14px">
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">How the blend works</div>
+       <h3 style="font-size:16px;margin-bottom:8px">Neither number alone is right</h3>
+       <p class="muted" style="font-size:13px;margin:0 0 12px">
+         A preseason rating is a prior and a four-game sample is noise. The model holds both and
+         shifts weight as evidence accumulates:
+       </p>
+       <div class="formula">rating = w &times; this season + (1 - w) &times; preseason
+w = games / (games + ${IS.k_best!=null?IS.k_best:'k'})</div>
+       <p class="muted" style="font-size:12.5px;margin:10px 0 0">
+         The constant was fitted, not chosen. Sweeping it across three seasons and keeping whichever
+         value predicted best landed on ${IS.k_best!=null?IS.k_best:'?'}, meaning this season earns
+         half the weight after ${IS.k_best!=null?IS.k_best:'?'} games and keeps climbing from there.
+       </p>
+     </div>
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">Every value tried</div>
+       <h3 style="font-size:16px;margin-bottom:8px">The sweep</h3>
+       <div class="tw"><table><thead><tr><th class="l">k</th><th>Avg miss</th><th>Accuracy</th><th>Log loss</th></tr></thead>
+       <tbody>${(IS.sweep||[]).map(r=>`<tr${r.k===IS.k_best?' style="background:var(--accent-wash)"':''}>
+         <td class="l">${r.k===999?'no update':r.k}</td><td>${r.mae.toFixed(2)}</td>
+         <td>${pct(r.accuracy,1)}</td><td>${r.logloss.toFixed(4)}</td></tr>`).join('')}</tbody></table></div>
+       <p class="muted" style="font-size:12.5px;margin:8px 0 0">
+         The bottom row is the model that never updates. It is the worst one on every measure.
+       </p>
+     </div>
+   </div>
+
+   <div class="card">
+     <div class="eyebrow" style="margin-bottom:3px">Sealed ${LED.stamped_at?esc(LED.stamped_at.slice(0,10)):''}</div>
+     <h3 style="font-size:17px;margin-bottom:6px">This season's predictions, on the record</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 12px;max-width:80ch">
+       Every call below was frozen before a single game was played, with the market's number stored
+       next to it so the comparison is already set up. Anyone can publish projections in September
+       and a track record in January. The only version worth anything is the one that was written
+       down first.
+     </p>
+     <div class="dl" style="margin-bottom:12px">
+       <div><dt>Sealed at</dt><dd style="font-size:13px">${LED.stamped_at?esc(LED.stamped_at):'&ndash;'}</dd></div>
+       <div><dt>Content digest</dt><dd style="font-size:13px">${LED.digest?esc(LED.digest):'&ndash;'}</dd></div>
+       <div><dt>Model version</dt><dd>${LED.model_version?esc(LED.model_version):'&ndash;'}</dd></div>
+     </div>
+     <h4 style="font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);font-weight:500;margin-bottom:8px">How each call gets graded</h4>
+     <div class="tw"><table><thead><tr><th class="l">Prediction</th><th class="l">Scoring rule</th></tr></thead><tbody>
+       ${Object.entries(LED.scoring_rules||{}).map(([k,v])=>
+         `<tr><td class="l" style="text-transform:capitalize">${esc(k.replace(/_/g,' '))}</td>
+              <td class="l" style="white-space:normal;font-family:var(--f-body)">${esc(v)}</td></tr>`).join('')}
+     </tbody></table></div>
+     <p class="muted" style="font-size:12.5px;margin:12px 0 0;max-width:80ch">
+       Brier score is the metric here because it punishes confident wrong answers the way it should.
+       Guessing 50% on everything scores 0.25. Anything worse than that is worse than knowing
+       nothing, and publishing the number either way is the entire point.
+     </p>
+   </div>`;
+
+  if(curve.length){
+    const f=ser('frozen'), u=ser('updated');
+    document.getElementById('rcCurve').innerHTML = lineChart(
+      [{name:'updated', c:'var(--s2)', y:u},{name:'frozen', c:'var(--s1)', y:f}],
+      weeks, {h:300, yLabel:'SHARE OF GAMES PICKED CORRECTLY', xLabel:'WEEK OF THE SEASON',
+              y0:0.40, y1:0.80, ref:0.5, refLabel:'coin flip'});
+  }
+}
+
+/* A line chart with real x labels and a reference line. The multiLine helper
+   assumes an index axis, which is wrong for a week-numbered series. */
+function lineChart(series, xs, opts={}){
+  const W=1000,H=opts.h||300,m={t:16,r:64,b:38,l:52};
+  const y0=opts.y0!=null?opts.y0:0, y1=opts.y1!=null?opts.y1:1;
+  const sx=i=>m.l+(i/(xs.length-1))*(W-m.l-m.r);
+  const sy=v=>H-m.b-((v-y0)/(y1-y0))*(H-m.t-m.b);
+  let grid='',ax='';
+  xs.forEach((x,i)=>{ if(i%2===0){
+    grid+=`<line x1="${sx(i)}" y1="${m.t}" x2="${sx(i)}" y2="${H-m.b}" stroke="var(--line)" stroke-width=".7"/>`;
+    ax+=`<text x="${sx(i)}" y="${H-m.b+16}" text-anchor="middle" font-size="11" font-family="var(--f-mono)" fill="var(--ink-4)">${x}</text>`;}});
+  for(let v=y0; v<=y1+1e-9; v+=0.1){
+    grid+=`<line x1="${m.l}" y1="${sy(v)}" x2="${W-m.r}" y2="${sy(v)}" stroke="var(--line)" stroke-width=".7"/>`;
+    ax+=`<text x="${m.l-9}" y="${sy(v)+4}" text-anchor="end" font-size="11" font-family="var(--f-mono)" fill="var(--ink-4)">${Math.round(v*100)}%</text>`;}
+  let ref='';
+  if(opts.ref!=null){
+    // Series labels live at the right edge, so the reference label goes on the
+    // left where nothing else competes for the space.
+    ref=`<line x1="${m.l}" y1="${sy(opts.ref)}" x2="${W-m.r}" y2="${sy(opts.ref)}" stroke="var(--ink-4)" stroke-width="1" stroke-dasharray="5 4"/>
+         <text x="${m.l+8}" y="${sy(opts.ref)-7}" font-size="10.5" font-family="var(--f-mono)"
+           letter-spacing=".06em" fill="var(--ink-4)">${esc(opts.refLabel||'')}</text>`;
+  }
+  const paths=series.map(s=>{
+    const pts=s.y.map((v,i)=>v==null?null:[sx(i),sy(v)]).filter(Boolean);
+    const d=pts.map((q,i)=>`${i?'L':'M'}${q[0].toFixed(1)},${q[1].toFixed(1)}`).join('');
+    const last=pts[pts.length-1];
+    return `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2.2" stroke-linejoin="round"/>
+      ${pts.map(q=>`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="2.6" fill="${s.c}"/>`).join('')}
+      <text x="${(last[0]+7).toFixed(1)}" y="${(last[1]+4).toFixed(1)}" font-size="11.5"
+        font-family="var(--f-mono)" font-weight="600" fill="${s.c}">${esc(s.name)}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Accuracy by week')}">
+    ${grid}${ref}${paths}${ax}
+    <text x="${(m.l+W-m.r)/2}" y="${H-3}" text-anchor="middle" font-size="10.5" font-family="var(--f-mono)"
+      letter-spacing=".08em" fill="var(--ink-4)">${esc(opts.xLabel||'')}</text></svg>`;
+}
+</script>
 <script>
 "use strict";
 /* ==========================================================================
@@ -2522,10 +2798,12 @@ function playerCompare(mountEl){
    Every page module is defined by now, so register the rest in nav order and
    start the router.
    ========================================================================== */
+registerPage('matchups','Week 1',pageMatchups,{badge:'new'});
 registerPage('draft','Draft room',pageDraftRoom,{badge:'tool'});
 registerPage('market','Markets',pageEV,{badge:'tool'});
 registerPage('sim','Scenario lab',pageSim,{badge:'live'});
 registerPage('compare','Compare',pageCompare);
+registerPage('record','Track record',pageRecord,{badge:'new'});
 registerPage('model','The model',pageModel);
 
 document.addEventListener('click',e=>{

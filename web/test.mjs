@@ -13,7 +13,7 @@ for (const theme of ['dark','light']) {
   page.on('console', m => { if(m.type()==='error') errors.push(`[${theme}] CONSOLE: ${m.text()}`); });
   await page.goto('file://'+process.cwd()+'/preview.html');
   await page.waitForTimeout(1200);
-  for (const id of ['overview','teams','players','draft','market','sim','compare','model']) {
+  for (const id of ['overview','matchups','teams','players','draft','market','sim','record','compare','model']) {
     await page.evaluate(i => go(i), id);
     await page.waitForTimeout(500);
     const vis = await page.evaluate(i => {

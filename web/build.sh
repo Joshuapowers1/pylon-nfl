@@ -2,6 +2,10 @@
 # Rebuilds index.html from the template plus the current model outputs.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# Catch the failure modes a rendering test cannot see.
+node lint.mjs
+
 python3 - <<'PY'
 import pathlib
 tpl   = pathlib.Path('app.template.html').read_text()
