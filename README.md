@@ -70,6 +70,8 @@ games that came next.
 **In-season updating is worth 4.2 percentage points**, which closes most of the gap
 to a closing Vegas line at roughly 66%.
 
+![Track record](docs/03-track-record.jpg)
+
 The blend is a conjugate-style weight, `rating = w * in-season + (1 - w) * preseason`
 with `w = games / (games + k)`. The constant `k` is fitted by sweeping it across
 three seasons and keeping whichever value predicted best. It landed on **8**, so this
@@ -207,9 +209,22 @@ Note the two conference books sum to **under** 100%. The same event priced two w
 
 ---
 
+## Week 1, game by game
+
+![Week 1 matchups](docs/02-week1-matchups.jpg)
+
+A projected score, a winner and a total for every game, with the posted line beside
+it in plain English. The margin comes from the calibrated game model and the total
+from a fitted scoring model, so the two can never imply an impossible pair of team
+scores. Across Week 1 the model sits within 1.6 points of the closing line on
+average, which is what should happen: a preseason model that routinely disagreed
+with the market by a touchdown would be broken, not brilliant.
+
+---
+
 ## The web terminal
 
-![Scenario lab](docs/02-scenario-lab.jpg)
+![Scenario lab](docs/04-scenario-lab.jpg)
 
 A single self-contained HTML file. No framework, no chart library, no network calls at runtime. Every chart is hand-built SVG and the full data bundle plus all 32 logos are inlined.
 
@@ -217,11 +232,11 @@ A single self-contained HTML file. No framework, no chart library, no network ca
 
 **Draft room.** Value over replacement recomputed for league size and scoring on every pick, so twelve-team full PPR and ten-team standard produce genuinely different boards. Tier breaks, and scarcity measured as startable players remaining above replacement. Persists to `localStorage`.
 
-![Draft room](docs/03-draft-room.jpg)
+![Draft room](docs/05-draft-room.jpg)
 
 **Markets.** Power-method de-vig, then expected value and Kelly sizing against an editable price. Stakes are scaled to a deployment cap and the scaling factor is disclosed, because these markets are nested rather than independent and summing line-by-line Kelly across them produces allocations well over 100% of a bankroll.
 
-![Markets](docs/04-markets.jpg)
+![Markets](docs/06-markets.jpg)
 
 ---
 
