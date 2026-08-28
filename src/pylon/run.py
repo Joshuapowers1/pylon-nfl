@@ -19,7 +19,7 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 
 from . import (ingest, ratings, adjustments, simulate, players, market, diagnostics,
-               draft, backtest, matchups, ledger, usage as usage_mod)
+               draft, backtest, matchups, ledger, weekly, usage as usage_mod)
 from .config import PROC, OUT, CONF, TRAIN_SEASONS, N_SIMS, TEAM_DIV, TEAM_CONF
 
 
@@ -96,6 +96,9 @@ def main(n_sims=N_SIMS, rebuild=False, player_sims=8000):
     mu, scoring = matchups.build(adj, trans, week=1)
     _t(f"projected {len(mu)} week 1 matchups", t0)
 
+    wk = weekly.build(out, adj, ctx26, week=1)
+    _t(f"projected {len(wk):,} players for week 1", t0)
+
     led = ledger.build(res, board, mu)
     _t(f"stamped prediction ledger ({led['digest']})", t0)
 
@@ -107,7 +110,7 @@ def main(n_sims=N_SIMS, rebuild=False, player_sims=8000):
     print(f"done in {time.time()-t0:.1f}s. outputs in {OUT}")
     return dict(ratings=adj, teams=res, wins=wd, seeds=sd, players=out, edges=board,
                 vig=vig, decomp=dec, draft=dboard, draft_info=dinfo, backtest=bt,
-                matchups=mu, scoring=scoring, ledger=led)
+                matchups=mu, scoring=scoring, ledger=led, weekly=wk)
 
 
 if __name__ == "__main__":

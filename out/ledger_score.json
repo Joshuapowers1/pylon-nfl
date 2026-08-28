@@ -1,0 +1,19 @@
+{
+  "season": 2025,
+  "stamped_at": "2026-08-28T00:43:18Z",
+  "digest": "b4eec01ab6115c9e",
+  "games_resolved": 272,
+  "season_complete": true,
+  "win_total_mae": 2.416,
+  "games": {
+    "n": 6,
+    "straight_up": 0.0,
+    "spread_mae_model": 10.467,
+    "spread_mae_market": 10.75,
+    "brier_model": 0.3108,
+    "brier_coin_flip": 0.25
+  },
+  "brier_playoffs": 0.1937,
+  "brier_division": 0.1939,
+  "brier_playoffs_market": 0.1801
+}

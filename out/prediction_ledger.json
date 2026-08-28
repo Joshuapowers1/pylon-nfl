@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "stamped_at": "2026-08-28T00:43:18Z",
+  "stamped_at": "2026-08-28T22:48:32Z",
   "model_version": "1.0.0",
   "scoring_rules": {
     "win_totals": "Brier score on P(over the posted line). Resolved by final record.",
@@ -574,5 +574,5 @@
       "market_total": 42.5
     }
   ],
-  "digest": "b4eec01ab6115c9e"
+  "digest": "ba1a2fa087412d22"
 }

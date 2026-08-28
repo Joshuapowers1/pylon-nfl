@@ -148,15 +148,22 @@ def test_eb_is_monotone_in_the_observation():
     assert hi > lo
 
 
-def test_streaming_premium_lowers_quarterback_value(proj):
-    """The fix for VORP wanting quarterbacks two rounds too early."""
+def test_streaming_premium_matches_the_measurement(proj):
+    """The premium was measured, not assumed, and it came out negative: a
+    matchup streamer scored 1.7 ppg WORSE than the quarterback who finished at
+    replacement rank. The waiver pool is a downgrade, not a free option."""
+    assert players.STREAM_PREMIUM_PPG["QB"] < 0
     naive = players.replacement_levels(proj, stream=False)
     streamed = players.replacement_levels(proj, stream=True)
-    assert streamed["QB"] > naive["QB"]
-    assert streamed["RB"] == naive["RB"]          # you cannot stream a starting RB
-    ranked = players.add_vorp(proj, stream=True).sort_values("vorp", ascending=False)
-    first_qb = list(ranked["position"]).index("QB") + 1
-    assert first_qb > 20, "quarterbacks are still going far too early"
+    assert streamed["QB"] < naive["QB"], "a negative premium lowers replacement level"
+    assert streamed["RB"] == naive["RB"], "you cannot stream a starting running back"
+
+
+def test_default_board_uses_the_unadjusted_replacement(proj):
+    """The pipeline ships the arithmetic, not the convention."""
+    default = players.add_vorp(proj)
+    explicit = players.add_vorp(proj, stream=False)
+    assert default["vorp"].equals(explicit["vorp"])
 
 
 def test_shares_normalise_to_the_team_total(proj):

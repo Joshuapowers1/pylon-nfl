@@ -66,6 +66,7 @@ h1,h2,h3,h4{font-family:var(--f-display); font-weight:700; letter-spacing:-.02em
 a{color:inherit;}
 button{font:inherit; color:inherit; cursor:pointer;}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 .num{font-family:var(--f-mono); font-variant-numeric:tabular-nums; font-feature-settings:"tnum";}
 .eyebrow{
   font-family:var(--f-mono); font-size:10.5px; font-weight:500;
@@ -325,6 +326,10 @@ tbody tr:hover td{background:var(--sunken);}
 .pal li .k{margin-left:auto; font-family:var(--f-mono); font-size:10px; color:var(--ink-4);}
 
 /* ---------- misc ---------- */
+.ss-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px;}
+.ss-num{display:flex; align-items:baseline; gap:7px;}
+.ss-num b{font-family:var(--f-display); font-size:28px; font-weight:700; letter-spacing:-.03em; line-height:1;}
+.ss-num span{font-size:11.5px; color:var(--ink-3);}
 .mk-team{
   display:flex; align-items:center; gap:9px; width:100%; background:none; border:0;
   padding:6px 4px; border-radius:var(--r-sm); color:inherit; font-size:14px; text-align:left;
@@ -464,6 +469,7 @@ tbody tr:hover td{background:var(--sunken);}
   </div>
 </div>
 <div class="tip" id="tip" role="status"></div>
+<div id="announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
 <script id="PYLON_LOGOS" type="application/json">__LOGOS__</script>
 <script id="PYLON_DATA" type="application/json">__DATA__</script>
@@ -511,6 +517,12 @@ function tipShow(e,html){
   TIP.style.left=x+'px'; TIP.style.top=y+'px';
 }
 function tipHide(){ TIP.classList.remove('on'); }
+/* Anything that finishes asynchronously has to say so out loud, or a screen
+   reader user has no idea the simulation completed. */
+function announce(msg){
+  const a=document.getElementById('announcer');
+  if(a){ a.textContent=''; setTimeout(()=>{ a.textContent=msg; }, 40); }
+}
 function hoverable(node, html){
   node.addEventListener('mousemove', e=>tipShow(e,html));
   node.addEventListener('mouseleave', tipHide);
@@ -707,12 +719,39 @@ function multiLine(series, opts={}){
    SHARED UI
    ========================================================================== */
 const SHEET=document.getElementById('sheet'), SCRIM=document.getElementById('scrim');
+let sheetReturnFocus = null;
+const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+
 function openSheet(html){
-  SHEET.innerHTML=html; SHEET.classList.add('on'); SHEET.setAttribute('aria-hidden','false');
+  // Remember where focus came from so closing puts it back, and make the rest
+  // of the page inert so a keyboard user cannot tab out into content that is
+  // visually behind a scrim.
+  if(!SHEET.classList.contains('on')) sheetReturnFocus = document.activeElement;
+  SHEET.innerHTML=html; SHEET.classList.add('on');
+  SHEET.setAttribute('aria-hidden','false'); SHEET.setAttribute('aria-modal','true');
   SCRIM.classList.add('on'); SHEET.scrollTop=0;
+  document.querySelector('.shell').setAttribute('inert','');
+  document.querySelector('header.top').setAttribute('inert','');
   const c=SHEET.querySelector('[data-close]'); if(c) c.focus();
 }
-function closeSheet(){ SHEET.classList.remove('on'); SHEET.setAttribute('aria-hidden','true'); SCRIM.classList.remove('on'); }
+function closeSheet(){
+  SHEET.classList.remove('on'); SHEET.setAttribute('aria-hidden','true');
+  SHEET.removeAttribute('aria-modal'); SCRIM.classList.remove('on');
+  document.querySelector('.shell').removeAttribute('inert');
+  document.querySelector('header.top').removeAttribute('inert');
+  if(sheetReturnFocus && sheetReturnFocus.isConnected) sheetReturnFocus.focus();
+  sheetReturnFocus = null;
+}
+/* Cycle Tab within the sheet. `inert` handles most browsers, this covers the
+   rest and keeps the loop closed at both ends. */
+SHEET.addEventListener('keydown', e=>{
+  if(e.key !== 'Tab' || !SHEET.classList.contains('on')) return;
+  const f=[...SHEET.querySelectorAll(FOCUSABLE)].filter(el=>el.offsetParent!==null);
+  if(!f.length) return;
+  const first=f[0], last=f[f.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+});
 SCRIM.addEventListener('click',closeSheet);
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSheet(); closePal(); } });
 
@@ -748,7 +787,7 @@ function makeTable(rows, cols, opts={}){
   const wrap = el('<div class="tw"><table><thead><tr></tr></thead><tbody></tbody></table></div>');
   const thead = wrap.querySelector('thead tr'), tbody = wrap.querySelector('tbody');
   cols.forEach(c=>{
-    const th = el(`<th class="${c.left?'l':''}" title="${esc(c.title||c.h)}">${esc(c.h)}</th>`);
+    const th = el(`<th scope="col" class="${c.left?'l':''}" title="${esc(c.title||c.h)}">${esc(c.h)}</th>`);
     th.addEventListener('click',()=>{
       if(sortKey===c.k) sortDir=-sortDir; else { sortKey=c.k; sortDir=c.asc?1:-1; }
       draw();
@@ -844,7 +883,7 @@ function teamSheet(code){
 
      <div class="blk">
        <h4>Model versus market</h4>
-       <div class="tw"><table><thead><tr><th class="l">Market</th><th>Pylon</th><th>Fair price</th><th>Edge</th></tr></thead>
+       <div class="tw"><table><thead><tr><th scope="col" class="l">Market</th><th scope="col">Pylon</th><th scope="col">Fair price</th><th scope="col">Edge</th></tr></thead>
        <tbody>${mktRows}</tbody></table></div>
      </div>
 
@@ -876,7 +915,7 @@ function teamSheet(code){
      <div class="blk">
        <h4>Fantasy roster &middot; top ${roster.length} by projected points</h4>
        <div class="tw"><table><thead><tr>
-         <th class="l">Player</th><th>Pos</th><th>Pts</th><th>PPG</th><th>Top 5</th><th>ADP</th>
+         <th class="l">Player</th><th scope="col">Pos</th><th scope="col">Pts</th><th scope="col">PPG</th><th scope="col">Top 5</th><th scope="col">ADP</th>
        </tr></thead><tbody>${roster.map(p=>`<tr data-p="${esc(p.player)}">
          <td class="l">${esc(p.player)}</td>
          <td><span class="pos-dot" style="background:${posColor(p.position)}"></span>${p.position}</td>
@@ -1003,7 +1042,7 @@ function playerSheet(p){
 
      <div class="blk">
        <h4>Same position, same team</h4>
-       <div class="tw"><table><thead><tr><th class="l">Player</th><th>Pts</th><th>Games</th><th>Top 5</th></tr></thead>
+       <div class="tw"><table><thead><tr><th scope="col" class="l">Player</th><th scope="col">Pts</th><th scope="col">Games</th><th scope="col">Top 5</th></tr></thead>
        <tbody>${same.slice(0,6).map(x=>`<tr data-p="${esc(x.player)}" ${x.player===p.player?'style="background:var(--accent-wash)"':''}>
          <td class="l">${esc(x.player)}</td><td>${f1(x.proj_points)}</td>
          <td>${f1(x.games)}</td><td>${x.p_top5!=null?pct(x.p_top5,0):'&ndash;'}</td></tr>`).join('')}</tbody></table></div>
@@ -1432,7 +1471,7 @@ function pageMarket(){
        Note the two conference books: they sum to <em>under</em> one hundred, which means the same event
        priced two ways disagrees with itself.
      </p>
-     <div class="tw"><table><thead><tr><th class="l">Book</th><th>Outcomes</th><th>Raw sum</th><th>Overround</th><th>Power k</th></tr></thead>
+     <div class="tw"><table><thead><tr><th scope="col" class="l">Book</th><th scope="col">Outcomes</th><th scope="col">Raw sum</th><th scope="col">Overround</th><th scope="col">Power k</th></tr></thead>
      <tbody>${VIG.map(v=>`<tr><td class="l">${esc(v.book)}</td><td>${v.n_outcomes}</td>
        <td>${v.raw_sum.toFixed(4)}</td>
        <td style="color:${v.overround_pct>10?'var(--down)':v.overround_pct<0?'var(--up)':'inherit'}">${pp(v.overround_pct)}%</td>
@@ -1537,7 +1576,7 @@ function pageCompare(){
       ['Judgment share', t=>pct(t.prior_share,0)],
     ];
     p.querySelector('#cTable').innerHTML = `<div class="tw"><table>
-      <thead><tr><th class="l">Metric</th>${rows.map((t,i)=>`<th style="color:${hues[i]}">${mark(t.team,17)}${t.team}</th>`).join('')}</tr></thead>
+      <thead><tr><th scope="col" class="l">Metric</th>${rows.map((t,i)=>`<th style="color:${hues[i]}">${mark(t.team,17)}${t.team}</th>`).join('')}</tr></thead>
       <tbody>${metrics.map(([n,fn])=>`<tr><td class="l">${n}</td>${rows.map(t=>`<td>${fn(t)}</td>`).join('')}</tr>`).join('')}</tbody>
     </table></div>`;
   }
@@ -2050,6 +2089,9 @@ function pageSim(){
       bar.style.width='100%'; setTimeout(()=>bar.style.width='0',400);
       simResult=res; tbl.refresh(decorate(res)); wireSliders();
       btn.textContent='Run simulation'; simRunning=false;
+      const lead=res.slice().sort((a,b)=>b.super_bowl-a.super_bowl)[0];
+      announce(`Simulation complete. ${nSims.toLocaleString()} seasons in ${ms} milliseconds. `
+        + `${BYTEAM[lead.team].name} lead at ${(lead.super_bowl*100).toFixed(1)} percent to win the title.`);
     }));
   }
   p.querySelector('#simRun').addEventListener('click',run);
@@ -2162,6 +2204,13 @@ function pageDraftRoom(){
    </div>
 
    <div style="margin-top:26px">
+     <div class="sec-head"><div><h2 style="font-size:20px">Compare any players</h2>
+       <p>Side by side across every metric, with the simulated outcome range for each.</p></div></div>
+     <div class="yards"></div>
+     <div id="dCompare"></div>
+   </div>
+
+   <div style="margin-top:26px">
      <div class="sec-head"><div><h2 style="font-size:20px">Where the room is wrong</h2>
        <p>The same board, plotted against what ${D.meta.adp_drafts.toLocaleString()} real drafts are actually doing.</p></div></div>
      <div class="yards"></div>
@@ -2234,8 +2283,8 @@ function pageDraftRoom(){
     const s=q.toLowerCase();
     const rows = avail.filter(x=>(posF==='ALL'||x.position===posF) && (!s||x.player.toLowerCase().includes(s))).slice(0,120);
     $('#dBoard').innerHTML = `<div class="tw"><table><thead><tr>
-        <th class="l">#</th><th class="l">Player</th><th>Pos</th><th>Tier</th><th>Pts</th><th>VORP</th>
-        <th>ADP</th><th>Top5</th><th>Bust</th><th></th></tr></thead><tbody>${
+        <th class="l">#</th><th class="l">Player</th><th scope="col">Pos</th><th scope="col">Tier</th><th scope="col">Pts</th><th scope="col">VORP</th>
+        <th>ADP</th><th scope="col">Top5</th><th scope="col">Bust</th><th scope="col"></th></tr></thead><tbody>${
       rows.map(x=>{
         const reach = x.adp_rank ? x.boardRank - x.adp_rank : null;
         return `<tr data-row="${esc(x.player)}">
@@ -2276,6 +2325,7 @@ function pageDraftRoom(){
   $('#dReset').addEventListener('click',()=>{DRAFT.mine=[]; DRAFT.gone=[]; saveDraft(); render();});
 
   render();
+  playerCompare($('#dCompare'));              // folded in from the retired compare page
   pageDraft($('#dArb'));                      // reuse the arbitrage view inside this page
 }
 </script>
@@ -2293,9 +2343,9 @@ function pageDraftRoom(){
    Kelly assumes your probability is right. This model's own backtest says it is
    worse than a closing line, so the page defaults to quarter Kelly and says so.
    ========================================================================== */
-let EVBANK = 1000, EVPRICES = {};
-try{ const r=localStorage.getItem('pylon-ev'); if(r){ const o=JSON.parse(r); EVBANK=o.bank||1000; EVPRICES=o.prices||{}; } }catch(e){}
-function saveEV(){ try{ localStorage.setItem('pylon-ev', JSON.stringify({bank:EVBANK, prices:EVPRICES})); }catch(e){} }
+let EVPRICES = {};
+try{ const r=localStorage.getItem('pylon-ev'); if(r){ EVPRICES=JSON.parse(r).prices||{}; } }catch(e){}
+function saveEV(){ try{ localStorage.setItem('pylon-ev', JSON.stringify({prices:EVPRICES})); }catch(e){} }
 const evKey = r => r.market+'|'+r.team;
 
 function pageEV(){
@@ -2315,19 +2365,6 @@ function pageEV(){
 
    <div class="bar">
      <div class="seg" id="mSel">${groups.map((g,i)=>`<button data-i="${i}" aria-pressed="${i===0}">${g.n}</button>`).join('')}</div>
-     <label class="eyebrow" style="align-self:center;margin-left:8px">Bankroll $</label>
-     <input class="txt" id="evBank" type="number" min="0" step="50" value="${EVBANK}" style="width:96px">
-     <div class="seg" id="evK">
-       <button data-k="0.25" aria-pressed="true">1/4 Kelly</button>
-       <button data-k="0.5">1/2 Kelly</button>
-       <button data-k="1">Full</button>
-     </div>
-     <label class="eyebrow" style="align-self:center">Max deployed</label>
-     <div class="seg" id="evCap">
-       <button data-c="0.1">10%</button>
-       <button data-c="0.25" aria-pressed="true">25%</button>
-       <button data-c="0.5">50%</button>
-     </div>
      <button class="chip" id="evPos" aria-pressed="false">Positive EV only</button>
      <span class="dim" style="font-size:12px;margin-left:auto" id="mCount"></span>
    </div>
@@ -2347,7 +2384,8 @@ function pageEV(){
        Kelly sizing assumes the probability you feed it is correct. This model's own backtest puts it
        at ${pct(D.backtest.straight_up_game_accuracy,1)} straight up against roughly 66% for a closing
        line, so its probabilities are a serious estimate and not a better one than the market's. The
-       page defaults to quarter Kelly for that reason.
+       Kelly is shown as a fraction and deliberately not as a dollar figure, because a
+       stake column reads as advice and the backtest does not support giving any.
      </p>
      <p class="muted" style="font-size:13px;margin:0;max-width:80ch">
        These markets are also nested rather than independent. A team's Super Bowl, conference,
@@ -2365,14 +2403,14 @@ function pageEV(){
        sits disproportionately in the longshots. Note the two conference books sum to
        <em>under</em> a hundred, which means the same event priced two ways disagrees with itself.
      </p>
-     <div class="tw"><table><thead><tr><th class="l">Book</th><th>Outcomes</th><th>Raw sum</th><th>Overround</th><th>Power k</th></tr></thead>
+     <div class="tw"><table><thead><tr><th scope="col" class="l">Book</th><th scope="col">Outcomes</th><th scope="col">Raw sum</th><th scope="col">Overround</th><th scope="col">Power k</th></tr></thead>
      <tbody>${VIG.map(v=>`<tr><td class="l">${esc(v.book)}</td><td>${v.n_outcomes}</td>
        <td>${v.raw_sum.toFixed(4)}</td>
        <td style="color:${v.overround_pct>10?'var(--down)':v.overround_pct<0?'var(--up)':'inherit'}">${pp(v.overround_pct)}%</td>
        <td>${v.power_k.toFixed(4)}</td></tr>`).join('')}</tbody></table></div>
    </div>`;
 
-  let kFrac=0.25, posOnly=false, gi=0, evCap=0.25;
+  let posOnly=false, gi=0;
   function enrich(rows){
     // how many other markets on this same team also show positive EV
     const posByTeam={};
@@ -2385,8 +2423,7 @@ function pageEV(){
       const edge = r.model_prob - price;
       const evD  = price>0 ? edge/price : 0;
       const kelly = price<1 ? edge/(1-price) : 0;
-      const stake = Math.max(0, kelly*kFrac)*EVBANK;
-      return {...r, price, edge, evD, kelly, stake, corr:posByTeam[r.team]||0};
+      return {...r, price, edge, evD, kelly, corr:posByTeam[r.team]||0};
     });
   }
   const cols=[
@@ -2400,7 +2437,6 @@ function pageEV(){
     {h:'Edge',k:'edge',f:r=>`<span style="color:${r.edge>0?'var(--up)':'var(--down)'}">${pp(r.edge*100)}pp</span>`},
     {h:'EV / $1',k:'evD',f:r=>`<span style="color:${r.evD>0?'var(--up)':'var(--down)'}">${r.evD>0?'+':''}${(r.evD*100).toFixed(1)}%</span>`},
     {h:'Kelly',k:'kelly',f:r=>r.kelly>0?pct(r.kelly,1):'<span class="dim">&ndash;</span>'},
-    {h:'Stake',k:'stake',f:r=>r.stake>0.5?`<b>$${r.stake.toFixed(0)}</b>`:'<span class="dim">&ndash;</span>'},
     {h:'Corr',k:'corr',f:r=>r.corr>1?`<span class="tag down" title="This team shows positive EV on ${r.corr} nested markets. They resolve off the same season.">${r.corr}x</span>`:'<span class="dim">&ndash;</span>'},
     {h:'Liquidity',k:'liquidity_usd',f:r=>r.liquidity_usd?'$'+(r.liquidity_usd/1000).toFixed(0)+'k':'<span class="dim">&ndash;</span>'},
   ];
@@ -2412,7 +2448,7 @@ function pageEV(){
     const g=groups[gi];
     let rows=enrich(EDGES.filter(e=>g.m.includes(e.market)));
     if(posOnly) rows=rows.filter(r=>r.evD>0);
-    scaleAndSummarise(rows);
+    summarise(rows);
     tbl.refresh(rows);
     drawChart();
     p.querySelectorAll('.evp').forEach(inp=>{
@@ -2423,31 +2459,25 @@ function pageEV(){
       });
     });
   }
-  function scaleAndSummarise(rows){
-    const pos=rows.filter(r=>r.evD>0);
-    const rawStake=pos.reduce((a,b)=>a+b.stake,0);
-    // Kelly sized line by line assumes each bet is independent. These are not:
-    // they are nested resolutions of the same season. Summing them straight
-    // produces allocations well over 100% of a bankroll, which is not a plan,
-    // it is an artefact. So the book is scaled to a hard deployment cap and the
-    // scaling factor is shown rather than hidden.
-    const capDollars = EVBANK*evCap;
-    const scale = rawStake>capDollars && rawStake>0 ? capDollars/rawStake : 1;
-    const deployed = rawStake*scale;
+  function summarise(rows){
+    const pos = rows.filter(r=>r.evD>0);
     // Longshots make EV-per-dollar explode: a contract at half a cent that the
     // model likes returns a headline number that means very little. Lead with
-    // the edge in probability points and exclude sub-2-cent lines from the
+    // the edge in probability points and keep sub-2-cent lines out of the
     // best-EV tile.
     const liquidPos = pos.filter(r=>r.price>=0.02);
-    const bestEdge = pos.length?pos.reduce((a,b)=>b.edge>a.edge?b:a):null;
-    const bestEv = liquidPos.length?liquidPos.reduce((a,b)=>b.evD>a.evD?b:a):null;
+    const bestEdge = pos.length ? pos.reduce((a,b)=>b.edge>a.edge?b:a) : null;
+    const bestEv = liquidPos.length ? liquidPos.reduce((a,b)=>b.evD>a.evD?b:a) : null;
+    const meanKelly = pos.length ? pos.reduce((a,b)=>a+b.kelly,0)/pos.length : null;
+    const nested = [...new Set(pos.filter(r=>r.corr>1).map(r=>r.team))].length;
     p.querySelector('#evKpis').innerHTML=`
       <div class="kpi"><div class="v">${pos.length}<small> / ${rows.length}</small></div><div class="l">lines the model prices above the market</div></div>
       <div class="kpi"><div class="v">${bestEdge?pp(bestEdge.edge*100)+'pp':'&ndash;'}</div><div class="l">largest edge${bestEdge?` &middot; ${bestEdge.team} ${esc(bestEdge.market.replace('Division: ','').replace('Super Bowl LXI','Super Bowl'))}`:''}</div></div>
       <div class="kpi"><div class="v">${bestEv?'+'+(bestEv.evD*100).toFixed(0)+'%':'&ndash;'}</div><div class="l">best EV per dollar above 2c${bestEv?` &middot; ${bestEv.team}`:''}</div></div>
-      <div class="kpi"><div class="v">$${deployed.toFixed(0)}</div><div class="l">deployed at ${kFrac===1?'full':kFrac===0.5?'half':'quarter'} Kelly, capped at ${(evCap*100).toFixed(0)}% of $${EVBANK.toLocaleString()}</div></div>
-      <div class="kpi"><div class="v" style="color:${scale<1?'var(--down)':'inherit'}">${scale<1?(scale).toFixed(2)+'x':'none'}</div><div class="l">${scale<1?`every stake scaled down: unconstrained Kelly wanted $${rawStake.toFixed(0)}`:'no scaling needed at this cap'}</div></div>`;
+      <div class="kpi"><div class="v">${meanKelly!=null?pct(meanKelly,1):'&ndash;'}</div><div class="l">average Kelly fraction across those lines</div></div>
+      <div class="kpi"><div class="v" style="color:${nested?'var(--down)':'inherit'}">${nested}</div><div class="l">teams showing an edge on more than one nested market</div></div>`;
   }
+
   function drawChart(){
     const g=groups[gi];
     const chartRows=enrich(EDGES.filter(e=>g.m.includes(e.market)))
@@ -2460,11 +2490,6 @@ function pageEV(){
   }
   p.querySelector('#mSel').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
     gi=+b.dataset.i; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
-  p.querySelector('#evK').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
-    kFrac=+b.dataset.k; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
-  p.querySelector('#evCap').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
-    evCap=+b.dataset.c; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); draw();});
-  p.querySelector('#evBank').addEventListener('change',e=>{EVBANK=Math.max(0,+e.target.value||0); saveEV(); draw();});
   const bp=p.querySelector('#evPos');
   bp.addEventListener('click',()=>{posOnly=!posOnly; bp.setAttribute('aria-pressed',posOnly); draw();});
   draw();
@@ -2519,7 +2544,7 @@ function playerCompare(mountEl){
             <span class="num" style="margin-left:auto">${f0(x.p90)}</span></div>
         </div>`).join('')}
       </div>
-      <div class="tw"><table><thead><tr><th class="l">Metric</th>
+      <div class="tw"><table><thead><tr><th scope="col" class="l">Metric</th>
         ${rows.map((x,i)=>`<th style="color:${hues[i]}">${esc(x.player.split(' ').slice(-1)[0])}</th>`).join('')}</tr></thead>
         <tbody>${metrics.map(([n,fn])=>{
           const vals=rows.map(fn);
@@ -2708,7 +2733,7 @@ w = games / (games + ${IS.k_best!=null?IS.k_best:'k'})</div>
      <div class="card">
        <div class="eyebrow" style="margin-bottom:3px">Every value tried</div>
        <h3 style="font-size:16px;margin-bottom:8px">The sweep</h3>
-       <div class="tw"><table><thead><tr><th class="l">k</th><th>Avg miss</th><th>Accuracy</th><th>Log loss</th></tr></thead>
+       <div class="tw"><table><thead><tr><th scope="col" class="l">k</th><th scope="col">Avg miss</th><th scope="col">Accuracy</th><th scope="col">Log loss</th></tr></thead>
        <tbody>${(IS.sweep||[]).map(r=>`<tr${r.k===IS.k_best?' style="background:var(--accent-wash)"':''}>
          <td class="l">${r.k===999?'no update':r.k}</td><td>${r.mae.toFixed(2)}</td>
          <td>${pct(r.accuracy,1)}</td><td>${r.logloss.toFixed(4)}</td></tr>`).join('')}</tbody></table></div>
@@ -2733,7 +2758,7 @@ w = games / (games + ${IS.k_best!=null?IS.k_best:'k'})</div>
        <div><dt>Model version</dt><dd>${LED.model_version?esc(LED.model_version):'&ndash;'}</dd></div>
      </div>
      <h4 style="font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);font-weight:500;margin-bottom:8px">How each call gets graded</h4>
-     <div class="tw"><table><thead><tr><th class="l">Prediction</th><th class="l">Scoring rule</th></tr></thead><tbody>
+     <div class="tw"><table><thead><tr><th scope="col" class="l">Prediction</th><th class="l">Scoring rule</th></tr></thead><tbody>
        ${Object.entries(LED.scoring_rules||{}).map(([k,v])=>
          `<tr><td class="l" style="text-transform:capitalize">${esc(k.replace(/_/g,' '))}</td>
               <td class="l" style="white-space:normal;font-family:var(--f-body)">${esc(v)}</td></tr>`).join('')}
@@ -2794,15 +2819,165 @@ function lineChart(series, xs, opts={}){
 <script>
 "use strict";
 /* ==========================================================================
+   START / SIT
+   Weekly player projections, which is a different question from a season
+   projection divided by seventeen. Game script, opponent, and a floor and
+   ceiling that reflect how noisy one football game actually is.
+   ========================================================================== */
+const WEEKLY = D.weekly && D.weekly.rows ? hydrate(D.weekly) : [];
+const GS = D.game_script || {};
+
+/* P(A outscores B) this week. Lognormal rather than normal because fantasy
+   scoring is bounded below by zero with a long right tail, and a normal model
+   gives a 20-point receiver a real chance of a negative week. */
+function pBeats(a, b){
+  const par = r => { const mu=Math.max(r.points,0.1), sd=Math.max(r.sd,0.1);
+    const v=Math.log1p((sd/mu)**2); return {m:Math.log(mu)-v/2, s:Math.sqrt(v)}; };
+  const A=par(a), B=par(b);
+  const z=(A.m-B.m)/Math.sqrt(A.s**2+B.s**2);
+  // Abramowitz-Stegun normal CDF, good to about 7 decimal places.
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989423*Math.exp(-z*z/2);
+  let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>0 ? 1-p : p;
+}
+
+let ssPicks = [];
+function pageStartSit(){
+  const p=document.getElementById('pg-startsit');
+  if(!WEEKLY.length){ p.innerHTML=head('Start / sit','No weekly projections loaded.'); return; }
+  const best = WEEKLY.filter(x=>x.points>6).slice().sort((a,b)=>b.matchup_delta-a.matchup_delta);
+
+  p.innerHTML = `
+   ${head('Start or sit, week 1',
+     "Season projections divided by seventeen are not weekly projections. These account for the game script, the actual opponent, and how wildly one football game varies. Pick two players and the model tells you how often each one wins.")}
+
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(168px,1fr))">
+     <div class="kpi"><div class="v">${WEEKLY.length}</div><div class="l">players projected for this week</div></div>
+     <div class="kpi"><div class="v">${GS.rush_att_per_point!=null?GS.rush_att_per_point.toFixed(2):'&ndash;'}</div><div class="l">rush attempts gained per point of spread, fitted on 1,632 team-games</div></div>
+     <div class="kpi"><div class="v">${GS.pass_att_per_point!=null?'+'+GS.pass_att_per_point.toFixed(2):'&ndash;'}</div><div class="l">pass attempts, which barely move at all</div></div>
+     <div class="kpi"><div class="v">${best[0]?esc(best[0].player.split(' ').slice(-1)[0]):'&ndash;'}</div><div class="l">best matchup on the board, worth ${best[0]?'+'+best[0].matchup_delta.toFixed(1):''} points</div></div>
+   </div>
+
+   <div class="card" style="margin-bottom:14px">
+     <div class="eyebrow" style="margin-bottom:3px">Head to head</div>
+     <h3 style="font-size:17px;margin-bottom:10px">Who do I start</h3>
+     <div class="bar">
+       <input class="txt" id="ssQ" placeholder="Add a player..." list="ssList" style="width:250px">
+       <datalist id="ssList">${WEEKLY.slice(0,400).map(x=>`<option value="${esc(x.player)}">`).join('')}</datalist>
+       <span class="dim" style="font-size:12px">Add two or more. Anything under 60% is a coin flip and you should start whoever you like.</span>
+     </div>
+     <div id="ssOut"></div>
+   </div>
+
+   <div class="bar">
+     <div class="seg" id="ssPos"><button data-p="ALL" aria-pressed="true">All</button>${POS.map(x=>`<button data-p="${x}">${x}</button>`).join('')}</div>
+     <div class="seg" id="ssSort">
+       <button data-k="points" aria-pressed="true">Projected</button>
+       <button data-k="ceiling">Ceiling</button>
+       <button data-k="floor">Floor</button>
+       <button data-k="matchup_delta">Best matchup</button>
+     </div>
+     <span class="dim" style="font-size:12px;margin-left:auto" id="ssCount"></span>
+   </div>
+   <div id="ssTable"></div>
+
+   <p class="muted" style="font-size:12.5px;margin-top:14px;max-width:80ch">
+     One finding worth knowing before you use this. Fitting team attempts on the closing spread
+     shows game script hammers the run and barely touches the pass: rushing attempts move
+     ${GS.rush_att_per_point!=null?Math.abs(GS.rush_att_per_point).toFixed(2):''} per point of spread while pass
+     attempts move ${GS.pass_att_per_point!=null?GS.pass_att_per_point.toFixed(2):''}. Favourites do not throw less,
+     they run more. Underdogs do not throw much more, they just get fewer plays. So a running back's
+     week is far more matchup-dependent than a receiver's, which is the opposite of how most
+     start-sit advice is written.
+   </p>`;
+
+  const cols=[
+    {h:'Player',k:'player',left:true,f:r=>`<span class="pos-dot" style="background:${posColor(r.position)}"></span>${esc(r.player)}`},
+    {h:'Pos',k:'pos_rank',f:r=>`${r.position}${r.pos_rank||''}`,asc:true},
+    {h:'Team',k:'team',left:true,f:r=>`${mark(r.team,17)}${r.team}`,asc:true},
+    {h:'Matchup',k:'opponent',left:true,f:r=>`${r.home?'vs':'at'} ${mark(r.opponent,17)}${r.opponent}`,asc:true},
+    {h:'Proj',k:'points',f:r=>`<b>${f1(r.points)}</b>`},
+    {h:'Floor',k:'floor',f:r=>f1(r.floor),title:'10th percentile outcome'},
+    {h:'Ceiling',k:'ceiling',f:r=>f1(r.ceiling),title:'90th percentile outcome'},
+    {h:'Matchup +/-',k:'matchup_delta',f:r=>{
+      const v=r.matchup_delta;
+      if(Math.abs(v)<0.15) return '<span class="dim">neutral</span>';
+      return `<span style="color:${v>0?'var(--up)':'var(--down)'}">${v>0?'+':''}${v.toFixed(1)}</span>`;},
+      title:'Points gained or lost versus a league-average opponent'},
+    {h:'Tgt',k:'targets',f:r=>r.targets>0.5?f1(r.targets):'<span class="dim">&ndash;</span>'},
+    {h:'Car',k:'rush_att',f:r=>r.rush_att>0.5?f1(r.rush_att):'<span class="dim">&ndash;</span>'},
+  ];
+  const count=p.querySelector('#ssCount');
+  let tbl=makeTable(WEEKLY,cols,{sort:'points',count,noun:'players',onRow:r=>{
+    const full=PLAYERS.find(x=>x.player===r.player); if(full) playerSheet(full);}});
+  p.querySelector('#ssTable').appendChild(tbl);
+
+  let pos='ALL', sortKey='points';
+  function apply(){
+    tbl.refresh(WEEKLY.filter(r=>pos==='ALL'||r.position===pos));
+  }
+  p.querySelector('#ssPos').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    pos=b.dataset.p; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b)); apply();});
+  p.querySelector('#ssSort').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    sortKey=b.dataset.k; [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    const th=[...p.querySelectorAll('#ssTable thead th')].find(x=>x.textContent.trim().startsWith(
+      {points:'Proj',ceiling:'Ceiling',floor:'Floor',matchup_delta:'Matchup +'}[sortKey]));
+    if(th) th.click();});
+
+  function renderSS(){
+    const rows=ssPicks.map(n=>WEEKLY.find(x=>x.player===n)).filter(Boolean);
+    const out=p.querySelector('#ssOut');
+    if(rows.length<1){ out.innerHTML='<p class="muted" style="font-size:13px;margin:0">Add a player above to compare.</p>'; return; }
+    const ranked=rows.slice().sort((a,b)=>b.points-a.points);
+    const top=ranked[0];
+    out.innerHTML=`
+      <div class="ss-grid">
+        ${ranked.map((r,i)=>{
+          const p1 = i===0 ? null : pBeats(top,r);
+          return `<div class="card" style="border-color:${i===0?'var(--accent)':'var(--line)'}">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+              ${mark(r.team,26)}
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:-.02em">${esc(r.player)}</div>
+                <div class="eyebrow">${r.position}${r.pos_rank||''} &middot; ${r.home?'vs':'at'} ${esc(r.opponent)}</div>
+              </div>
+              <button class="chip" style="padding:2px 8px" data-drop="${esc(r.player)}">&times;</button>
+            </div>
+            <div class="ss-num"><b>${f1(r.points)}</b><span>projected</span></div>
+            <div class="dim num" style="font-size:11.5px;margin-bottom:8px">floor ${f1(r.floor)} &middot; ceiling ${f1(r.ceiling)}</div>
+            ${i===0
+              ? '<div class="tag acc">model\u2019s start</div>'
+              : `<div style="font-size:12.5px;color:var(--ink-2)">${esc(top.player.split(' ').slice(-1)[0])} outscores him <b>${pct(p1,0)}</b> of the time</div>`}
+          </div>`;
+        }).join('')}
+      </div>
+      ${ranked.length>1 && pBeats(ranked[0],ranked[1])<0.6
+        ? `<p class="note" style="margin-top:10px">This is close enough to be a coin flip. At ${pct(pBeats(ranked[0],ranked[1]),0)} the model has no real opinion, so start whichever you would rather be right about.</p>`
+        : ''}`;
+    out.querySelectorAll('[data-drop]').forEach(b=>b.addEventListener('click',()=>{
+      ssPicks=ssPicks.filter(n=>n!==b.dataset.drop); renderSS();}));
+  }
+  const q=p.querySelector('#ssQ');
+  q.addEventListener('change',()=>{
+    const hit=WEEKLY.find(x=>x.player.toLowerCase()===q.value.toLowerCase().trim());
+    if(hit && !ssPicks.includes(hit.player)){ if(ssPicks.length>=4) ssPicks.shift(); ssPicks.push(hit.player); q.value=''; renderSS(); }
+  });
+  renderSS();
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
    BOOT
    Every page module is defined by now, so register the rest in nav order and
    start the router.
    ========================================================================== */
 registerPage('matchups','Week 1',pageMatchups,{badge:'new'});
+registerPage('startsit','Start / sit',pageStartSit,{badge:'new'});
 registerPage('draft','Draft room',pageDraftRoom,{badge:'tool'});
 registerPage('market','Markets',pageEV,{badge:'tool'});
 registerPage('sim','Scenario lab',pageSim,{badge:'live'});
-registerPage('compare','Compare',pageCompare);
 registerPage('record','Track record',pageRecord,{badge:'new'});
 registerPage('model','The model',pageModel);
 
