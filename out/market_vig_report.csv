@@ -1,0 +1,13 @@
+book,n_outcomes,raw_sum,overround_pct,power_k,largest_method_gap_team,power_vs_proportional_pp
+Super Bowl LXI (Polymarket),32,1.049,4.9,1.0158,LA,0.241
+Super Bowl LXI (DraftKings),32,1.2266,22.66,1.0706,LA,0.938
+AFC Champion (Polymarket),16,0.983,-1.7,0.993,BUF,-0.065
+NFC Champion (Polymarket),16,0.9735,-2.65,0.9891,LA,-0.264
+Division AFC East (Polymarket),4,1.009,0.9,1.0101,,
+Division AFC North (Polymarket),4,0.9985,-0.15,0.9987,,
+Division AFC South (Polymarket),4,1.01,1.0,1.0081,,
+Division AFC West (Polymarket),4,1.0005,0.05,1.0004,,
+Division NFC East (Polymarket),4,1.02,2.0,1.0156,,
+Division NFC North (Polymarket),4,0.99,-1.0,0.9926,,
+Division NFC South (Polymarket),4,1.025,2.5,1.0184,,
+Division NFC West (Polymarket),4,1.0225,2.25,1.0208,,
