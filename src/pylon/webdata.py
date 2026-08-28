@@ -63,6 +63,11 @@ def build() -> dict:
     board = pd.read_csv(OUT / "draft_board.csv")
     bt = pd.read_csv(OUT / "backtest_win_projections.csv")
     cal = json.loads((CONF / "calibration.json").read_text())
+    inseason = json.loads((CONF / "inseason.json").read_text()) if (CONF / "inseason.json").exists() else {}
+    scoring = json.loads((CONF / "scoring_model.json").read_text()) if (CONF / "scoring_model.json").exists() else {}
+    led = json.loads((OUT / "prediction_ledger.json").read_text()) if (OUT / "prediction_ledger.json").exists() else {}
+    mu = pd.read_csv(OUT / "matchups_week1.csv") if (OUT / "matchups_week1.csv").exists() else pd.DataFrame()
+    curve = pd.read_csv(OUT / "inseason_curve.csv") if (OUT / "inseason_curve.csv").exists() else pd.DataFrame()
     btm = json.loads((CONF / "backtest.json").read_text())
     priors = json.loads((CONF / "offseason_2026.json").read_text())
     roles = json.loads((CONF / "roles_2026.json").read_text())
@@ -154,7 +159,18 @@ def build() -> dict:
             "market_pulled": "2026-08-25T07:34:22Z",
             "plays_in_fit": 81389, "n_players": int(len(p)),
         },
-        "calibration": cal, "backtest": btm,
+        "calibration": cal, "backtest": btm, "inseason": inseason, "scoring": scoring,
+        "ledger": {k: v for k, v in led.items() if k != "teams"},
+        "matchups": _tbl(mu, [c for c in ["week","away","home","kickoff","model_spread_home",
+                              "market_spread_home","spread_edge","model_total","market_total",
+                              "total_edge","home_win_prob","market_home_win_prob","wp_edge",
+                              "model_home_pts","model_away_pts"] if c in mu.columns],
+                         {"model_spread_home":1,"market_spread_home":1,"spread_edge":1,
+                          "model_total":1,"market_total":1,"total_edge":1,"home_win_prob":4,
+                          "market_home_win_prob":4,"wp_edge":4,"model_home_pts":1,
+                          "model_away_pts":1,"week":0}) if len(mu) else {"cols":[],"rows":[]},
+        "inseason_curve": _tbl(curve, ["week","model","accuracy","mae","n"],
+                               {"week":0,"accuracy":4,"mae":3,"n":0}) if len(curve) else {"cols":[],"rows":[]},
         "teams": _tbl(t, tcols, tround),
         "win_dist": winsd, "seed_dist": seeds, "schedule": sch,
         "players": _tbl(p, pcols, pround),
