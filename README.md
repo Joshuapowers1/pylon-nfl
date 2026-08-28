@@ -11,6 +11,7 @@ An NFL projection and market-edge engine. Opponent-adjusted ridge ratings on nin
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ridge-F7931E?logo=scikitlearn&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-DB5A00)
+[![tests](https://github.com/Joshuapowers1/pylon-nfl/actions/workflows/tests.yml/badge.svg)](https://github.com/Joshuapowers1/pylon-nfl/actions/workflows/tests.yml)
 ![Backtest](https://img.shields.io/badge/backtest-160%20team--seasons-2a78d6)
 ![Runtime deps](https://img.shields.io/badge/frontend%20dependencies-0-1baf7a)
 
@@ -49,6 +50,37 @@ Every projection below was built with **zero information from the season it pred
 | Straight-up game accuracy | **58.2%** |
 
 Read that honestly. 58.2% straight up is well above a coin flip and well below a closing Vegas line, which lands near 66%. This is a serious estimate that disagrees with the market in specific, defensible places. It is not an edge-printing machine, and any preseason model claiming a much better backtest without publishing this table should be treated with suspicion.
+
+---
+
+## In-season updating
+
+A preseason rating is a prior. The moment real games exist, quoting week zero all
+year is the worst version of the model. So it refits, and the refit is measured
+rather than asserted: three completed seasons are replayed week by week, with the
+updated ratings rebuilt from only the games already played before predicting the
+games that came next.
+
+| | Frozen at week zero | Updated weekly |
+|---|---|---|
+| Straight-up accuracy | 59.0% | **63.2%** |
+| Mean absolute error | 10.96 pts | **10.42 pts** |
+| Log loss | 0.668 | **0.639** |
+
+**In-season updating is worth 4.2 percentage points**, which closes most of the gap
+to a closing Vegas line at roughly 66%.
+
+The blend is a conjugate-style weight, `rating = w * in-season + (1 - w) * preseason`
+with `w = games / (games + k)`. The constant `k` is fitted by sweeping it across
+three seasons and keeping whichever value predicted best. It landed on **8**, so this
+season earns half the weight after eight games.
+
+The honest detail: through week five the updating model is *worse* than the frozen
+one. Four games of data is mostly noise. It takes about six weeks before the season
+tells you more than the offseason did, and the weekly curve on the site shows it.
+
+`.github/workflows/weekly-update.yml` runs the whole refit every Tuesday and commits
+the result, so the published site does this on its own once the season starts.
 
 ---
 
@@ -91,6 +123,9 @@ from `/docs` on `main`, so the published site is always the file that was just b
 | Five-season out-of-sample backtest | `out/backtest_win_projections.csv` |
 | How much of each rating is data vs analyst judgment | `out/rating_decomposition.csv` |
 | Sensitivity of every projection to the judgment layer | `out/sensitivity_priors.csv` |
+| Game-by-game spread, total and win probability vs the posted line | `out/matchups_week1.csv` |
+| Frozen vs updated accuracy, week by week | `out/inseason_curve.csv` |
+| This season's predictions, sealed with a timestamp and a digest | `out/prediction_ledger.json` |
 
 ---
 
