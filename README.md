@@ -128,6 +128,8 @@ from `/docs` on `main`, so the published site is always the file that was just b
 | Game-by-game spread, total and win probability vs the posted line | `out/matchups_week1.csv` |
 | Frozen vs updated accuracy, week by week | `out/inseason_curve.csv` |
 | This season's predictions, sealed with a timestamp and a digest | `out/prediction_ledger.json` |
+| Weekly player projections with floor, ceiling and matchup adjustment | `out/weekly_week1.csv` |
+| The measured streaming premium | `config/streaming_premium.json` |
 
 ---
 
@@ -206,6 +208,58 @@ Two ideas do most of the work. **Empirical Bayes**: observed share is shrunk tow
 A fair book sums to 1.00. Comparing a model to raw sportsbook prices produces an "edge" on all 32 teams, which is arithmetic rather than insight. De-vigging uses the power method, solving for the exponent that makes prices sum to one, because the margin sits disproportionately in the longshots.
 
 Note the two conference books sum to **under** 100%. The same event priced two ways disagrees with itself.
+
+---
+
+## Weekly projections and start/sit
+
+A season projection divided by seventeen is not a weekly projection. Three things
+change week to week and none survive an annual average: game script, the actual
+opponent, and whether the player is available at all.
+
+Fitting team attempts on the closing spread across 1,632 team-games found the game
+script effect is real but very lopsided:
+
+| | Per point of spread | Correlation |
+|---|---|---|
+| Rush attempts | **-0.25** | -0.21 |
+| Pass attempts | +0.07 | +0.06 |
+
+**Favourites do not throw less, they run more. Underdogs do not throw much more,
+they just get fewer plays.** A running back's week is therefore far more
+matchup-dependent than a receiver's, which is the opposite of how most start-sit
+advice is written.
+
+Every player gets a floor, a ceiling and a matchup adjustment, and the head-to-head
+answers the only question that matters: how often does A outscore B. Lognormal
+rather than normal, because fantasy scoring is bounded below by zero with a long
+right tail and a normal model gives a 20-point receiver a real chance of a negative
+week.
+
+---
+
+## The number I got wrong
+
+The player model priced replacement level for quarterbacks above the season-long
+QB14, on the reasoning that you never had to draft one: you can start whoever has
+the best matchup. That is the conventional wisdom and it is why every VORP board
+gets overridden by hand.
+
+`streaming.py` replays it rather than assuming it. Each week a simulated manager
+starts whichever unrostered quarterback faces the softest pass defense, rated only
+on games already played, with no sight of the outcome.
+
+| Season | Streaming | QB at replacement rank | Difference |
+|---|---|---|---|
+| 2023 | 15.33 | 18.73 | -3.40 |
+| 2024 | 18.41 | 18.59 | -0.17 |
+| 2025 | 17.52 | 19.11 | -1.59 |
+
+**The premium is minus 1.7, not plus.** Streaming is worse than rostering the player
+who ends up at replacement rank: the waiver pool is a real downgrade, not a free
+option. So the fudge factor is deleted and the board ranks quarterbacks where the
+arithmetic puts them, which disagrees with how most people draft. That disagreement
+is the entire reason this project exists.
 
 ---
 
@@ -306,7 +360,7 @@ Kept here deliberately. Each was silently producing wrong answers, and each is t
 2. **Defensive ratings are nearly information-free from data alone.** With a measured carry-over of 0.14, play-by-play supplies almost no defensive differentiation, so the prior does proportionally more work there.
 3. **No in-season updating.** Every rating is frozen at the start of the season. A live version would re-fit weekly.
 4. **Point totals are risk-adjusted, not healthy-season.** Expected games played is projected rather than assumed at 17, which is why totals sit below published industry sets. A 17-game column is provided for like-for-like comparison.
-5. **Quarterback VORP overstates draft-day value** in one-quarterback leagues, because the position is streamable in a way replacement-level math cannot capture.
+5. **The engine ranks quarterbacks earlier than the market does.** This was previously listed as a known flaw, on the assumption that streaming made replacement level higher. Measuring it found the opposite, so the adjustment is gone and the disagreement stands. It may still be wrong, but it is now wrong on the evidence rather than on a hunch.
 6. **Rookies and role-changers are asserted, not measured.** 58 of them, each with a stated reason.
 
 ---
