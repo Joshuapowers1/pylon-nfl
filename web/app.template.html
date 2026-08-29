@@ -91,7 +91,14 @@ header.top{
   font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em;
   color:var(--ink-4); text-transform:uppercase; padding-top:2px;
 }
-nav.tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; flex:1; min-width:0;}
+/* Eleven sections will not fit every viewport, so the row scrolls. The mask
+   fades the last few pixels rather than cutting a word in half, which is the
+   only cue a horizontal scroller gets to say there is more to the right. */
+nav.tabs{
+  display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; flex:1; min-width:0;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+}
 nav.tabs::-webkit-scrollbar{display:none;}
 nav.tabs button{
   background:none; border:0; padding:7px 11px; border-radius:var(--r-sm);
@@ -330,6 +337,48 @@ tbody tr:hover td{background:var(--sunken);}
 .ss-num{display:flex; align-items:baseline; gap:7px;}
 .ss-num b{font-family:var(--f-display); font-size:28px; font-weight:700; letter-spacing:-.03em; line-height:1;}
 .ss-num span{font-size:11.5px; color:var(--ink-3);}
+/* ---------- start here ---------- */
+.startrow{display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:11px; margin-bottom:14px;}
+.startrow > *{min-width:0;}
+.startcard{
+  display:block; text-align:left; padding:14px 15px 13px; border:1px solid var(--line);
+  border-radius:var(--r); background:var(--surface); color:inherit; cursor:pointer;
+  transition:border-color .12s, transform .12s;
+}
+.startcard:hover{border-color:var(--accent); transform:translateY(-1px);}
+.startcard .q{font-family:var(--f-display); font-size:16.5px; font-weight:700; letter-spacing:-.02em; margin-bottom:6px;}
+.startcard p{font-size:13px; line-height:1.55; color:var(--ink-3); margin:0 0 10px;}
+.startcard span{font-size:12.5px; font-weight:600; color:var(--accent);}
+.startcard span::after{content:" >"; }
+
+/* ---------- my team ---------- */
+.slotgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:9px;}
+.slot{
+  display:flex; align-items:center; gap:10px; padding:9px 11px; min-width:0;
+  border:1px solid var(--line); border-radius:var(--r-sm); background:var(--surface);
+}
+.slot.empty{border-style:dashed; color:var(--ink-4);}
+.slot .tag{flex:none; min-width:42px; text-align:center;}
+.slot .who{flex:1; min-width:0;}
+.slot .who b{display:block; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.slot .who span{font-size:11.5px; color:var(--ink-3);}
+.slot .pts{flex:none; text-align:right; font-family:var(--f-display); font-size:19px; font-weight:700; letter-spacing:-.02em;}
+.slot .pts em{display:block; font-style:normal; font-family:var(--f-body); font-size:10.5px;
+  font-weight:400; letter-spacing:0; color:var(--ink-4);}
+.imp{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; align-items:start;}
+.notice{
+  border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--sunken);
+  border-radius:var(--r-sm); padding:10px 12px; font-size:13px; line-height:1.55; margin:10px 0 0;
+}
+.notice b{font-weight:600;}
+textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-mono); font-size:12.5px; line-height:1.6;}
+.rosterchip{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 9px 4px 5px; margin:0 5px 5px 0;
+  border:1px solid var(--line); border-radius:999px; background:var(--surface); font-size:12.5px;
+}
+.rosterchip button{border:0; background:none; color:var(--ink-4); font-size:14px; line-height:1; padding:0 1px;}
+.rosterchip button:hover{color:var(--down);}
+.rosterchip.miss{border-style:dashed; color:var(--ink-4);}
 .mk-team{
   display:flex; align-items:center; gap:9px; width:100%; background:none; border:0;
   padding:6px 4px; border-radius:var(--r-sm); color:inherit; font-size:14px; text-align:left;
@@ -1095,8 +1144,8 @@ function pageOverview(){
          instead of in a footnote.
        </p>
        <div class="hero-cta">
+         <button class="chip go" data-go="myteam">Open my team</button>
          <button class="chip go" data-go="sim">Run your own scenario</button>
-         <button class="chip go" data-go="draft">Open the draft room</button>
          <button class="chip go" data-go="market">Price a market</button>
        </div>
        <div class="stack">
@@ -1117,6 +1166,24 @@ function pageOverview(){
      </div>
    </div>
    <div class="yards"></div>
+
+   <div class="startrow">
+     <button class="startcard" data-go="myteam">
+       <div class="q">What do I do with my fantasy team?</div>
+       <p>Pull your roster in from Sleeper, a public ESPN league, or by pasting it out of any app. You get a lineup, the calls that are too close to matter, where your roster is thin, and who is worth adding.</p>
+       <span>Open your team</span>
+     </button>
+     <button class="startcard" data-go="matchups">
+       <div class="q">Who wins this weekend?</div>
+       <p>A projected score and a win probability for all sixteen games, next to the number the sportsbooks are posting, so you can see where the model disagrees and by how much.</p>
+       <span>See this week</span>
+     </button>
+     <button class="startcard" data-go="market">
+       <div class="q">Is there a bet worth making?</div>
+       <p>Every futures market with the bookmaker's cut stripped out first, so a price is compared with a real probability rather than a padded one. Most of the board has no edge, and it says so.</p>
+       <span>Check the board</span>
+     </button>
+   </div>
 
    <div class="kpis">
      <div class="kpi"><div class="v">0.57<small> / 0.14</small></div><div class="l">Offense carries over. Defense barely does. The engine's core finding.</div></div>
@@ -1741,9 +1808,9 @@ function pageModel(){
      <ol style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.65;color:var(--ink-2);max-width:80ch">
        <li><b>The judgment layer is judgment.</b> Five teams are more than 80% prior-driven. Those projections are opinions with a model attached, and the chart above names them.</li>
        <li><b>Defensive ratings are nearly information-free from data alone.</b> With a measured carry-over of ${SHRINK.def_pass.shrinkage.toFixed(2)}, the play-by-play supplies almost no defensive differentiation, so the prior does proportionally more work there.</li>
-       <li><b>No in-season updating.</b> Every rating is frozen at the start of the season. A live version would re-fit weekly.</li>
+       <li><b>The in-season refit is fitted on three seasons, not on this one.</b> Ratings do update weekly now, and the blend weight was chosen out of sample, but a season with a genuinely unusual shape would need a different weight and this would not know until it was over.</li>
        <li><b>Point totals are risk-adjusted, not healthy-season.</b> Expected games played is projected rather than assumed at seventeen, which is why these totals sit below published industry sets. The 17-game column exists for like-for-like comparison.</li>
-       <li><b>Quarterback value over replacement overstates draft-day value</b> in one-quarterback leagues, because the position is streamable in a way replacement-level math cannot capture.</li>
+       <li><b>The quarterback board disagrees with how people draft.</b> That used to be listed here as a flaw, on the reasoning that streaming raised replacement level. Measuring it found the opposite, so the adjustment is gone and the disagreement stands. It may still be wrong, but it is now wrong on evidence rather than on a hunch.</li>
        <li><b>Rookies and role-changers are asserted, not measured.</b> Fifty-eight of them, each with a stated reason attached to the player.</li>
      </ol>
    </div>`;
@@ -1787,8 +1854,6 @@ function registerPage(id,label,build,opts){
   renderTabs();
 }
 registerPage('overview','Overview',pageOverview);
-registerPage('teams','Teams',pageTeams);
-registerPage('players','Players',pagePlayers);
 const built={};
 /* Feature pages are defined in later script blocks, so they register from
    there once their code exists. See the boot block at the end of the file. */
@@ -2969,17 +3034,465 @@ function pageStartSit(){
 <script>
 "use strict";
 /* ==========================================================================
+   MY TEAM
+   Turns a real fantasy roster into advice. Three ways in: a Sleeper username,
+   a public ESPN league id, or a block of text pasted out of any app at all.
+
+   The paste route is the one that always works and it is deliberately first
+   in the fallback order, because this file is a static page with no server
+   behind it. Sleeper and ESPN both send access-control-allow-origin: *, so
+   the fetches below are legal from any host, but a page served under a
+   restrictive content policy will still have them blocked. That is not an
+   error worth a stack trace, so it is caught and answered with the paste box.
+   ========================================================================== */
+
+const MT_KEY = 'pylon-myteam-v1';
+const SEASON = String(D.meta.season);
+const IDS = D.ids || {sleeper:{}, keys:{}};
+const SUFFIX = new Set(['jr','sr','ii','iii','iv','v']);
+
+/* Same normaliser the ADP join uses on the Python side. Both ends have to
+   agree or the keys built at bundle time will not match anything typed here. */
+function normKey(s){
+  const parts = String(s).toLowerCase().trim()
+    .replace(/[.'\u2019]/g,'').replace(/-/g,' ')
+    .split(/\s+/).filter(w=>w && !SUFFIX.has(w));
+  return parts.join(' ');
+}
+const BYNAME = Object.fromEntries(PLAYERS.map(p=>[p.player,p]));
+const BYWEEK = Object.fromEntries(WEEKLY.map(w=>[w.player,w]));
+function resolve(raw){
+  const hit = IDS.keys[normKey(raw)];
+  return hit ? BYNAME[hit] : null;
+}
+
+/* Pull every player name out of arbitrary text. Rosters get pasted with
+   position prefixes, team codes, bye weeks, injury flags and score columns
+   attached, and every app formats it differently, so rather than guess at a
+   layout this walks word windows longest-first and keeps whatever resolves. */
+function parseRoster(text){
+  const found = [], missed = [];
+  for(const line of String(text).split(/[\n\r]+/)){
+    const words = line.split(/[^A-Za-z.'\u2019-]+/).filter(Boolean);
+    if(!words.length) continue;
+    const used = new Array(words.length).fill(false);
+    let any = false;
+    for(let n=4; n>=2; n--){
+      for(let i=0; i+n<=words.length; i++){
+        if(used.slice(i,i+n).some(Boolean)) continue;
+        const hit = resolve(words.slice(i,i+n).join(' '));
+        if(hit && !found.includes(hit.player)){
+          found.push(hit.player);
+          for(let j=i;j<i+n;j++) used[j]=true;
+          any = true;
+        }
+      }
+    }
+    if(!any && line.trim().length>3 && /[A-Za-z]{3}/.test(line)) missed.push(line.trim().slice(0,48));
+  }
+  return {found, missed};
+}
+
+/* ---- lineup formats ------------------------------------------------------
+   Sleeper hands back the league's real slot list, so an imported league uses
+   its own settings. Everything else picks from these presets. FLEX accepts
+   RB, WR and TE. SUPER_FLEX also accepts a quarterback. */
+const FLEXES = {FLEX:['RB','WR','TE'], SUPER_FLEX:['QB','RB','WR','TE'], REC_FLEX:['WR','TE']};
+const FORMATS = {
+  espn:    {label:'ESPN default',  slots:['QB','RB','RB','WR','WR','TE','FLEX']},
+  sleeper: {label:'Sleeper default', slots:['QB','RB','RB','WR','WR','WR','TE','FLEX']},
+  superflex:{label:'Superflex',    slots:['QB','RB','RB','WR','WR','TE','FLEX','SUPER_FLEX']},
+};
+
+/* Fill the fixed slots first, then the flexes, always taking the highest
+   projection still on the bench. With slot eligibility nested the way fantasy
+   lineups are, that greedy pass is the optimal lineup, not an approximation. */
+function optimise(roster, slots){
+  const pool = roster.map(name=>({name, w:BYWEEK[name], s:BYNAME[name]}))
+    .filter(x=>x.s)
+    .sort((a,b)=>(b.w?b.w.points:0)-(a.w?a.w.points:0));
+  const taken = new Set();
+  const order = slots.map((s,i)=>[s,i]).sort((a,b)=>(FLEXES[a[0]]?1:0)-(FLEXES[b[0]]?1:0));
+  const out = new Array(slots.length).fill(null);
+  for(const [slot,idx] of order){
+    const ok = FLEXES[slot] || [slot];
+    const pick = pool.find(x=>!taken.has(x.name) && ok.includes(x.s.position));
+    if(pick){ taken.add(pick.name); out[idx] = pick; }
+  }
+  return {starters:out, bench:pool.filter(x=>!taken.has(x.name))};
+}
+
+/* Where a roster is thin. Each starter is measured against the player who
+   would be holding that spot on an average team: your best receiver against
+   the twelfth-best receiver in a twelve-team league, your second against the
+   twenty-fourth, and so on down. The slot label comes from the lineup rather
+   than the position count, because a running back filling a flex is starting
+   in a flex and calling him your RB3 would misread the roster. */
+function holes(starters, slots, teams){
+  const byPos = {};
+  POS.forEach(p=>{ byPos[p]=PLAYERS.filter(x=>x.position===p).sort((a,b)=>b.proj_ppg-a.proj_ppg); });
+  const seen = {};
+  return starters.map((m,i)=>{
+    if(!m) return null;
+    const pos = m.s.position, list = byPos[pos] || [];
+    if(!list.length) return null;
+    seen[pos] = (seen[pos]||0) + 1;
+    const benchmark = list[Math.min(teams*seen[pos]-1, list.length-1)];
+    const slot = slots[i];
+    return {pos, slot: FLEXES[slot] ? (slot==='SUPER_FLEX'?'SFLX':slot==='REC_FLEX'?'WR/TE':'FLEX') : pos+seen[pos],
+            player:m.name, rank: list.findIndex(x=>x.player===m.name)+1,
+            gap: m.s.proj_ppg - benchmark.proj_ppg, par: benchmark.proj_ppg};
+  }).filter(Boolean).sort((a,b)=>a.gap-b.gap);}
+
+let MT = {roster:[], format:'sleeper', teams:12, source:'', taken:[], slots:null, league:''};
+try{ const s=localStorage.getItem(MT_KEY); if(s) MT=Object.assign(MT, JSON.parse(s)); }catch(e){}
+function mtSave(){ try{ localStorage.setItem(MT_KEY, JSON.stringify(MT)); }catch(e){} }
+
+/* Ten seconds, then give up and say so. A blocked request usually fails
+   instantly, but a request that is merely being swallowed hangs forever, and
+   a spinner that never resolves is the worst of the three outcomes. */
+const LOOKUP_TIMEOUT_MS = 10000;
+async function getJSON(url){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), LOOKUP_TIMEOUT_MS);
+  try{
+    const r = await fetch(url, {cache:'no-store', signal:ctrl.signal});
+    if(!r.ok){ const e=new Error('http '+r.status); e.status=r.status; throw e; }
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+function netMessage(err){
+  if(err && err.status===401) return "That league is set to private. ESPN only lets an outside page read public leagues, so use the paste box instead: open your team, select the whole roster, copy, paste.";
+  if(err && err.status===404) return "Nothing came back for that. Check the spelling and try again.";
+  if(err && err.name==='AbortError') return "The lookup took longer than ten seconds and was called off. Try again, or paste your roster, which needs no connection at all.";
+  return "This page could not reach the outside, which is normal in a preview that blocks outside connections. Paste your roster instead: it works everywhere and nothing leaves your browser.";
+}
+
+function pageMyTeam(){
+  const p = document.getElementById('pg-myteam');
+  p.innerHTML = head('Your team',
+    "Everything else on this site is about the league. This page is about the eleven or fifteen players you actually own. Pull them in from Sleeper, from a public ESPN league, or by pasting your roster out of any app, and the model tells you who to start, where you are thin, and who is worth adding.")
+    + '<div id="mtImport"></div><div id="mtBody"></div>';
+  renderImport();
+  renderTeam();
+}
+
+function renderImport(){
+  const box = document.getElementById('mtImport');
+  box.innerHTML = `
+   <div class="card" style="margin-bottom:14px">
+     <div class="bar" style="margin-bottom:10px">
+       <div class="seg" id="mtSrc">
+         <button data-s="sleeper" aria-pressed="true">Sleeper</button>
+         <button data-s="espn">ESPN</button>
+         <button data-s="paste">Paste</button>
+       </div>
+       <span class="dim" style="font-size:12px" id="mtHint"></span>
+     </div>
+     <div id="mtForm"></div>
+     <div id="mtMsg"></div>
+   </div>`;
+  const seg = box.querySelector('#mtSrc');
+  let src = 'sleeper';
+  function draw(){
+    seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.s===src)));
+    box.querySelector('#mtMsg').innerHTML='';
+    const f = box.querySelector('#mtForm');
+    const hint = box.querySelector('#mtHint');
+    if(src==='sleeper'){
+      hint.textContent = 'Public, no password needed.';
+      f.innerHTML = `<div class="bar">
+        <input class="txt" id="slUser" placeholder="Sleeper username" style="width:220px" autocomplete="off">
+        <button class="chip" id="slGo">Find my leagues</button></div>
+        <div id="slPick" style="margin-top:10px"></div>`;
+      f.querySelector('#slGo').addEventListener('click',sleeperLookup);
+      f.querySelector('#slUser').addEventListener('keydown',e=>{ if(e.key==='Enter') sleeperLookup(); });
+    } else if(src==='espn'){
+      hint.textContent = 'Public leagues only.';
+      f.innerHTML = `<div class="bar">
+        <input class="txt" id="esId" placeholder="League ID from the URL" style="width:220px" inputmode="numeric" autocomplete="off">
+        <button class="chip" id="esGo">Load league</button></div>
+        <p class="muted" style="font-size:12px;margin:8px 0 0">The id is the number after leagueId= in your ESPN league address.</p>
+        <div id="esPick" style="margin-top:10px"></div>`;
+      f.querySelector('#esGo').addEventListener('click',espnLookup);
+      f.querySelector('#esId').addEventListener('keydown',e=>{ if(e.key==='Enter') espnLookup(); });
+    } else {
+      hint.textContent = 'Works anywhere, no connection needed.';
+      f.innerHTML = `<textarea class="txt" id="mtPaste" placeholder="Paste your roster here. Any format works: one name per line, or a whole page copied straight out of Yahoo, ESPN, Sleeper or NFL.com."></textarea>
+        <div class="bar" style="margin-top:9px">
+          <button class="chip" id="mtParse">Read this roster</button>
+          <span class="dim" style="font-size:12px">Nothing leaves your browser.</span>
+        </div>`;
+      f.querySelector('#mtParse').addEventListener('click',()=>{
+        const {found,missed} = parseRoster(f.querySelector('#mtPaste').value);
+        if(!found.length){ msg("No names in that text matched a projected player. Check that you copied the roster and not the scoreboard."); return; }
+        MT.roster = found; MT.source='paste'; MT.taken=[]; MT.slots=null; MT.league=''; mtSave();
+        msg(`Matched <b>${found.length}</b> players.` + (missed.length? ` ${missed.length} line${missed.length===1?'':'s'} did not match anything: ${esc(missed.slice(0,4).join(', '))}.` : ''), true);
+        renderTeam();
+      });
+    }
+  }
+  function msg(html, ok){
+    box.querySelector('#mtMsg').innerHTML = `<div class="notice" style="border-left-color:${ok?'var(--up)':'var(--accent)'}">${html}</div>`;
+  }
+  box._msg = msg;
+  seg.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return; src=b.dataset.s; draw();});
+  draw();
+}
+
+async function sleeperLookup(){
+  const box=document.getElementById('mtImport');
+  const name=box.querySelector('#slUser').value.trim();
+  if(!name) return;
+  const pick=box.querySelector('#slPick');
+  pick.innerHTML='<p class="muted" style="font-size:13px;margin:0">Looking...</p>';
+  try{
+    const user = await getJSON('https://api.sleeper.app/v1/user/'+encodeURIComponent(name));
+    if(!user || !user.user_id) throw Object.assign(new Error('no user'),{status:404});
+    const leagues = await getJSON(`https://api.sleeper.app/v1/user/${user.user_id}/leagues/nfl/${SEASON}`);
+    if(!leagues.length){ pick.innerHTML=`<div class="notice">That account has no ${SEASON} leagues yet. Paste the roster instead and it will still work.</div>`; return; }
+    pick.innerHTML = `<div class="bar"><label class="dim" style="font-size:12px">League</label>
+      <select class="txt" id="slLg">${leagues.map((l,i)=>`<option value="${i}">${esc(l.name)} (${l.total_rosters} teams)</option>`).join('')}</select>
+      <button class="chip" id="slLoad">Load my roster</button></div>`;
+    pick.querySelector('#slLoad').addEventListener('click',async()=>{
+      const lg = leagues[+pick.querySelector('#slLg').value];
+      pick.querySelector('#slLoad').textContent='Loading...';
+      try{
+        const rosters = await getJSON(`https://api.sleeper.app/v1/league/${lg.league_id}/rosters`);
+        const mine = rosters.find(r=>r.owner_id===user.user_id) || rosters[0];
+        const nameOf = id => (IDS.sleeper[String(id)]||[null])[0];
+        MT.roster = (mine.players||[]).map(nameOf).filter(Boolean).map(n=>{const h=resolve(n); return h?h.player:null;}).filter(Boolean);
+        MT.taken = rosters.flatMap(r=>r.players||[]).map(nameOf).filter(Boolean)
+                          .map(n=>{const h=resolve(n); return h?h.player:null;}).filter(Boolean);
+        MT.teams = lg.total_rosters || 12;
+        MT.slots = (lg.roster_positions||[]).filter(s=>Object.hasOwn(FLEXES,s) || POS.includes(s));
+        if(!MT.slots.length) MT.slots=null;
+        MT.source='sleeper'; MT.league=lg.name; mtSave();
+        box._msg(`Loaded <b>${esc(lg.name)}</b>. ${MT.roster.length} of your players are projected, and ${MT.taken.length} are rostered across the league, so the free agent list below is the real one.`, true);
+        pick.innerHTML='';
+        renderTeam();
+      }catch(err){ pick.innerHTML=`<div class="notice">${netMessage(err)}</div>`; }
+    });
+  }catch(err){
+    pick.innerHTML = `<div class="notice">${netMessage(err)}</div>`;
+  }
+}
+
+async function espnLookup(){
+  const box=document.getElementById('mtImport');
+  const id=box.querySelector('#esId').value.trim().replace(/\D/g,'');
+  if(!id) return;
+  const pick=box.querySelector('#esPick');
+  pick.innerHTML='<p class="muted" style="font-size:13px;margin:0">Looking...</p>';
+  const url=`https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leagues/${id}?view=mRoster&view=mTeam`;
+  try{
+    const lg = await getJSON(url);
+    const teams = lg.teams||[];
+    if(!teams.length) throw Object.assign(new Error('empty'),{status:404});
+    const label = t => t.name || [t.location,t.nickname].filter(Boolean).join(' ') || ('Team '+t.id);
+    pick.innerHTML = `<div class="bar"><label class="dim" style="font-size:12px">Your team</label>
+      <select class="txt" id="esTm">${teams.map((t,i)=>`<option value="${i}">${esc(label(t))}</option>`).join('')}</select>
+      <button class="chip" id="esLoad">Load my roster</button></div>`;
+    pick.querySelector('#esLoad').addEventListener('click',()=>{
+      const names = t => ((t.roster&&t.roster.entries)||[])
+        .map(e=>e.playerPoolEntry && e.playerPoolEntry.player && e.playerPoolEntry.player.fullName)
+        .filter(Boolean).map(n=>{const h=resolve(n); return h?h.player:null;}).filter(Boolean);
+      const me = teams[+pick.querySelector('#esTm').value];
+      MT.roster = names(me);
+      MT.taken = teams.flatMap(names);
+      MT.teams = teams.length;
+      MT.slots = null; MT.source='espn'; MT.league = lg.settings && lg.settings.name || 'ESPN league';
+      mtSave();
+      box._msg(`Loaded <b>${esc(label(me))}</b>. ${MT.roster.length} of your players are projected.`, true);
+      pick.innerHTML='';
+      renderTeam();
+    });
+  }catch(err){
+    pick.innerHTML = `<div class="notice">${netMessage(err)}</div>`;
+  }
+}
+
+function renderTeam(){
+  const body=document.getElementById('mtBody');
+  if(!body) return;
+  if(!MT.roster.length){
+    body.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:8px">Nothing loaded yet</h3>
+      <p class="muted" style="font-size:13.5px;margin:0;max-width:70ch">Pick one of the three above. If you are just looking around, paste is the fastest: copy your roster out of whatever app you use and drop it in. The page keeps it in this browser only, and forgets it if you clear it.</p></div>`;
+    return;
+  }
+  const slots = MT.slots || FORMATS[MT.format].slots;
+  const {starters, bench} = optimise(MT.roster, slots);
+  const startPts = starters.reduce((a,s)=>a+(s&&s.w?s.w.points:0),0);
+  const gaps = holes(starters, slots, MT.teams);
+  const worst = gaps[0];
+
+  /* Close calls. A bench player is only a real argument against the starter
+     he could actually replace, so each one is matched to the weakest starter
+     sitting in a slot his position is eligible for. Comparing him against the
+     whole lineup throws up a tight-end-versus-receiver argument that no lineup
+     rule would ever let you act on. */
+  const calls=[];
+  bench.forEach(b=>{
+    if(!b.w) return;
+    const swappable = starters
+      .map((s,i)=>({s, ok:(FLEXES[slots[i]]||[slots[i]]).includes(b.s.position)}))
+      .filter(x=>x.ok && x.s && x.s.w)
+      .map(x=>x.s)
+      .sort((x,y)=>x.w.points-y.w.points);
+    const s = swappable[0];
+    if(!s) return;
+    const pr = pBeats(s.w, b.w);
+    if(pr<0.62) calls.push({start:s, sit:b, p:pr});
+  });
+  calls.sort((a,b)=>a.p-b.p);
+
+  const mineSet = new Set(MT.roster);
+  const takenSet = new Set(MT.taken.length? MT.taken : MT.roster);
+  /* Ranked by value over replacement rather than raw points, because raw
+     points puts eight quarterbacks at the top of every waiver list and none of
+     them would improve a lineup that already has one. */
+  const adds = PLAYERS.filter(x=>!takenSet.has(x.player) && POS.includes(x.position))
+    .sort((a,b)=>b.vorp-a.vorp).slice(0,12);
+  const roster = MT.roster.map(n=>BYNAME[n]).filter(Boolean);
+  const sells = roster.filter(x=>x.adp_rank && x.arb!=null).slice()
+    .sort((a,b)=>a.arb-b.arb);
+
+  body.innerHTML = `
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(168px,1fr))">
+     <div class="kpi"><div class="v">${f1(startPts)}</div><div class="l">projected points from your best lineup this week</div></div>
+     <div class="kpi"><div class="v">${MT.roster.length}</div><div class="l">players matched${MT.league?' from '+esc(MT.league):''}</div></div>
+     <div class="kpi"><div class="v">${worst? esc(worst.player.split(' ').slice(-1)[0]) : '&ndash;'}</div><div class="l">${!worst? 'no starting spots to grade'
+        : worst.gap<0 ? 'your weakest starter, '+f1(Math.abs(worst.gap))+' points a game short of what an average team gets out of that spot'
+        : 'your weakest starter, and even he is '+f1(worst.gap)+' points a game clear of par. No holes on this roster.'}</div></div>
+     <div class="kpi"><div class="v">${calls.length}</div><div class="l">lineup calls close enough that the model will not pick for you</div></div>
+   </div>
+
+   <div class="card" style="margin-bottom:14px">
+     <div class="bar" style="margin-bottom:10px">
+       <div><div class="eyebrow" style="margin-bottom:3px">Week 1</div>
+         <h3 style="font-size:17px;margin:0">Start these</h3></div>
+       ${MT.slots? `<span class="dim" style="font-size:12px;margin-left:auto">Using your league's own lineup slots.</span>`
+         : `<div class="seg" id="mtFmt" style="margin-left:auto">${Object.entries(FORMATS).map(([k,v])=>
+             `<button data-f="${k}" aria-pressed="${k===MT.format}">${v.label}</button>`).join('')}</div>`}
+     </div>
+     <div class="slotgrid">
+       ${starters.map((s,i)=>slotCard(slots[i],s)).join('')}
+     </div>
+     ${bench.length? `<div class="eyebrow" style="margin:16px 0 8px">On the bench</div>
+       <div class="slotgrid">${bench.slice(0,10).map(b=>slotCard('BENCH',b)).join('')}</div>`:''}
+   </div>
+
+   ${calls.length? `<div class="card" style="margin-bottom:14px">
+     <div class="eyebrow" style="margin-bottom:3px">Close calls</div>
+     <h3 style="font-size:17px;margin-bottom:4px">These are nearly coin flips</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 10px;max-width:75ch">The model puts the first name ahead, but not by enough to be worth losing sleep over. Anything under 60 percent is noise and you should start whoever you would rather watch.</p>
+     ${calls.slice(0,5).map(c=>`<div class="bar" style="padding:7px 0;border-top:1px solid var(--line)">
+        <span>${mark(c.start.s.team,18)} <b>${esc(c.start.name)}</b> over ${mark(c.sit.s.team,18)} ${esc(c.sit.name)}</span>
+        <span style="margin-left:auto;font-family:var(--f-mono);font-size:12px;color:${c.p<0.56?'var(--ink-4)':'var(--ink-3)'}">${pct(c.p,0)} of the time${c.p<0.56?' (call it a tie)':''}</span>
+      </div>`).join('')}
+   </div>`:''}
+
+   <div class="two">
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">Roster shape</div>
+       <h3 style="font-size:17px;margin-bottom:4px">Where you are thin</h3>
+       <p class="muted" style="font-size:13px;margin:0 0 10px">Each starter against the player who would hold that same slot on an average team in a ${MT.teams}-team league.</p>
+       ${gaps.map(g=>`<div class="bar" style="padding:7px 0;border-top:1px solid var(--line)">
+          <span class="tag" style="min-width:40px;text-align:center">${g.slot}</span>
+          <span>${esc(g.player)} <span class="dim">${g.pos}${g.rank} overall</span></span>
+          <span style="margin-left:auto;font-family:var(--f-mono);font-size:12px;color:${g.gap>0?'var(--up)':'var(--down)'}">${pp(g.gap)} per game</span>
+        </div>`).join('')}
+     </div>
+     <div class="card">
+       <div class="eyebrow" style="margin-bottom:3px">${MT.taken.length? 'Free agents in your league':'Not on your roster'}</div>
+       <h3 style="font-size:17px;margin-bottom:4px">Worth adding</h3>
+       <p class="muted" style="font-size:13px;margin:0 0 10px">${MT.taken.length
+          ? 'Every player nobody in your league has rostered, ranked by how far he clears replacement level at his own position rather than by raw points.'
+          : 'Loaded from a paste, so the model cannot see who else is taken. Import from Sleeper or a public ESPN league and this becomes a real free agent list.'}</p>
+       <div id="mtAdds"></div>
+     </div>
+   </div>
+
+   <div class="card" style="margin-top:14px">
+     <div class="eyebrow" style="margin-bottom:3px">Trade angles</div>
+     <h3 style="font-size:17px;margin-bottom:4px">Where the model disagrees with the room</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 10px;max-width:80ch">Where a player went in drafts is what the room thinks he is worth. The last column is how far the model sits from that, counted in draft slots. A big positive number is somebody the model rates far above what the room paid, so keep him or go get him. The bottom of the list is who to shop while the name still carries weight.</p>
+     <div id="mtArb"></div>
+   </div>
+
+   <p class="muted" style="font-size:12.5px;margin-top:14px;max-width:80ch">
+     Your roster stays in this browser. Nothing is uploaded, there is no account, and the Sleeper and
+     ESPN lookups read public league data only. Clearing your browser data clears this too.
+     <button class="chip" id="mtClear" style="margin-left:8px">Forget my team</button>
+   </p>`;
+
+  const addCols=[
+    {h:'Player',k:'player',left:true,f:r=>`<span class="pos-dot" style="background:${posColor(r.position)}"></span>${esc(r.player)}`},
+    {h:'Pos',k:'pos_rank',f:r=>`${r.position}${r.pos_rank}`,asc:true},
+    {h:'Team',k:'team',left:true,f:r=>`${mark(r.team,17)}${r.team}`,asc:true},
+    {h:'Season',k:'proj_points',f:r=>`<b>${f0(r.proj_points)}</b>`,title:'Projected fantasy points for the season'},
+    {h:'Per game',k:'proj_ppg',f:r=>f1(r.proj_ppg)},
+    {h:'Week 1',k:'player',f:r=>{const w=BYWEEK[r.player]; return w? f1(w.points) : '<span class="dim">&ndash;</span>';}},
+  ];
+  document.getElementById('mtAdds').appendChild(
+    makeTable(adds, addCols, {sort:'proj_points', noun:'players', onRow:r=>playerSheet(r)}));
+
+  const arbCols=[
+    {h:'Player',k:'player',left:true,f:r=>`<span class="pos-dot" style="background:${posColor(r.position)}"></span>${esc(r.player)}`},
+    {h:'Pos',k:'pos_rank',f:r=>`${r.position}${r.pos_rank}`,asc:true},
+    {h:'Drafted',k:'adp_rank',f:r=>r.adp_formatted||f0(r.adp),asc:true,title:'Average draft position'},
+    {h:'Model has him',k:'value_rank',f:r=>'#'+f0(r.value_rank),asc:true},
+    {h:'Slots apart',k:'arb',f:r=>{const v=r.arb; if(v==null) return '<span class="dim">&ndash;</span>';
+      return `<span style="color:${v>8?'var(--up)':v<-8?'var(--down)':'var(--ink-3)'}">${v>0?'+':''}${f0(v)}</span>`;},
+      title:'Draft slots between where he went and where the model has him. Positive means the model likes him more than the room did.'},
+    {h:'Read',k:'verdict',left:true,f:r=>`<span class="tag">${esc(r.verdict||'')}</span>`},
+  ];
+  document.getElementById('mtArb').appendChild(
+    makeTable(sells, arbCols, {sort:'arb', noun:'players', onRow:r=>playerSheet(r)}));
+
+  const fmt=body.querySelector('#mtFmt');
+  if(fmt) fmt.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
+    MT.format=b.dataset.f; mtSave(); renderTeam();});
+  body.querySelector('#mtClear').addEventListener('click',()=>{
+    MT={roster:[],format:MT.format,teams:12,source:'',taken:[],slots:null,league:''}; mtSave();
+    renderTeam(); announce('Roster cleared.');
+  });
+}
+
+function slotCard(slot,x){
+  const label = slot==='SUPER_FLEX'?'SFLX' : slot==='REC_FLEX'?'WR/TE' : slot;
+  if(!x) return `<div class="slot empty"><span class="tag">${label}</span><div class="who"><b>Empty</b><span>nothing on your roster fits here</span></div></div>`;
+  const w=x.w;
+  return `<div class="slot">
+    <span class="tag" style="min-width:42px;text-align:center">${label}</span>
+    ${mark(x.s.team,22)}
+    <div class="who"><b>${esc(x.name)}</b>
+      <span>${x.s.position}${x.s.pos_rank} ${w? (w.home?'vs ':'at ')+w.opponent : 'on bye or not projected'}</span></div>
+    <div class="pts">${w? f1(w.points) : '&ndash;'}<em>${w? f1(w.floor)+' to '+f1(w.ceiling) : ''}</em></div>
+  </div>`;
+}
+</script>
+<script>
+"use strict";
+/* ==========================================================================
    BOOT
    Every page module is defined by now, so register the rest in nav order and
    start the router.
    ========================================================================== */
-registerPage('matchups','Week 1',pageMatchups,{badge:'new'});
-registerPage('startsit','Start / sit',pageStartSit,{badge:'new'});
-registerPage('draft','Draft room',pageDraftRoom,{badge:'tool'});
-registerPage('market','Markets',pageEV,{badge:'tool'});
-registerPage('sim','Scenario lab',pageSim,{badge:'live'});
-registerPage('record','Track record',pageRecord,{badge:'new'});
-registerPage('model','The model',pageModel);
+/* Nav order is deliberate. Somebody arriving from a shared link is far more
+   likely to want their own roster handled than a shrinkage coefficient, so
+   the four pages that answer a question about this weekend come first and the
+   modelling pages sit at the end for whoever wants to check the work. */
+registerPage('myteam','My team',pageMyTeam,{badge:'new'});
+registerPage('matchups','This week',pageMatchups);
+registerPage('startsit','Start or sit',pageStartSit);
+registerPage('draft','Draft',pageDraftRoom);
+registerPage('teams','Teams',pageTeams);
+registerPage('players','Players',pagePlayers);
+registerPage('market','Betting',pageEV);
+registerPage('sim','Simulator',pageSim,{badge:'live'});
+registerPage('record','Record',pageRecord);
+registerPage('model','How it works',pageModel);
 
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }

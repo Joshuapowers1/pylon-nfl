@@ -17,6 +17,7 @@ import json
 import numpy as np
 import pandas as pd
 from .config import OUT, CONF, RAW, PROC, TEAM_ALIASES, TEAM_DIV, TEAM_CONF, DIVISIONS
+from .platforms import build_index
 
 TEAM_META = {
  "ARI":("Arizona","Cardinals","#97233F","#000000"),   "ATL":("Atlanta","Falcons","#A71930","#000000"),
@@ -194,6 +195,9 @@ def build() -> dict:
                    for k, v in priors["teams"].items()},
         "roles": {k: v for k, v in roles["players"].items()},
         "divisions": DIVISIONS,
+        # Lets the browser turn a Sleeper roster, an ESPN roster or a pasted
+        # block of text into our own player rows without a round trip.
+        "ids": build_index(p),
     }
     out = OUT / "web_bundle.json"
     out.write_text(json.dumps(bundle, separators=(",", ":")))

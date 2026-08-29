@@ -102,7 +102,8 @@ Runs end to end in about 22 seconds and writes every published number to `out/`.
 ```bash
 PYTHONPATH=src python -m pylon.webdata   # pack outputs into a single JSON bundle
 cd web && ./build.sh                     # inline the bundle and logos into index.html
-node test.mjs                            # headless check: all pages, both themes, three breakpoints
+node test.mjs                            # headless check: all pages, both themes, three breakpoints,
+                                         # plus the roster import from paste and from a stubbed Sleeper
 ```
 
 `build.sh` writes the built page to both `web/index.html` and `docs/index.html`. GitHub Pages serves
@@ -263,6 +264,52 @@ is the entire reason this project exists.
 
 ---
 
+## Your actual roster
+
+Everything else here is about the league. This part is about the fifteen players
+somebody owns, because that is the only version of a projection most people will
+ever act on.
+
+There are three ways in and the order matters:
+
+- **Sleeper.** Username, pick a league, done. Sleeper's API is public, read-only
+  and sends `access-control-allow-origin: *`, so a static page can call it with
+  no key and no account. The league's own `roster_positions` come back with it,
+  so a superflex league gets a superflex lineup rather than a guess. Every roster
+  in the league comes back too, which makes the free agent list the real one
+  instead of "good players you do not have".
+- **ESPN,** by league id, for public leagues. The read host sends the same CORS
+  header. Private leagues need `espn_s2` and `SWID` cookies, which a page on
+  another origin cannot send and should not ask for, so a private league returns
+  401 and the page says so plainly and points at the paste box.
+- **Paste.** Copy a roster out of any app at all. This one has no network in it
+  and therefore cannot break, which is why it is the fallback everywhere else
+  fails, including under a content policy that blocks outside connections.
+
+The paste parser walks word windows longest-first against a normalised name
+index rather than assuming a layout, so `QB Josh Allen Buf QB1 Bye 7` and
+`Tyrone Tracy Jr.` and `Ja'Marr Chase` all resolve, and anything that does not
+resolve is reported back by line rather than silently dropped.
+
+What comes out of it: a lineup filled by a greedy pass over slot eligibility,
+which for the way fantasy slots nest is the optimal lineup rather than an
+approximation; the calls close enough that the head-to-head probability is under
+62%, said out loud as coin flips; each starter measured against the player who
+would hold that same spot on an average team in that league; a waiver list ranked
+by value over replacement rather than raw points, because raw points puts eight
+quarterbacks at the top of every waiver list and none of them would improve a
+lineup that already has one; and the roster sorted by how far the model sits from
+where each player was drafted.
+
+Nothing is uploaded and there is no account. The roster lives in `localStorage`
+and the two lookups read public league data only.
+
+`config/sleeper_ids.json` is the id table the import resolves against: 1,115
+rosterable players trimmed out of the 4,300 Sleeper carries, refreshed by
+`scripts/refresh_sleeper.py` and rebuilt every Tuesday with the rest of the site.
+
+---
+
 ## Week 1, game by game
 
 ![Week 1 matchups](docs/02-week1-matchups.jpg)
@@ -280,15 +327,17 @@ with the market by a touchdown would be broken, not brilliant.
 
 ![Scenario lab](docs/04-scenario-lab.jpg)
 
-A single self-contained HTML file. No framework, no chart library, no network calls at runtime. Every chart is hand-built SVG and the full data bundle plus all 32 logos are inlined.
+A single self-contained HTML file. No framework, no chart library, no build step in the browser. Every chart is hand-built SVG and the full data bundle plus all 32 logos are inlined. The only network calls the page ever makes are the two optional roster lookups, and every page works with those blocked.
 
 **Scenario lab.** The season Monte Carlo reimplemented in JavaScript: same team-constant strength draw, per-game noise, real 272-game schedule, division tiebreakers, seven-team bracket. 4,000 seasons in roughly 360ms. It reproduces the Python engine to within about 0.06 wins and one percentage point on playoff odds, which is itself the regression test. Drag a rating and all 32 teams re-solve.
+
+**My team.** Roster import from Sleeper, a public ESPN league, or pasted text, then a lineup, the close calls, the thin spots and the waiver board. Described in full above.
 
 **Draft room.** Value over replacement recomputed for league size and scoring on every pick, so twelve-team full PPR and ten-team standard produce genuinely different boards. Tier breaks, and scarcity measured as startable players remaining above replacement. Persists to `localStorage`.
 
 ![Draft room](docs/05-draft-room.jpg)
 
-**Markets.** Power-method de-vig, then expected value and Kelly sizing against an editable price. Stakes are scaled to a deployment cap and the scaling factor is disclosed, because these markets are nested rather than independent and summing line-by-line Kelly across them produces allocations well over 100% of a bankroll.
+**Markets.** Power-method de-vig, then expected value and Kelly sizing against an editable price. Kelly is shown as a fraction and there is no dollar column, because these markets are nested rather than independent and a stake figure summed line by line across them reads as advice the backtest does not support.
 
 ![Markets](docs/06-markets.jpg)
 
@@ -302,6 +351,7 @@ pylon-nfl/
 │   ├── offseason_2026.json         32 roster and scheme priors, each justified
 │   ├── roles_2026.json             58 player role priors: rookies, injuries, role changes
 │   ├── market_snapshot_2026.json   Polymarket and sportsbook prices, timestamped
+│   ├── sleeper_ids.json            trimmed id table the roster import resolves against
 │   ├── calibration.json            fitted shrinkage and translation constants
 │   └── backtest.json               out-of-sample results and the variance split
 ├── src/pylon/
@@ -317,6 +367,7 @@ pylon-nfl/
 │   ├── players.py                  opportunity-based fantasy projections
 │   ├── draft.py                    model vs live ADP
 │   ├── market.py                   de-vigging and the edge board
+│   ├── platforms.py                Sleeper and ESPN roster import support
 │   ├── diagnostics.py              decomposition and sensitivity
 │   ├── charts.py                   broadcast visuals
 │   ├── webdata.py                  packs outputs into the web bundle
@@ -325,6 +376,9 @@ pylon-nfl/
 │   ├── app.template.html           source for the terminal
 │   ├── build.sh                    injects data + logos → index.html
 │   └── test.mjs                    headless Playwright check
+├── scripts/
+│   ├── fetch_data.sh               play-by-play, rosters, schedule, ADP, market
+│   └── refresh_sleeper.py          rebuilds config/sleeper_ids.json
 └── out/                            every published number
 ```
 
@@ -358,10 +412,11 @@ Kept here deliberately. Each was silently producing wrong answers, and each is t
 
 1. **The judgment layer is judgment.** Five teams are more than 80% prior-driven. Those projections are opinions with a model attached, and `rating_decomposition.csv` names them.
 2. **Defensive ratings are nearly information-free from data alone.** With a measured carry-over of 0.14, play-by-play supplies almost no defensive differentiation, so the prior does proportionally more work there.
-3. **No in-season updating.** Every rating is frozen at the start of the season. A live version would re-fit weekly.
+3. **The in-season blend weight is fitted on three seasons, not on this one.** Ratings do refit weekly, and `k` was chosen out of sample, but a season with a genuinely unusual shape would want a different weight and this would not find that out until it was over.
 4. **Point totals are risk-adjusted, not healthy-season.** Expected games played is projected rather than assumed at 17, which is why totals sit below published industry sets. A 17-game column is provided for like-for-like comparison.
 5. **The engine ranks quarterbacks earlier than the market does.** This was previously listed as a known flaw, on the assumption that streaming made replacement level higher. Measuring it found the opposite, so the adjustment is gone and the disagreement stands. It may still be wrong, but it is now wrong on the evidence rather than on a hunch.
 6. **Rookies and role-changers are asserted, not measured.** 58 of them, each with a stated reason.
+7. **The roster import cannot see a private ESPN league.** That needs `espn_s2` and `SWID` cookies, which a page on another origin cannot send and has no business asking for, so those leagues fall back to paste. Sleeper has no such limit because its read API is genuinely public.
 
 ---
 

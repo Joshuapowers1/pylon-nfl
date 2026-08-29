@@ -43,6 +43,11 @@ jobs:
       - name: Fetch source data
         run: ./scripts/fetch_data.sh
 
+      # Rosters move all season, so the id table the roster import resolves
+      # against has to move with them or an added player reads as unmatched.
+      - name: Refresh the Sleeper id table
+        run: python scripts/refresh_sleeper.py
+
       - name: Refit and rebuild
         run: |
           PYTHONPATH=src python -m pylon.run --sims 25000 --player-sims 10000
