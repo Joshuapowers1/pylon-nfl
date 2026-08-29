@@ -3152,20 +3152,42 @@ function mtSave(){ try{ localStorage.setItem(MT_KEY, JSON.stringify(MT)); }catch
    instantly, but a request that is merely being swallowed hangs forever, and
    a spinner that never resolves is the worst of the three outcomes. */
 const LOOKUP_TIMEOUT_MS = 10000;
-async function getJSON(url){
+async function getJSON(url, ms){
   const ctrl = new AbortController();
-  const timer = setTimeout(()=>ctrl.abort(), LOOKUP_TIMEOUT_MS);
+  const timer = setTimeout(()=>ctrl.abort(), ms || LOOKUP_TIMEOUT_MS);
   try{
     const r = await fetch(url, {cache:'no-store', signal:ctrl.signal});
     if(!r.ok){ const e=new Error('http '+r.status); e.status=r.status; throw e; }
     return await r.json();
   } finally { clearTimeout(timer); }
 }
+/* Whether this copy of the page can reach the outside at all.
+   The same file is published in two places: a static host, where the lookups
+   work, and an embedded preview with a content policy that blocks every
+   outside request. Rather than let somebody type a username into a control
+   that cannot possibly work, one cheap request settles it up front and the
+   page picks its own default tab from the answer. */
+let NET = null, netProbe = null;
+const LIVE_SITE = 'https://joshuapowers1.github.io/pylon-nfl/';
+/* Lazily, and once. Somebody who never opens this page never causes a request
+   to anybody, which is the only defensible default for a page that otherwise
+   talks to nothing. */
+function checkNet(){
+  if(!netProbe) netProbe = (async()=>{
+    // Shorter than a real lookup. A blocked request fails instantly, so this
+    // only bounds the case where something is quietly swallowing it.
+    try{ await getJSON('https://api.sleeper.app/v1/state/nfl', 4000); NET = true; }
+    catch(e){ NET = false; }
+    return NET;
+  })();
+  return netProbe;
+}
+
 function netMessage(err){
   if(err && err.status===401) return "That league is set to private. ESPN only lets an outside page read public leagues, so use the paste box instead: open your team, select the whole roster, copy, paste.";
   if(err && err.status===404) return "Nothing came back for that. Check the spelling and try again.";
   if(err && err.name==='AbortError') return "The lookup took longer than ten seconds and was called off. Try again, or paste your roster, which needs no connection at all.";
-  return "This page could not reach the outside, which is normal in a preview that blocks outside connections. Paste your roster instead: it works everywhere and nothing leaves your browser.";
+  return `This copy of the page cannot reach the outside, which is what an embedded preview does. Paste your roster instead, which needs no connection at all, or open the hosted copy at <a href="${LIVE_SITE}" target="_blank" rel="noopener">${LIVE_SITE.replace('https://','')}</a> where the lookups run.`;
 }
 
 function pageMyTeam(){
@@ -3193,22 +3215,30 @@ function renderImport(){
      <div id="mtMsg"></div>
    </div>`;
   const seg = box.querySelector('#mtSrc');
-  let src = 'sleeper';
+  let src = NET===false ? 'paste' : 'sleeper';
+  checkNet().then(ok=>{
+    if(ok) return;
+    seg.querySelectorAll('button[data-s="sleeper"],button[data-s="espn"]')
+       .forEach(b=>{ b.title='Needs a connection this copy of the page does not have'; });
+    // Only move somebody who has not already chosen for themselves.
+    if(src==='sleeper' && !MT.roster.length){ src='paste'; draw(); }
+  });
   function draw(){
     seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.s===src)));
     box.querySelector('#mtMsg').innerHTML='';
     const f = box.querySelector('#mtForm');
     const hint = box.querySelector('#mtHint');
     if(src==='sleeper'){
-      hint.textContent = 'Public, no password needed.';
+      hint.textContent = NET===false ? 'Not reachable from this copy of the page.' : 'Public, no password needed.';
       f.innerHTML = `<div class="bar">
         <input class="txt" id="slUser" placeholder="Sleeper username" style="width:220px" autocomplete="off">
         <button class="chip" id="slGo">Find my leagues</button></div>
         <div id="slPick" style="margin-top:10px"></div>`;
       f.querySelector('#slGo').addEventListener('click',sleeperLookup);
       f.querySelector('#slUser').addEventListener('keydown',e=>{ if(e.key==='Enter') sleeperLookup(); });
+      if(NET===false) f.querySelector('#slPick').innerHTML=`<div class="notice">${netMessage()}</div>`;
     } else if(src==='espn'){
-      hint.textContent = 'Public leagues only.';
+      hint.textContent = NET===false ? 'Not reachable from this copy of the page.' : 'Public leagues only.';
       f.innerHTML = `<div class="bar">
         <input class="txt" id="esId" placeholder="League ID from the URL" style="width:220px" inputmode="numeric" autocomplete="off">
         <button class="chip" id="esGo">Load league</button></div>
@@ -3216,6 +3246,7 @@ function renderImport(){
         <div id="esPick" style="margin-top:10px"></div>`;
       f.querySelector('#esGo').addEventListener('click',espnLookup);
       f.querySelector('#esId').addEventListener('keydown',e=>{ if(e.key==='Enter') espnLookup(); });
+      if(NET===false) f.querySelector('#esPick').innerHTML=`<div class="notice">${netMessage()}</div>`;
     } else {
       hint.textContent = 'Works anywhere, no connection needed.';
       f.innerHTML = `<textarea class="txt" id="mtPaste" placeholder="Paste your roster here. Any format works: one name per line, or a whole page copied straight out of Yahoo, ESPN, Sleeper or NFL.com."></textarea>
