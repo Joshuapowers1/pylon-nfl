@@ -266,6 +266,8 @@ is the entire reason this project exists.
 
 ## Your actual roster
 
+![My team](docs/08-my-team.jpg)
+
 Everything else here is about the league. This part is about the fifteen players
 somebody owns, because that is the only version of a projection most people will
 ever act on.
@@ -300,6 +302,8 @@ by value over replacement rather than raw points, because raw points puts eight
 quarterbacks at the top of every waiver list and none of them would improve a
 lineup that already has one; and the roster sorted by how far the model sits from
 where each player was drafted.
+
+![Roster shape and waiver board](docs/09-my-team-detail.jpg)
 
 Nothing is uploaded and there is no account. The roster lives in `localStorage`
 and the two lookups read public league data only.
