@@ -85,7 +85,7 @@ header.top{
   display:flex; align-items:center; gap:18px; height:58px;
 }
 .brand{display:flex; align-items:center; gap:9px; flex:none;}
-.pylon{width:13px; height:19px; flex:none;}
+.pylon{width:11px; height:20px; flex:none;}
 .brand b{font-family:var(--f-display); font-weight:800; font-size:16px; letter-spacing:-.03em;}
 .brand span{
   font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em;
@@ -443,9 +443,22 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <svg class="pylon" viewBox="0 0 13 19" aria-hidden="true">
-        <path d="M6.5 0 13 3.4v12.2L6.5 19 0 15.6V3.4z" fill="var(--accent)"/>
-        <path d="M6.5 0 13 3.4 6.5 6.8 0 3.4z" fill="var(--accent)" opacity=".55"/>
+      <!-- An end-zone pylon: a square orange column, drawn in isometric so
+           the top cap and both side faces read at 11 pixels wide, and flared
+           toward the base the way the real marker is.
+
+           The faces are shaded with color-mix rather than opacity. Opacity
+           blends toward whatever is behind it, which would light the column
+           from the left in dark mode and from the right in light mode. The
+           fill attribute stays as a plain accent so a browser without
+           color-mix gets a solid pylon rather than a black one. -->
+      <svg class="pylon" viewBox="0 0 11 20" aria-hidden="true">
+        <path d="M5.5 4.2 9.2 2.4 10 17.6 5.5 19.8z" fill="var(--accent)"
+              style="fill:color-mix(in srgb, var(--accent), #000 28%)"/>
+        <path d="M1.8 2.4 5.5 4.2v15.6L1 17.6z" fill="var(--accent)"
+              style="fill:color-mix(in srgb, var(--accent), #000 8%)"/>
+        <path d="M5.5 .6 9.2 2.4 5.5 4.2 1.8 2.4z" fill="var(--accent)"
+              style="fill:color-mix(in srgb, var(--accent), #fff 24%)"/>
       </svg>
       <b>PYLON</b><span>2026</span>
     </div>
