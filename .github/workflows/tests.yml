@@ -32,6 +32,17 @@ jobs:
       - name: Lint the web template
         run: cd web && node lint.mjs
 
+      # Colour is the easiest thing to get wrong and the hardest to notice, so
+      # it is checked rather than eyeballed: every page, both themes, three
+      # widths, contrast against the ground each element actually sits on.
+      - name: Audit contrast, overflow and clipping
+        run: |
+          cd web
+          npm install --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+          node audit.mjs
+          node test.mjs
+
       - name: Check the site is in sync with the model
         run: |
           # docs/index.html is generated. If it drifts from the template plus the

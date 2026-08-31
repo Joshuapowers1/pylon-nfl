@@ -1,4 +1,18 @@
 <title>Pylon Terminal</title>
+<meta name="author" content="Joshua Powers">
+<meta name="description" content="Pylon Terminal: an NFL projection engine by Joshua Powers. Opponent-adjusted ridge model on nine seasons of play-by-play, 25,000 simulated seasons, a de-vigged market board, and a fantasy roster import that turns a Sleeper or ESPN league into a set lineup.">
+<meta name="theme-color" content="#B54900">
+<link rel="author" href="https://www.linkedin.com/in/joshuampowers">
+<link rel="canonical" href="https://joshuapowers1.github.io/pylon-nfl/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pylon Terminal">
+<meta property="og:title" content="Pylon Terminal, by Joshua Powers">
+<meta property="og:description" content="An NFL projection engine you can argue with. Nine seasons of play-by-play, 25,000 simulated seasons, and a roster import that turns your Sleeper or ESPN league into a set lineup.">
+<meta property="og:url" content="https://joshuapowers1.github.io/pylon-nfl/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pylon Terminal, by Joshua Powers">
+<meta name="twitter:description" content="An NFL projection engine you can argue with. The backtest is on the front page, not in a footnote.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 20'%3E%3Cpath d='M5.5 4.2 9.2 2.4 10 17.6 5.5 19.8z' fill='%238a3700'/%3E%3Cpath d='M1.8 2.4 5.5 4.2v15.6L1 17.6z' fill='%23a64200'/%3E%3Cpath d='M5.5 .6 9.2 2.4 5.5 4.2 1.8 2.4z' fill='%23e07030'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -14,12 +28,25 @@
   color-scheme: light;
   --ground:#F6F7F5; --surface:#FFFFFF; --raised:#FBFCFA; --sunken:#EFF2EE;
   --line:#DEE4DF; --line-strong:#C6CFC8;
-  --ink:#0B1014; --ink-2:#3C4A52; --ink-3:#5F6E77; --ink-4:#8A979E;
-  --accent:#DB5A00; --accent-ink:#FFFFFF; --accent-wash:#FDF0E6;
+  --ink:#0B1014; --ink-2:#39464E; --ink-3:#53616A; --ink-4:#666F74;
+  --accent:#B54900; --accent-ink:#FFFFFF; --accent-wash:#FBEEE4;
   /* data language: one diverging pair, used identically everywhere */
-  --up:#2a78d6; --up-wash:#E4EEFB; --down:#e34948; --down-wash:#FBE7E7; --mid:#B9C2BC;
+  --up:#2a78d6; --up-wash:#E4EEFB; --down:#C33433; --down-wash:#FBE7E7; --mid:#B9C2BC;
+  /* Semantic status, separate from the chart language above. The diverging
+     pair and the sequential ramp are tuned to read as fills at small sizes;
+     neither was tuned to be read as text, and two of them were being used
+     that way. These are the text-safe versions, measured against every ground
+     they appear on. The fills are unchanged. */
+  --ok:#127A56; --warn:#2E6FBC; --bad:#C33433;
+  /* The pills print the direction as a word on a tinted chip, which is a
+     tighter contrast problem than the same colour on a plain surface. */
+  --up-ink:#256ABC; --down-ink:#C13332;
   /* categorical, adjacent-validated, capped at 4 and always direct-labelled */
   --s1:#eb6834; --s2:#2a78d6; --s3:#1baf7a; --s4:#4a3aa7;
+  /* The same four series, dark enough to be read as words. The comparison
+     views label each series in its own colour rather than with a legend, and
+     a fill that is legible as a bar is not automatically legible as a name. */
+  --s1t:#B04E27; --s2t:#266CC1; --s3t:#137C57; --s4t:#4a3aa7;
   /* sequential blue ramp */
   --q1:#cde2fb; --q2:#9ec5f4; --q3:#6da7ec; --q4:#3987e5; --q5:#256abf; --q6:#184f95;
   --shadow:0 1px 2px rgba(11,16,20,.06),0 8px 24px -12px rgba(11,16,20,.18);
@@ -31,7 +58,7 @@
   --glass-strong:rgba(250,252,249,.74);
   --glass-hi:rgba(255,255,255,.85);
   --glass-edge:rgba(11,16,20,.07);
-  --field-warm:rgba(219,90,0,.15);
+  --field-warm:rgba(181,73,0,.15);
   --field-cool:rgba(57,135,229,.13);
   --field-deep:rgba(25,158,112,.09);
   --field-line:rgba(11,16,20,.035);
@@ -45,10 +72,13 @@
     color-scheme: dark;
     --ground:#0B1014; --surface:#121A20; --raised:#18232B; --sunken:#0E161B;
     --line:#22303A; --line-strong:#33454F;
-    --ink:#E9EFF2; --ink-2:#B4C2CA; --ink-3:#7C8D97; --ink-4:#5B6C76;
+    --ink:#E9EFF2; --ink-2:#BAC7CE; --ink-3:#94A4AD; --ink-4:#7C8A92;
     --accent:#FF7A1A; --accent-ink:#160B02; --accent-wash:#2A1A0C;
     --up:#3987e5; --up-wash:#12243A; --down:#e66767; --down-wash:#331B1B; --mid:#3A4750;
+    --ok:#35B98A; --warn:#6da7ec; --bad:#e66767;
+    --up-ink:#5f9eea; --down-ink:#e66767;
     --s1:#d95926; --s2:#3987e5; --s3:#199e70; --s4:#9085e9;
+    --s1t:#e8783f; --s2t:#5f9eea; --s3t:#35b98a; --s4t:#a79ef0;
     --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#9ec5f4; --q6:#cde2fb;
     --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
     --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
@@ -66,10 +96,13 @@
   color-scheme: dark;
   --ground:#0B1014; --surface:#121A20; --raised:#18232B; --sunken:#0E161B;
   --line:#22303A; --line-strong:#33454F;
-  --ink:#E9EFF2; --ink-2:#B4C2CA; --ink-3:#7C8D97; --ink-4:#5B6C76;
+  --ink:#E9EFF2; --ink-2:#BAC7CE; --ink-3:#94A4AD; --ink-4:#7C8A92;
   --accent:#FF7A1A; --accent-ink:#160B02; --accent-wash:#2A1A0C;
   --up:#3987e5; --up-wash:#12243A; --down:#e66767; --down-wash:#331B1B; --mid:#3A4750;
+  --ok:#35B98A; --warn:#6da7ec; --bad:#e66767;
+  --up-ink:#5f9eea; --down-ink:#e66767;
   --s1:#d95926; --s2:#3987e5; --s3:#199e70; --s4:#9085e9;
+  --s1t:#e8783f; --s2t:#5f9eea; --s3t:#35b98a; --s4t:#a79ef0;
   --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#9ec5f4; --q6:#cde2fb;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
   --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
@@ -219,9 +252,22 @@ section.page.on{display:block; animation:fade .22s ease;}
   display:grid; grid-template-columns:1.65fr 1fr; gap:28px; align-items:start;
   padding:8px 0 4px;
 }
-.byline{font-size:13px; color:var(--ink-3); margin-top:6px;}
-.byline a{color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--line-strong);}
-.byline a:hover{color:var(--accent); border-bottom-color:var(--accent);}
+.byline{
+  display:flex; align-items:center; flex-wrap:wrap; gap:7px 10px;
+  font-size:13px; color:var(--ink-3); margin-top:8px;
+}
+.byline b{color:var(--ink); font-weight:600;}
+.byline-sep{width:1px; height:13px; background:var(--line-strong);}
+.byline a{
+  display:inline-flex; align-items:center; gap:5px; color:var(--ink-2);
+  text-decoration:none; padding:3px 9px 3px 7px; border-radius:999px;
+  border:1px solid var(--line); background:var(--surface);
+  font-size:12.5px; transition:border-color .12s, color .12s;
+}
+.byline a svg{flex:none; opacity:.8;}
+.byline a:hover{color:var(--accent); border-color:var(--accent);}
+.byline a:hover svg{opacity:1;}
+@media (max-width:520px){ .byline-sep{display:none;} }
 .hero-copy h2{font-size:clamp(28px,4.2vw,46px); line-height:1.02; margin:12px 0 12px; letter-spacing:-.035em;}
 .hero-copy p{margin:0 0 16px; color:var(--ink-2); font-size:15px; line-height:1.62; max-width:60ch;}
 .hero-cta{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;}
@@ -335,8 +381,8 @@ tbody tr:hover td{background:var(--sunken);}
   padding:2px 5px; border-radius:4px; background:var(--sunken); color:var(--ink-3);
   border:1px solid var(--line); text-transform:uppercase; font-weight:500;
 }
-.tag.up{background:var(--up-wash); color:var(--up); border-color:transparent;}
-.tag.down{background:var(--down-wash); color:var(--down); border-color:transparent;}
+.tag.up{background:var(--up-wash); color:var(--up-ink); border-color:transparent;}
+.tag.down{background:var(--down-wash); color:var(--down-ink); border-color:transparent;}
 .tag.acc{background:var(--accent-wash); color:var(--accent); border-color:transparent;}
 .pos-dot{
   display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:6px;
@@ -489,15 +535,17 @@ tbody tr:hover td{background:var(--sunken);}
 .startcard span::after{content:" >"; }
 
 /* ---------- my team ---------- */
-.slotgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:9px;}
+.slotgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(248px,1fr)); gap:9px;}
+.slotgrid > *{min-width:0;}
 .slot{
   display:flex; align-items:center; gap:10px; padding:9px 11px; min-width:0;
+  min-height:56px;
   border:1px solid var(--line); border-radius:var(--r-sm); background:var(--surface);
 }
 .slot.empty{border-style:dashed; color:var(--ink-4);}
 .slot .tag{flex:none; min-width:42px; text-align:center;}
 .slot .who{flex:1; min-width:0;}
-.slot .who b{display:block; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.slot .who b{display:block; font-size:13.5px; font-weight:600; line-height:1.25; overflow-wrap:anywhere;}
 .slot .who span{font-size:11.5px; color:var(--ink-3);}
 .slot .pts{flex:none; text-align:right; font-family:var(--f-display); font-size:19px; font-weight:700; letter-spacing:-.02em;}
 .slot .pts em{display:block; font-style:normal; font-family:var(--f-body); font-size:10.5px;
@@ -1311,8 +1359,23 @@ function pageOverview(){
   p.innerHTML = `
    <div class="hero">
      <div class="hero-copy">
-       <div class="eyebrow">Pylon &middot; play-level yield and league outcome network</div>
-       <div class="byline">by <a href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener">Joshua Powers</a></div>
+       <div class="eyebrow">Pylon Terminal &middot; NFL projection engine &middot; 2026 season</div>
+       <div class="byline" itemscope itemtype="https://schema.org/Person">
+         <span>Built by <b itemprop="name">Joshua Powers</b></span>
+         <span class="byline-sep" aria-hidden="true"></span>
+         <a itemprop="sameAs" href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener me">
+           <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M3.4 5.9h2.4V14H3.4zM4.6 1.9a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8M7.3 5.9h2.3v1.1h.03a2.5 2.5 0 0 1 2.26-1.24c2.4 0 2.85 1.59 2.85 3.65V14h-2.4v-3.6c0-.86-.02-1.96-1.2-1.96-1.2 0-1.38.94-1.38 1.9V14H7.3z"/></svg>
+           LinkedIn</a>
+         <a itemprop="email" href="mailto:joshpowersbiz@gmail.com">
+           <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="1.4"/><path d="m2.2 4.4 5.8 4.2 5.8-4.2"/></svg>
+           joshpowersbiz@gmail.com</a>
+         <a itemprop="sameAs" href="https://instagram.com/joshuampowers" target="_blank" rel="noopener me">
+           <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3.6"/><circle cx="8" cy="8" r="2.9"/><circle cx="11.6" cy="4.4" r=".85" fill="currentColor" stroke="none"/></svg>
+           @joshuampowers</a>
+         <a itemprop="sameAs" href="https://github.com/Joshuapowers1/pylon-nfl" target="_blank" rel="noopener me">
+           <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+           Source</a>
+       </div>
        <h2>An NFL projection engine you can argue with</h2>
        <p>
          Nine seasons of play-by-play, an opponent-adjusted ridge model, shrinkage measured out of
@@ -1615,9 +1678,12 @@ function pageDraft(target){
    </div>
    <div id="dTable"></div>
    <p class="muted" style="font-size:12.5px;margin-top:12px;max-width:70ch">
-     One caveat the model will not tell you itself. Value over replacement overstates quarterbacks in
-     a one-quarterback league, because the position is streamable in a way the replacement-level math
-     cannot see. The arithmetic is right. The draft strategy is a judgment call.
+     One caveat, and it is not the one usually given. This board used to be adjusted downward at
+     quarterback on the reasoning that the position is streamable, so replacement level there was
+     really higher than the arithmetic said. Replaying three seasons of actual streaming found the
+     opposite by 1.7 points a game, so the adjustment is gone and the board ranks quarterbacks where
+     the arithmetic puts them. That disagrees with how most rooms draft, which is the point, but it is
+     a disagreement worth knowing you are taking on.
    </p>`;
 
   const cols=[
@@ -1794,7 +1860,7 @@ function pageCompare(){
       else { if(cmp.length>=4) cmp.shift(); cmp.push(c); }
       render();
     }));
-    const hues=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+    const hues=['var(--s1t)','var(--s2t)','var(--s3t)','var(--s4t)'];
     if(cmp.length){
       p.querySelector('#cLines').innerHTML = multiLine(
         cmp.map((c,i)=>({name:c, c:hues[i], y:D.win_dist[c]})),{h:320,aria:'Win distributions compared'});
@@ -2474,7 +2540,10 @@ function pageDraftRoom(){
       const left = avail.filter(x=>x.position===pos && x.v>0).length;
       const total = rep[pos];
       const share = Math.max(0,Math.min(1,left/total));
-      const col = share<.25?'var(--down)':share<.5?'var(--q4)':'var(--q3)';
+      // The number is read as text at 24px, so it takes the semantic set. The
+      // bar under it keeps the ramp, where contrast rules do not apply.
+      const col = share<.25?'var(--bad)':share<.5?'var(--warn)':'var(--ok)';
+      const bar = share<.25?'var(--down)':share<.5?'var(--q4)':'var(--q3)';
       return `<div class="kpi">
         <div style="display:flex;align-items:baseline;gap:6px">
           <div class="v" style="font-size:24px;color:${col}">${left}</div>
@@ -2482,7 +2551,7 @@ function pageDraftRoom(){
         </div>
         <div class="l">startable ${pos}s left above replacement</div>
         <div style="height:3px;background:var(--sunken);border-radius:2px;overflow:hidden;margin-top:4px">
-          <div style="height:100%;width:${(share*100).toFixed(0)}%;background:${col}"></div></div>
+          <div style="height:100%;width:${(share*100).toFixed(0)}%;background:${bar}"></div></div>
       </div>`;
     }).join('');
 
@@ -2743,7 +2812,7 @@ function pageEV(){
    ========================================================================== */
 let cmpPlayers=['Bijan Robinson','Jahmyr Gibbs','Ja\'Marr Chase'];
 function playerCompare(mountEl){
-  const hues=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+  const hues=['var(--s1t)','var(--s2t)','var(--s3t)','var(--s4t)'];
   function render(){
     const rows=cmpPlayers.map(n=>PLAYERS.find(x=>x.player===n)).filter(Boolean);
     const metrics=[
@@ -3449,75 +3518,172 @@ function renderImport(){
   draw();
 }
 
+/* Sleeper and ESPN both hand back a shape that is close to what this page
+   needs and not identical to it, so each lookup is written against the real
+   response rather than against the documentation. Everything below was
+   checked against live leagues. */
+
+/* People paste what they have. A Sleeper username, a profile URL, an @handle. */
+function sleeperHandle(raw){
+  const t = String(raw).trim();
+  const m = t.match(/sleeper\.(?:app|com)\/[^\s]*?\/([A-Za-z0-9_.-]+)\/?$/);
+  return (m ? m[1] : t).replace(/^@/,'').trim();
+}
+/* And an ESPN league is copied as the whole address far more often than as the
+   number. Stripping non-digits from the address would glue leagueId and
+   teamId together into a league that does not exist, so pull the parameter
+   out first and only fall back to digits when there is no parameter at all. */
+function espnLeagueId(raw){
+  const t = String(raw).trim();
+  const m = t.match(/leagueId[=/](\d+)/i);
+  if(m) return m[1];
+  const digits = t.replace(/\D/g,'');
+  return /^\d+$/.test(t) ? t : (t.includes('/') || t.includes('=') ? '' : digits);
+}
+
+function loadingRow(){ return '<p class="muted" style="font-size:13px;margin:0">Looking...</p>'; }
+function resolveNames(list){
+  const out = [];
+  list.forEach(n=>{ const h = n && resolve(n); if(h && !out.includes(h.player)) out.push(h.player); });
+  return out;
+}
+
 async function sleeperLookup(){
   const box=document.getElementById('mtImport');
-  const name=box.querySelector('#slUser').value.trim();
-  if(!name) return;
+  const name=sleeperHandle(box.querySelector('#slUser').value);
   const pick=box.querySelector('#slPick');
-  pick.innerHTML='<p class="muted" style="font-size:13px;margin:0">Looking...</p>';
+  if(!name){ pick.innerHTML='<div class="notice">Type your Sleeper username first. It is the one you log in with, not your team name.</div>'; return; }
+  pick.innerHTML = loadingRow();
   try{
     const user = await getJSON('https://api.sleeper.app/v1/user/'+encodeURIComponent(name));
     if(!user || !user.user_id) throw Object.assign(new Error('no user'),{status:404});
-    const leagues = await getJSON(`https://api.sleeper.app/v1/user/${user.user_id}/leagues/nfl/${SEASON}`);
-    if(!leagues.length){ pick.innerHTML=`<div class="notice">That account has no ${SEASON} leagues yet. Paste the roster instead and it will still work.</div>`; return; }
-    pick.innerHTML = `<div class="bar"><label class="dim" style="font-size:12px">League</label>
-      <select class="txt" id="slLg">${leagues.map((l,i)=>`<option value="${i}">${esc(l.name)} (${l.total_rosters} teams)</option>`).join('')}</select>
-      <button class="chip" id="slLoad">Load my roster</button></div>`;
+    /* A league belongs to one season. Somebody looking in August before their
+       league rolls over is in last year's, so fall back rather than telling
+       them they have no leagues. */
+    let season = SEASON;
+    let leagues = await getJSON(`https://api.sleeper.app/v1/user/${user.user_id}/leagues/nfl/${season}`);
+    if(!leagues.length){
+      season = String(+SEASON - 1);
+      leagues = await getJSON(`https://api.sleeper.app/v1/user/${user.user_id}/leagues/nfl/${season}`);
+    }
+    if(!leagues.length){
+      pick.innerHTML = `<div class="notice">That account is real, but it has no NFL leagues in ${SEASON} or ${season}. Paste your roster instead and everything on this page still works.</div>`;
+      return;
+    }
+    pick.innerHTML = `<div class="bar">
+        <label class="dim" style="font-size:12px" for="slLg">League</label>
+        <select class="txt" id="slLg">${leagues.map((l,i)=>
+          `<option value="${i}">${esc(l.name||'League')} (${l.total_rosters||'?'} teams)</option>`).join('')}</select>
+        <button class="chip" id="slLoad">Load my roster</button>
+      </div>${season!==SEASON?`<p class="muted" style="font-size:12px;margin:8px 0 0">Nothing found for ${SEASON}, so these are the ${season} leagues.</p>`:''}`;
     pick.querySelector('#slLoad').addEventListener('click',async()=>{
       const lg = leagues[+pick.querySelector('#slLg').value];
-      pick.querySelector('#slLoad').textContent='Loading...';
+      const btn = pick.querySelector('#slLoad');
+      btn.textContent='Loading...'; btn.disabled=true;
       try{
         const rosters = await getJSON(`https://api.sleeper.app/v1/league/${lg.league_id}/rosters`);
-        const mine = rosters.find(r=>r.owner_id===user.user_id) || rosters[0];
+        // Co-owned teams list the second manager separately, so check both.
+        const mine = rosters.find(r=>r.owner_id===user.user_id)
+                  || rosters.find(r=>(r.co_owners||[]).includes(user.user_id));
+        if(!mine){
+          pick.innerHTML = `<div class="notice">You are in that league but no roster is assigned to you yet, which happens before a draft. Paste your roster instead.</div>`;
+          return;
+        }
         const nameOf = id => (IDS.sleeper[String(id)]||[null])[0];
-        MT.roster = (mine.players||[]).map(nameOf).filter(Boolean).map(n=>{const h=resolve(n); return h?h.player:null;}).filter(Boolean);
-        MT.taken = rosters.flatMap(r=>r.players||[]).map(nameOf).filter(Boolean)
-                          .map(n=>{const h=resolve(n); return h?h.player:null;}).filter(Boolean);
-        MT.teams = lg.total_rosters || 12;
-        MT.slots = (lg.roster_positions||[]).filter(s=>Object.hasOwn(FLEXES,s) || POS.includes(s));
-        if(!MT.slots.length) MT.slots=null;
-        MT.source='sleeper'; MT.league=lg.name; mtSave();
-        box._msg(`Loaded <b>${esc(lg.name)}</b>. ${MT.roster.length} of your players are projected, and ${MT.taken.length} are rostered across the league, so the free agent list below is the real one.`, true);
+        MT.roster = resolveNames((mine.players||[]).map(nameOf));
+        MT.taken  = resolveNames(rosters.flatMap(r=>r.players||[]).map(nameOf));
+        MT.teams  = lg.total_rosters || rosters.length || 12;
+        MT.slots  = (lg.roster_positions||[]).filter(x=>Object.hasOwn(FLEXES,x) || POS.includes(x));
+        if(!MT.slots.length) MT.slots = null;
+        MT.source='sleeper'; MT.league = lg.name || 'Sleeper league'; mtSave();
+        if(!MT.roster.length){
+          box._msg(`Loaded <b>${esc(MT.league)}</b>, but your roster is empty. That is normal before a draft. Come back after it, or paste a roster to try the page now.`);
+        } else {
+          box._msg(`Loaded <b>${esc(MT.league)}</b>. ${MT.roster.length} of your players are projected, and ${MT.taken.length} are rostered across the league, so the free agent list below is the real one.`, true);
+        }
         pick.innerHTML='';
         renderTeam();
-      }catch(err){ pick.innerHTML=`<div class="notice">${netMessage(err)}</div>`; }
+      }catch(err){
+        btn.textContent='Load my roster'; btn.disabled=false;
+        pick.innerHTML = `<div class="notice">${netMessage(err)}</div>`;
+      }
     });
   }catch(err){
-    pick.innerHTML = `<div class="notice">${netMessage(err)}</div>`;
+    pick.innerHTML = `<div class="notice">${err && err.status===404
+      ? 'No Sleeper account by that name. It is the username you log in with, not the name of your team.'
+      : netMessage(err)}</div>`;
   }
 }
 
+/* ESPN numbers its lineup slots. These are the ones that can hold a player we
+   project; kickers, defenses, bench and injured reserve are deliberately not
+   here, because a lineup made of slots we cannot fill is not a lineup. */
+const ESPN_SLOTS = {0:"QB", 2:"RB", 3:"FLEX", 4:"WR", 5:"REC_FLEX", 6:"TE", 7:"SUPER_FLEX", 23:"FLEX"};
+
 async function espnLookup(){
   const box=document.getElementById('mtImport');
-  const id=box.querySelector('#esId').value.trim().replace(/\D/g,'');
-  if(!id) return;
+  const id=espnLeagueId(box.querySelector('#esId').value);
   const pick=box.querySelector('#esPick');
-  pick.innerHTML='<p class="muted" style="font-size:13px;margin:0">Looking...</p>';
-  const url=`https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leagues/${id}?view=mRoster&view=mTeam`;
+  if(!id){ pick.innerHTML='<div class="notice">Paste the league address from your browser, or just the number after leagueId in it.</div>'; return; }
+  pick.innerHTML = loadingRow();
+  const url = (yr) => `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${yr}/segments/0/leagues/${id}?view=mRoster&view=mTeam&view=mSettings`;
   try{
-    const lg = await getJSON(url);
-    const teams = lg.teams||[];
+    let season = SEASON, lg;
+    try{ lg = await getJSON(url(season)); }
+    catch(err){
+      if(err && err.status===404){ season = String(+SEASON - 1); lg = await getJSON(url(season)); }
+      else throw err;
+    }
+    const teams = lg.teams || [];
     if(!teams.length) throw Object.assign(new Error('empty'),{status:404});
-    const label = t => t.name || [t.location,t.nickname].filter(Boolean).join(' ') || ('Team '+t.id);
-    pick.innerHTML = `<div class="bar"><label class="dim" style="font-size:12px">Your team</label>
-      <select class="txt" id="esTm">${teams.map((t,i)=>`<option value="${i}">${esc(label(t))}</option>`).join('')}</select>
-      <button class="chip" id="esLoad">Load my roster</button></div>`;
+
+    // Owner names live in members, keyed by the id the team carries.
+    const members = {};
+    (lg.members||[]).forEach(m=>{ members[m.id] = m.displayName || [m.firstName,m.lastName].filter(Boolean).join(' '); });
+    const label = t => {
+      const nm = t.name || [t.location,t.nickname].filter(Boolean).join(' ').trim() || ('Team '+t.id);
+      const who = members[t.primaryOwner];
+      return who ? `${nm} (${who})` : nm;
+    };
+    const settings = lg.settings || {};
+    const leagueName = settings.name || 'ESPN league';
+
+    pick.innerHTML = `<div class="bar">
+        <label class="dim" style="font-size:12px" for="esTm">Your team in ${esc(leagueName)}</label>
+        <select class="txt" id="esTm">${teams.map((t,i)=>`<option value="${i}">${esc(label(t))}</option>`).join('')}</select>
+        <button class="chip" id="esLoad">Load my roster</button>
+      </div>${season!==SEASON?`<p class="muted" style="font-size:12px;margin:8px 0 0">No ${SEASON} league at that id, so this is the ${season} one.</p>`:''}`;
+
     pick.querySelector('#esLoad').addEventListener('click',()=>{
-      const names = t => ((t.roster&&t.roster.entries)||[])
-        .map(e=>e.playerPoolEntry && e.playerPoolEntry.player && e.playerPoolEntry.player.fullName)
-        .filter(Boolean).map(n=>{const h=resolve(n); return h?h.player:null;}).filter(Boolean);
+      const names = t => resolveNames(((t.roster&&t.roster.entries)||[])
+        .map(e=>e.playerPoolEntry && e.playerPoolEntry.player && e.playerPoolEntry.player.fullName));
       const me = teams[+pick.querySelector('#esTm').value];
       MT.roster = names(me);
-      MT.taken = teams.flatMap(names);
-      MT.teams = teams.length;
-      MT.slots = null; MT.source='espn'; MT.league = lg.settings && lg.settings.name || 'ESPN league';
-      mtSave();
-      box._msg(`Loaded <b>${esc(label(me))}</b>. ${MT.roster.length} of your players are projected.`, true);
+      MT.taken  = resolveNames(teams.flatMap(t=>((t.roster&&t.roster.entries)||[])
+        .map(e=>e.playerPoolEntry && e.playerPoolEntry.player && e.playerPoolEntry.player.fullName)));
+      MT.teams  = settings.size || teams.length;
+
+      // The real starting lineup, in the league's own slot order.
+      const counts = (settings.rosterSettings||{}).lineupSlotCounts || {};
+      const slots = [];
+      Object.keys(ESPN_SLOTS).map(Number).sort((a,b)=>a-b).forEach(code=>{
+        for(let n = +(counts[code]||0); n > 0; n--) slots.push(ESPN_SLOTS[code]);
+      });
+      MT.slots = slots.length ? slots : null;
+      MT.source='espn'; MT.league = leagueName; mtSave();
+
+      if(!MT.roster.length){
+        box._msg(`Loaded <b>${esc(label(me))}</b>, but that roster is empty, which is normal before a draft. Paste a roster to try the page now.`);
+      } else {
+        box._msg(`Loaded <b>${esc(label(me))}</b> from ${esc(leagueName)}. ${MT.roster.length} of your players are projected${MT.slots?', using your league\'s own lineup slots':''}, and ${MT.taken.length} are rostered across the league.`, true);
+      }
       pick.innerHTML='';
       renderTeam();
     });
   }catch(err){
-    pick.innerHTML = `<div class="notice">${netMessage(err)}</div>`;
+    pick.innerHTML = `<div class="notice">${err && err.status===404
+      ? 'No league at that id. Check the number after leagueId in your league address, and note that ESPN keeps a separate league for every season.'
+      : netMessage(err)}</div>`;
   }
 }
 

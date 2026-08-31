@@ -139,6 +139,60 @@ if(sl.taken !== 8) errors.push(`[import] league-wide rostered count was ${sl.tak
 if(String(sl.slots) !== 'QB,RB,RB,WR,WR,TE,FLEX') errors.push(`[import] league slots read ${sl.slots}`);
 if(sl.adds.some(n=>sl.mine.includes(n))) errors.push('[import] waiver list is offering a player already rostered');
 if(sl.adds.includes('Trey McBride')) errors.push('[import] waiver list is offering another team\'s player');
+/* ESPN, against a response captured from a real public league in 2026 with
+   the owner names replaced. The shape is the thing under test: where the
+   player names live, where the league's own lineup slots live, and that a
+   pasted league address does not turn into the wrong league id. */
+const ESPN = JSON.parse(fs.readFileSync('espn-fixture.json','utf8'));
+await r.evaluate(fx=>{
+  window.fetch = async (url)=>{
+    const u=String(url);
+    if(/seasons\/\d+\/segments\/0\/leagues\/1241838\?/.test(u)) return {ok:true,status:200,json:async()=>fx};
+    if(/\/leagues\/\d+\?/.test(u)) return {ok:false,status:404,json:async()=>({})};
+    return {ok:true,status:200,json:async()=>({week:1})};
+  };
+  try{localStorage.removeItem('pylon-myteam-v1')}catch(e){}
+}, ESPN);
+// A pasted league address, not a bare number.
+const idCases = await r.evaluate(()=>[
+  espnLeagueId('https://fantasy.espn.com/football/team?leagueId=1241838&teamId=4&seasonId=2026'),
+  espnLeagueId('1241838'),
+  espnLeagueId('  1241838  '),
+  espnLeagueId('https://fantasy.espn.com/football/league?leagueId=1241838'),
+]);
+if(idCases.some(x=>x!=='1241838')) errors.push(`[espn] league id parsing returned ${JSON.stringify(idCases)}`);
+const slCases = await r.evaluate(()=>[
+  sleeperHandle('@ninja'), sleeperHandle(' ninja '), sleeperHandle('https://sleeper.com/user/ninja'),
+]);
+if(slCases.some(x=>x!=='ninja')) errors.push(`[sleeper] username parsing returned ${JSON.stringify(slCases)}`);
+
+await r.evaluate(()=>go('myteam'));
+await r.waitForTimeout(300);
+await r.click('#mtSrc button[data-s="espn"]');
+await r.fill('#esId','https://fantasy.espn.com/football/team?leagueId=1241838&teamId=4');
+await r.click('#esGo');
+await r.waitForTimeout(700);
+const teamOpts = await r.evaluate(()=>[...document.querySelectorAll('#esTm option')].map(o=>o.textContent));
+if(teamOpts.length !== 10) errors.push(`[espn] offered ${teamOpts.length} teams, expected 10`);
+if(!teamOpts[0] || !/\(Manager/.test(teamOpts[0])) errors.push(`[espn] team label lost the owner: ${teamOpts[0]}`);
+await r.click('#esLoad');
+await r.waitForTimeout(800);
+const es = await r.evaluate(()=>({
+  mine: MT.roster.length, taken: MT.taken.length, teams: MT.teams,
+  slots: (MT.slots||[]).join(','), league: MT.league,
+  starters: [...document.querySelectorAll('#pg-myteam .slot')].length,
+  pts: parseFloat(document.querySelector('#pg-myteam .kpi .v')?.textContent),
+  dupes: MT.taken.length !== new Set(MT.taken).size,
+}));
+if(es.league !== 'The Keeper League') errors.push(`[espn] league name read as ${es.league}`);
+if(es.teams !== 10) errors.push(`[espn] league size read as ${es.teams}`);
+if(es.slots !== 'QB,RB,RB,WR,WR,WR,TE,FLEX') errors.push(`[espn] lineup slots read as ${es.slots}`);
+if(!(es.mine >= 8)) errors.push(`[espn] resolved only ${es.mine} players on the selected roster`);
+if(!(es.taken >= 80)) errors.push(`[espn] resolved only ${es.taken} rostered players league-wide`);
+if(es.dupes) errors.push('[espn] the same player was counted twice as rostered');
+if(!(es.pts > 60)) errors.push(`[espn] lineup total read ${es.pts}`);
+await r.screenshot({path:'shot-espn.png'});
+
 // The glossary. Every abbreviation in a column header should resolve to a
 // definition, and clicking one should open the list at that entry.
 await r.evaluate(()=>go('players'));
@@ -186,4 +240,4 @@ const mow = await m.evaluate(()=>document.documentElement.scrollWidth - document
 if(mow>2) errors.push(`[mobile] horizontal overflow of ${mow}px at 390`);
 await browser.close();
 
-console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, roster import from paste and Sleeper, no overflow at 1440 or 390');
+console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, roster import from paste, Sleeper and a real ESPN league, no overflow at 1440 or 390');
