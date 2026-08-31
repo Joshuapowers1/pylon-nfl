@@ -16,6 +16,14 @@ for (const theme of ['dark','light']) {
     errors.push(`[${theme}] CONSOLE: ${m.text()}`); });
   await page.goto('file://'+process.cwd()+'/preview.html');
   await page.waitForTimeout(1200);
+  if(theme==='dark'){
+    // First visit: the overlay should be up, and dismissing it should stick.
+    const up = await page.evaluate(()=>document.getElementById('welcome').classList.contains('on'));
+    if(!up) errors.push('[first visit] welcome overlay did not appear');
+    await page.screenshot({path:'shot-welcome.png'});
+  }
+  await page.evaluate(()=>closeWelcome());
+  await page.waitForTimeout(150);
   for (const id of ['overview','myteam','matchups','startsit','teams','players','draft','market','sim','record','model']) {
     await page.evaluate(i => go(i), id);
     await page.waitForTimeout(500);
@@ -55,6 +63,7 @@ const r = await browser.newPage({ viewport:{width:1440,height:1400}, colorScheme
 r.on('pageerror', e=>errors.push(`[import] PAGEERROR: ${e.message}`));
 await r.goto('file://'+process.cwd()+'/preview.html');
 await r.waitForTimeout(900);
+await r.evaluate(()=>closeWelcome());
 await r.evaluate(()=>{ try{localStorage.removeItem('pylon-myteam-v1')}catch(e){} go('myteam'); });
 await r.waitForTimeout(300);
 
@@ -130,6 +139,39 @@ if(sl.taken !== 8) errors.push(`[import] league-wide rostered count was ${sl.tak
 if(String(sl.slots) !== 'QB,RB,RB,WR,WR,TE,FLEX') errors.push(`[import] league slots read ${sl.slots}`);
 if(sl.adds.some(n=>sl.mine.includes(n))) errors.push('[import] waiver list is offering a player already rostered');
 if(sl.adds.includes('Trey McBride')) errors.push('[import] waiver list is offering another team\'s player');
+// The glossary. Every abbreviation in a column header should resolve to a
+// definition, and clicking one should open the list at that entry.
+await r.evaluate(()=>go('players'));
+await r.waitForTimeout(500);
+const gl = await r.evaluate(()=>{
+  const heads = [...document.querySelectorAll('#pg-players thead th')].map(t=>t.textContent.trim());
+  const wired = [...document.querySelectorAll('#pg-players thead th .term')].map(t=>t.textContent.trim());
+  return {heads, wired, terms: TERMS.length};
+});
+if(gl.wired.length < 5) errors.push(`[glossary] only ${gl.wired.length} of ${gl.heads.length} player columns explain themselves`);
+await r.evaluate(()=>document.querySelector('#pg-players thead th .term').click());
+await r.waitForTimeout(400);
+const opened = await r.evaluate(()=>({
+  on: SHEET.classList.contains('on'),
+  hit: !!SHEET.querySelector('.gl-row.hit'),
+  rows: SHEET.querySelectorAll('.gl-row').length,
+}));
+if(!opened.on) errors.push('[glossary] clicking a column header did not open the glossary');
+if(!opened.hit) errors.push('[glossary] the glossary opened but did not highlight the term clicked');
+if(opened.rows !== gl.terms) errors.push(`[glossary] rendered ${opened.rows} of ${gl.terms} definitions`);
+await r.evaluate(()=>{ document.getElementById('glQ').value='vig';
+  document.getElementById('glQ').dispatchEvent(new Event('input')); });
+await r.waitForTimeout(250);
+const searched = await r.evaluate(()=>SHEET.querySelectorAll('.gl-row').length);
+if(!(searched > 0 && searched < gl.terms)) errors.push(`[glossary] search for "vig" returned ${searched} of ${gl.terms}`);
+await r.screenshot({path:'shot-glossary.png'});
+// Sorting must not strip the affordance back off the header.
+await r.evaluate(()=>closeSheet());
+await r.waitForTimeout(250);
+await r.evaluate(()=>{ const th=document.querySelector('#pg-players thead th:nth-child(5)'); th.click(); th.click(); });
+await r.waitForTimeout(300);
+const afterSort = await r.evaluate(()=>document.querySelectorAll('#pg-players thead th .term').length);
+if(afterSort !== gl.wired.length) errors.push(`[glossary] sorting dropped the definition link: ${gl.wired.length} then ${afterSort}`);
 await r.close();
 
 // mobile
@@ -137,10 +179,11 @@ const m = await browser.newPage({ viewport:{width:390,height:844}, colorScheme:'
 m.on('pageerror', e=>errors.push(`[mobile] PAGEERROR: ${e.message}`));
 await m.goto('file://'+process.cwd()+'/preview.html');
 await m.waitForTimeout(900);
+await m.evaluate(()=>closeWelcome());
 await m.evaluate(()=>go('teams')); await m.waitForTimeout(400);
 await m.screenshot({path:'shot-mobile.png'});
 const mow = await m.evaluate(()=>document.documentElement.scrollWidth - document.documentElement.clientWidth);
 if(mow>2) errors.push(`[mobile] horizontal overflow of ${mow}px at 390`);
 await browser.close();
 
-console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, roster import from paste and Sleeper, no overflow at 1440 or 390');
+console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, roster import from paste and Sleeper, no overflow at 1440 or 390');

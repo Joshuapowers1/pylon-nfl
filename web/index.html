@@ -24,6 +24,17 @@
   --q1:#cde2fb; --q2:#9ec5f4; --q3:#6da7ec; --q4:#3987e5; --q5:#256abf; --q6:#184f95;
   --shadow:0 1px 2px rgba(11,16,20,.06),0 8px 24px -12px rgba(11,16,20,.18);
   --shadow-lg:0 2px 6px rgba(11,16,20,.08),0 24px 56px -20px rgba(11,16,20,.28);
+  /* Glass. A translucent surface, a hairline, and a lit top edge. The blur is
+     only worth anything because of the ambient field painted behind the page,
+     so the two are designed as one thing. */
+  --glass:rgba(255,255,255,.60);
+  --glass-strong:rgba(250,252,249,.74);
+  --glass-hi:rgba(255,255,255,.85);
+  --glass-edge:rgba(11,16,20,.07);
+  --field-warm:rgba(219,90,0,.15);
+  --field-cool:rgba(57,135,229,.13);
+  --field-deep:rgba(25,158,112,.09);
+  --field-line:rgba(11,16,20,.035);
   --r:10px; --r-sm:6px;
   --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
@@ -41,6 +52,14 @@
     --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#9ec5f4; --q6:#cde2fb;
     --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
     --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
+    --glass:rgba(24,33,40,.56);
+    --glass-strong:rgba(13,19,24,.72);
+    --glass-hi:rgba(255,255,255,.08);
+    --glass-edge:rgba(0,0,0,.5);
+    --field-warm:rgba(255,122,26,.15);
+    --field-cool:rgba(57,135,229,.15);
+    --field-deep:rgba(25,158,112,.11);
+    --field-line:rgba(255,255,255,.030);
   }
 }
 :root[data-theme="dark"]{
@@ -54,6 +73,16 @@
   --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#9ec5f4; --q6:#cde2fb;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
   --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
+--shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px -12px rgba(0,0,0,.7);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 56px -20px rgba(0,0,0,.85);
+  --glass:rgba(24,33,40,.56);
+  --glass-strong:rgba(13,19,24,.72);
+  --glass-hi:rgba(255,255,255,.08);
+  --glass-edge:rgba(0,0,0,.5);
+  --field-warm:rgba(255,122,26,.15);
+  --field-cool:rgba(57,135,229,.15);
+  --field-deep:rgba(25,158,112,.11);
+  --field-line:rgba(255,255,255,.030);
 }
 
 *,*::before,*::after{box-sizing:border-box;}
@@ -61,6 +90,57 @@ body{
   margin:0; background:var(--ground); color:var(--ink);
   font-family:var(--f-body); font-size:15px; line-height:1.5;
   -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+
+/* ---------- the field ----------------------------------------------------
+   Frosted glass only reads as glass when there is something behind it to
+   soften. This is that something: three broad washes in the palette already
+   in use, and the faintest set of yard lines, fixed so the panels appear to
+   float over a field rather than over a flat grey. It is drawn once, behind
+   everything, and never scrolls. */
+body::before{
+  content:""; position:fixed; inset:-10% -10% -10% -10%; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(58% 44% at 12% 4%,  var(--field-warm) 0%, transparent 68%),
+    radial-gradient(52% 46% at 92% 34%, var(--field-cool) 0%, transparent 66%),
+    radial-gradient(64% 40% at 42% 104%,var(--field-deep) 0%, transparent 64%);
+}
+body::after{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:repeating-linear-gradient(to right,
+    var(--field-line) 0 1px, transparent 1px 68px);
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 22%,#000 78%,transparent);
+  mask-image:linear-gradient(to bottom,transparent,#000 22%,#000 78%,transparent);
+}
+
+/* ---------- glass --------------------------------------------------------
+   One material, two weights. Chrome and overlays take the strong weight;
+   panels that hold content take the light one. Data tables stay opaque on
+   purpose, because a column of numbers read through a blur is worse than a
+   column of numbers on a plain surface, and the contrast between the two is
+   what makes the glass legible as a material. */
+.glass, .card, .kpi, header.top, .sheet, .pal-in, .notice, .slot, .hero-side{
+  background:var(--glass);
+  -webkit-backdrop-filter:saturate(180%) blur(18px);
+  backdrop-filter:saturate(180%) blur(18px);
+  box-shadow:inset 0 1px 0 var(--glass-hi), 0 1px 2px var(--glass-edge), 0 14px 30px -22px var(--glass-edge);
+}
+header.top, .sheet, .pal-in{
+  background:var(--glass-strong);
+  -webkit-backdrop-filter:saturate(190%) blur(30px);
+  backdrop-filter:saturate(190%) blur(30px);
+}
+/* Without backdrop-filter a translucent panel is just washed-out text, so
+   everything falls back to the solid surfaces the site had before. */
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  .glass, .card, .kpi, .notice, .slot, .hero-side{background:var(--surface);}
+  header.top, .sheet, .pal-in{background:var(--ground);}
+}
+/* Some people turn transparency off at the system level. Honour it. */
+@media (prefers-reduced-transparency: reduce){
+  .glass, .card, .kpi, .notice, .slot, .hero-side{background:var(--surface); backdrop-filter:none; -webkit-backdrop-filter:none;}
+  header.top, .sheet, .pal-in{background:var(--ground); backdrop-filter:none; -webkit-backdrop-filter:none;}
+  body::before, body::after{display:none;}
 }
 h1,h2,h3,h4{font-family:var(--f-display); font-weight:700; letter-spacing:-.02em; margin:0; text-wrap:balance;}
 a{color:inherit;}
@@ -77,7 +157,7 @@ button{font:inherit; color:inherit; cursor:pointer;}
 /* ---------- app shell ---------- */
 .shell{max-width:1480px; margin:0 auto; padding:0 20px 96px;}
 header.top{
-  position:sticky; top:0; z-index:60; background:var(--ground);
+  position:sticky; top:0; z-index:60;
   border-bottom:1px solid var(--line);
 }
 .top-in{
@@ -156,7 +236,7 @@ section.page.on{display:block; animation:fade .22s ease;}
   border:1px solid var(--line); border-radius:4px; padding:2px 6px;
 }
 .hero-side{
-  background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  border:1px solid var(--line); border-radius:var(--r);
   padding:14px; display:flex; flex-direction:column; gap:2px;
 }
 .hero-row{
@@ -180,13 +260,13 @@ section.page.on{display:block; animation:fade .22s ease;}
 
 /* ---------- cards / grids ---------- */
 .card{
-  background:var(--surface); border:1px solid var(--line);
+  border:1px solid var(--line);
   border-radius:var(--r); padding:16px;
 }
 .grid{display:grid; gap:12px;}
 .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:10px; margin-bottom:22px;}
 .kpi{
-  background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  border:1px solid var(--line); border-radius:var(--r);
   padding:13px 14px; display:flex; flex-direction:column; gap:3px;
 }
 .kpi .v{font-family:var(--f-display); font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1;}
@@ -274,13 +354,14 @@ tbody tr:hover td{background:var(--sunken);}
 .scrim.on{opacity:1; pointer-events:auto;}
 .sheet{
   position:fixed; top:0; right:0; bottom:0; width:min(660px,100%);
-  background:var(--ground); border-left:1px solid var(--line); z-index:90;
+  border-left:1px solid var(--line); z-index:90;
   transform:translateX(101%); transition:transform .24s cubic-bezier(.32,.72,0,1);
   overflow-y:auto; overscroll-behavior:contain; box-shadow:var(--shadow-lg);
 }
 .sheet.on{transform:none;}
 .sheet-head{
-  position:sticky; top:0; background:var(--ground); border-bottom:1px solid var(--line);
+  position:sticky; top:0; background:var(--glass-strong); border-bottom:1px solid var(--line);
+  -webkit-backdrop-filter:saturate(190%) blur(30px); backdrop-filter:saturate(190%) blur(30px);
   padding:16px 20px; display:flex; align-items:flex-start; gap:14px; z-index:2;
 }
 .sheet-body{padding:20px; display:flex; flex-direction:column; gap:22px;}
@@ -316,9 +397,10 @@ tbody tr:hover td{background:var(--sunken);}
 }
 .pal.on{display:block;}
 .pal-in{
-  max-width:560px; margin:0 auto; background:var(--surface); border:1px solid var(--line);
-  border-radius:12px; box-shadow:var(--shadow-lg); overflow:hidden;
+  max-width:560px; margin:0 auto; border:1px solid var(--line);
+  border-radius:12px; overflow:hidden;
 }
+.pal-in{box-shadow:var(--shadow-lg), inset 0 1px 0 var(--glass-hi);}
 .pal input{
   width:100%; border:0; border-bottom:1px solid var(--line); background:none;
   padding:15px 17px; font:inherit; font-size:15px; color:var(--ink);
@@ -337,6 +419,61 @@ tbody tr:hover td{background:var(--sunken);}
 .ss-num{display:flex; align-items:baseline; gap:7px;}
 .ss-num b{font-family:var(--f-display); font-size:28px; font-weight:700; letter-spacing:-.03em; line-height:1;}
 .ss-num span{font-size:11.5px; color:var(--ink-3);}
+/* ---------- explain everything ---------- */
+.term{
+  cursor:help; border-bottom:1px dotted currentColor; border-radius:2px;
+}
+.term:hover{color:var(--accent); border-bottom-color:var(--accent);}
+.gl{display:flex; flex-direction:column; gap:22px;}
+.gl section{display:block;}
+.gl-row{
+  padding:10px 0; border-top:1px solid var(--line);
+  display:grid; grid-template-columns:170px 1fr; gap:16px; align-items:baseline;
+}
+.gl-row dt{font-weight:600; font-size:14px;}
+.gl-row dt em{
+  display:block; font-style:normal; font-family:var(--f-mono); font-size:10.5px;
+  color:var(--ink-4); letter-spacing:.04em; margin-top:2px;
+}
+.gl-row dd{margin:0; font-size:13.5px; line-height:1.6; color:var(--ink-2);}
+.gl-row.hit{
+  background:var(--accent-wash); border-radius:var(--r-sm);
+  margin:0 -10px; padding:10px; border-top-color:transparent;
+}
+@media (max-width:560px){ .gl-row{grid-template-columns:1fr; gap:5px;} }
+
+/* ---------- first visit ---------- */
+.welcome{
+  position:fixed; inset:0; z-index:130; display:none; place-items:center;
+  padding:22px; background:rgba(6,10,13,.4);
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+}
+.welcome.on{display:grid; animation:fade .28s ease;}
+.welcome-in{
+  width:min(620px,100%); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 20px; box-shadow:var(--shadow-lg), inset 0 1px 0 var(--glass-hi);
+}
+.welcome-in h2{font-size:27px; margin:6px 0 10px; letter-spacing:-.03em;}
+.welcome-in > p{margin:0 0 18px; color:var(--ink-2); font-size:14px; line-height:1.6; max-width:52ch;}
+.welcome-opts{display:flex; flex-direction:column; gap:9px; margin-bottom:16px;}
+.welcome-opts button{
+  text-align:left; padding:13px 15px; border:1px solid var(--line); border-radius:var(--r);
+  background:var(--surface); color:inherit; transition:border-color .12s, transform .12s;
+}
+.welcome-opts button:hover{border-color:var(--accent); transform:translateX(2px);}
+.welcome-opts b{display:block; font-size:15px; font-weight:600; margin-bottom:3px;}
+.welcome-opts span{font-size:12.5px; color:var(--ink-3); line-height:1.5;}
+.wskip{
+  background:none; border:0; padding:4px 0; font-size:12.5px; color:var(--ink-4);
+  text-decoration:underline; text-underline-offset:3px;
+}
+.wskip:hover{color:var(--ink-2);}
+.footlink{
+  background:none; border:0; padding:0; font:inherit; color:var(--ink-3);
+  text-decoration:underline; text-underline-offset:3px;
+}
+.footlink:hover{color:var(--accent);}
+
 /* ---------- start here ---------- */
 .startrow{display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:11px; margin-bottom:14px;}
 .startrow > *{min-width:0;}
@@ -476,6 +613,13 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
           <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
         </svg>
       </a>
+      <button class="iconbtn" id="helpBtn" aria-label="What every word means" title="What every word on this site means">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M6.1 6.1a2 2 0 1 1 2.3 2q-.4.1-.4.6v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="11.5" r=".85" fill="currentColor"/>
+        </svg>
+      </button>
       <button class="iconbtn" id="themeBtn" aria-label="Toggle theme">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <circle cx="8" cy="8" r="3.4" stroke="currentColor" stroke-width="1.5"/>
@@ -486,6 +630,21 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
     </div>
   </div>
 </header>
+
+<div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle">
+  <div class="welcome-in glass">
+    <div class="eyebrow">Pylon &middot; 2026</div>
+    <h2 id="wTitle">What brings you here?</h2>
+    <p>Pick one. Everything else stays where it is, and the question mark in the
+       top corner explains any word on the site in plain English.</p>
+    <div class="welcome-opts">
+      <button data-w="myteam"><b>I play fantasy football</b><span>Pull in your roster and get a lineup, the close calls, and who is worth adding.</span></button>
+      <button data-w="matchups"><b>I want to know who wins</b><span>Projected scores for every game this week, next to what the sportsbooks are posting.</span></button>
+      <button data-w="model"><b>I want to see how it works</b><span>The method, the backtest, and the six ways this model is wrong.</span></button>
+    </div>
+    <button class="wskip" data-wclose>Just let me look around</button>
+  </div>
+</div>
 
 <div class="shell">
   <section class="page" id="pg-overview"></section>
@@ -508,6 +667,8 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
         </div>
       </div>
       <div class="foot-meta">
+        <span><button class="footlink" id="tourBtn">Show me around again</button>
+              &middot; <button class="footlink" id="glossBtn">What every word means</button></span>
         <span>PYLON v1.0 &middot; MIT licensed</span>
         <span>25,000 season simulations &middot; 10,000 per player</span>
         <span>Markets pulled 2026-08-25 07:34 UTC</span>
@@ -849,7 +1010,7 @@ function makeTable(rows, cols, opts={}){
   const wrap = el('<div class="tw"><table><thead><tr></tr></thead><tbody></tbody></table></div>');
   const thead = wrap.querySelector('thead tr'), tbody = wrap.querySelector('tbody');
   cols.forEach(c=>{
-    const th = el(`<th scope="col" class="${c.left?'l':''}" title="${esc(c.title||c.h)}">${esc(c.h)}</th>`);
+    const th = el(`<th scope="col" class="${c.left?'l':''}" title="${esc(c.title||c.h)}">${termTag(c.term||c.h)}</th>`);
     th.addEventListener('click',()=>{
       if(sortKey===c.k) sortDir=-sortDir; else { sortKey=c.k; sortDir=c.asc?1:-1; }
       draw();
@@ -858,8 +1019,12 @@ function makeTable(rows, cols, opts={}){
   });
   function draw(){
     [...thead.children].forEach((th,i)=>{
-      if(cols[i].k===sortKey){ th.dataset.sorted=''; th.textContent=cols[i].h+(sortDir>0?' \u25B2':' \u25BC'); }
-      else { delete th.dataset.sorted; th.textContent=cols[i].h; }
+      // innerHTML rather than textContent, because the header carries the
+      // affordance that opens the definition and textContent would strip it
+      // off again on every sort.
+      const arrow = cols[i].k===sortKey ? (sortDir>0?' \u25B2':' \u25BC') : '';
+      if(cols[i].k===sortKey) th.dataset.sorted=''; else delete th.dataset.sorted;
+      th.innerHTML = termTag(cols[i].term||cols[i].h) + arrow;
     });
     const s=[...rows].sort((a,b)=>{
       const x=a[sortKey], y=b[sortKey];
@@ -3515,6 +3680,331 @@ function slotCard(slot,x){
     <div class="pts">${w? f1(w.points) : '&ndash;'}<em>${w? f1(w.floor)+' to '+f1(w.ceiling) : ''}</em></div>
   </div>`;
 }
+</script>
+<script>
+"use strict";
+/* ==========================================================================
+   PLAIN ENGLISH
+   A projection is worth nothing to somebody who cannot read it. Every term
+   this site uses is defined here in the words a person would actually use,
+   with the reason it matters rather than only what it is, and every one of
+   them is reachable from the place it appears: hover a column header, tap it
+   on a phone, or open the whole list from the question mark in the header.
+   ========================================================================== */
+
+/* [term, group, definition, aliases] -- aliases are the abbreviations that
+   actually appear in column headers and labels, so a lookup by header text
+   finds the entry without every table having to name it. */
+const TERMS = [
+  // ---- the fantasy side
+  ["Projected points","Fantasy",
+   "Our best guess at a player's fantasy points, already reduced for the games we expect him to miss. That is why these totals sit below most published sets: everyone gets hurt sometimes and pretending otherwise makes every player look better than he is.",
+   ["proj","season","points","proj points","pts"]],
+  ["Points per game","Fantasy",
+   "Projected points divided by the games we expect him to play, not by seventeen. Use this to compare two players when one of them is expected to miss time.",
+   ["ppg","per game","proj ppg"]],
+  ["Floor","Fantasy",
+   "A bad but not disastrous week. One week in ten comes in at or below this. High floors matter when you are favoured and just need to not blow it.",
+   []],
+  ["Ceiling","Fantasy",
+   "A great week. One week in ten comes in at or above this. High ceilings matter when you are the underdog and need something to go right.",
+   []],
+  ["Matchup","Fantasy",
+   "Points gained or lost this week purely because of who he is playing and whether his team is likely to be ahead or behind. A running back's week swings on this far more than a receiver's does.",
+   ["matchup +/-","matchup delta"]],
+  ["Value over replacement","Fantasy",
+   "How many more points a player gives you than the guy you could pick up for free at the same position. It is the number that says a good tight end is worth more than a slightly better receiver, because there are forty usable receivers and about ten usable tight ends.",
+   ["vorp","value","above replacement","val"]],
+  ["Replacement level","Fantasy",
+   "The last player at a position who would be starting in your league. Everyone above him is worth something. Everyone below him is interchangeable with the waiver wire.",
+   []],
+  ["Average draft position","Fantasy",
+   "Where a player actually goes in real drafts. It is not our number, it is the market's, and the gap between the two is the whole point of the draft board.",
+   ["adp","drafted","adp rank"]],
+  ["Slots apart","Fantasy",
+   "How far our ranking sits from where he was drafted, counted in picks. A big positive number means the room is undervaluing him. A big negative means the name is worth more than the player.",
+   ["arb","rounds apart"]],
+  ["Position rank","Fantasy",
+   "Where he sits among players at his own position. RB7 is the seventh-best running back. Compare within a position, never across.",
+   ["pos","pos rank","#"]],
+  ["Target share","Fantasy",
+   "The share of his team's passes thrown his way, counted only over the games he actually played. Counting it over the full season makes anyone who missed time look like he lost his job.",
+   ["tgt share","target share eb"]],
+  ["Targets","Fantasy","Passes thrown in his direction, whether or not he caught them. It is the best single predictor of a receiver's value because it measures opportunity rather than luck.",["tgt"]],
+  ["Carries","Fantasy","Handoffs. For a quarterback this includes scrambles, which most sources quietly drop and which are close to half of a running quarterback's rushing value.",["car","rush att"]],
+  ["Bye week","Fantasy","The week his team does not play. He scores nothing and you need somebody else.",["bye"]],
+  ["Flex","Fantasy","A lineup slot that will take a running back, a receiver or a tight end. Superflex will also take a quarterback, which changes what quarterbacks are worth completely.",["sflx","super flex","superflex"]],
+  ["Coin flip","Fantasy",
+   "Two players close enough that the model gives one of them under a 60% chance of outscoring the other. At that margin the honest answer is that nobody knows, so start whoever you would rather watch.",
+   []],
+  ["Streaming","Fantasy",
+   "Picking up a different quarterback or defense every week based on the matchup instead of rostering one. Everybody says it works. We replayed three seasons and it lost by 1.7 points a game, so this model does not assume it works.",
+   []],
+
+  // ---- the team model
+  ["Power rating","Team",
+   "How many points better or worse than an average team, on a neutral field. A rating of +3 means you would expect to beat an average team by about three.",
+   ["rating","net","power"]],
+  ["Projected wins","Team",
+   "The average number of wins across 25,000 simulated seasons. It is an average, so a team that projects 9.4 wins does not win 9.4 games. It wins 8, or 11, and 9.4 is the middle of that spread.",
+   ["proj wins","wins"]],
+  ["Playoff odds","Team","The share of simulated seasons in which the team makes the playoffs. Fourteen teams make it in every single simulation, because that is the actual rule.",["make playoffs","playoffs"]],
+  ["Offensive rating","Team",
+   "How much better than average the offense is at moving the ball, after taking out how good or bad the defenses it faced were. A team that played six terrible defenses does not get credit for it here.",
+   ["off","off rank","off final"]],
+  ["Defensive rating","Team",
+   "The same measure for the defense. Worth much less than the offensive one, because how good a defense was last year barely predicts how good it will be this year.",
+   ["def","def rank","def final"]],
+  ["Expected points added","Team",
+   "The scoring value of a single play. A five-yard gain on third and two is worth a lot. A five-yard gain on third and twelve is worth nothing. EPA counts the difference, which yards do not.",
+   ["epa"]],
+  ["Opponent adjustment","Team",
+   "Crediting a unit for who it played. Everything on this site is adjusted, so a good offense against good defenses outranks a great offense against bad ones.",
+   []],
+  ["Carry-over","Team",
+   "How much of a unit's performance repeats next season. Offense repeats at 0.57 and defense at 0.14, which is the central finding of this project and the reason it disagrees with the market as often as it does.",
+   ["shrinkage","carries over"]],
+  ["Prior","Team",
+   "The part of a projection that comes from judgment rather than from data: a new quarterback, a coaching change, a rookie with no NFL snaps. Every prior on this site is written down with the reason attached, and the share of each team's projection that comes from one is published.",
+   ["prior share","from prior"]],
+  ["Strength of schedule","Team","The average quality of the opponents a team faces. Worth a win either way in a bad year.",["sos","swing"]],
+
+  // ---- betting
+  ["Spread","Betting",
+   "The points one side gives the other so that a bet on either is close to a coin flip. Minus 3 means favoured by three.",
+   ["model spread","market spread"]],
+  ["Total","Betting","The combined points both teams are expected to score. Bet over or under it.",["model total","market total","o/u"]],
+  ["Win probability","Betting","The chance a team wins the game outright, ignoring the margin.",["wp","win prob","home win prob"]],
+  ["Vig","Betting",
+   "The bookmaker's cut, baked into the price rather than charged separately. It is why the two sides of a coin flip are both priced at worse than even money, and why comparing a raw price to a real probability is meaningless.",
+   ["vigorish","juice","overround"]],
+  ["De-vigging","Betting",
+   "Stripping the bookmaker's cut back out so the price becomes a probability you can compare against. Every comparison on this site happens after this step, never before.",
+   ["devig","de-vig"]],
+  ["Edge","Betting",
+   "The gap between what we think will happen and what the price implies. Most of the board has no edge worth acting on, and the site says so rather than manufacturing one.",
+   ["edge pp","spread edge","total edge","wp edge"]],
+  ["Expected value","Betting","What a bet returns on average if you could make it a thousand times. Positive does not mean it wins. It means it wins often enough to be worth making repeatedly.",["ev","expected value"]],
+  ["Kelly","Betting",
+   "A formula for how much of a bankroll to risk given an edge. It is shown here as a fraction and nothing more, because these markets overlap heavily and adding up stake sizes across them produces numbers well past everything you own.",
+   ["kelly","kelly frac"]],
+  ["Implied probability","Betting","The chance a price is quoting, once the bookmaker's cut is removed.",["implied","market prob"]],
+  ["Closing line","Betting","The final price before kickoff, after everybody who knows anything has bet. It is the sharpest public number in sports and the benchmark this model is measured against.",[]],
+
+  // ---- how good is the model
+  ["Backtest","Model",
+   "Running the model on seasons it has never seen and checking how wrong it was. Any model looks brilliant on the data it was fitted to, so this is the only test that counts.",
+   []],
+  ["Average miss","Model","How far off the win total was, on average, across 160 past team-seasons. Ours is 2.39 wins.",["mae","mae wins"]],
+  ["Brier score","Model",
+   "A score for probability forecasts where lower is better. It punishes confident wrong answers harder than uncertain ones, which is exactly what you want from a model that publishes probabilities.",
+   ["brier"]],
+  ["Monte Carlo","Model",
+   "Playing the season out 25,000 times with the randomness left in, then counting how often each thing happened. It is how a rating becomes a playoff probability.",
+   ["simulation","sims"]],
+  ["Percentile","Model",
+   "The p10 is the outcome only one season in ten falls below, and the p90 is the one only one in ten beats. The distance between them is how uncertain the projection is, which matters more than the middle number.",
+   ["p10","p25","p50","p75","p90"]],
+  ["Calibration","Model",
+   "Whether things given a 70% chance actually happen about 70% of the time. A model can be well calibrated and still not beat the market, and it can beat the market while being badly calibrated. Both are worth knowing.",
+   []],
+
+  // ---- the rest of the column headers, so nothing on any table is unexplained
+  ["Games","Fantasy",
+   "How many of the seventeen we expect him to play. Almost nobody plays all of them, and building that in up front is why these projections read low next to sets that assume everyone is available every week.",
+   ["g","games"]],
+  ["Seventeen-game total","Fantasy",
+   "What he would score if he never missed a game. It exists purely so these numbers can be compared like for like against published sets that assume a full season. It is not the projection.",
+   ["17g"]],
+  ["Projected stat line","Fantasy",
+   "The catches, yards and touchdowns behind the points, so you can see whether a projection rests on volume or on scoring. Touchdowns are the least reliable half of it, which is worth remembering before trading for someone coming off a big year.",
+   ["rec","recyd","ruyd","td","rec yards","rush yards","pass yards"]],
+  ["Top five odds","Fantasy",
+   "The share of ten thousand simulated seasons in which he finishes top five at his position. The number that matters in a league where second place pays nothing.",
+   ["top5","top3","top12","p top5"]],
+  ["Bust odds","Fantasy",
+   "The share of simulations in which he finishes well below where he is being drafted. High-bust players are not bad players, they are players whose range is wide, and a wide range is fine early and dangerous late.",
+   ["bust","p bust"]],
+  ["Model rank","Fantasy",
+   "Where the model puts a player overall, by value over replacement. Compare it against where he actually goes in drafts, which is the next column along.",
+   ["val","model #","value rank","model has him"]],
+  ["Verdict","Fantasy",
+   "A one-word read on the gap between our rank and the draft market's. Buy and smash buy mean the room is late on him. Fade means the name is doing the work.",
+   ["read","verdict"]],
+  ["Tier","Fantasy",
+   "A break in the board where the drop from one player to the next is unusually large. Reaching within a tier costs you almost nothing. Reaching past one costs you real points.",
+   ["tier"]],
+
+  ["Championship odds","Team","The share of simulated seasons ending with that team winning the Super Bowl.",["super bowl","conf champ","conference"]],
+  ["Division odds","Team","The share of simulated seasons in which the team wins its division, which is the only thing that guarantees a home game.",["division","win division"]],
+  ["Seed","Team","Playoff seeding, one through seven. The one seed is the only one that skips a round, which is worth roughly a game of value on its own.",["1 seed","one seed","seed"]],
+  ["Change","Team","How much this number moved when you dragged a rating in the simulator. It is the whole point of that page: not what the model thinks, but how sensitive what it thinks is to the thing you doubt.",["chg","adjust","gap"]],
+  ["Correlation","Model","How closely two things move together, from minus one to one. Zero means knowing one tells you nothing about the other.",["corr"]],
+
+  ["Fair price","Betting","What the price would be with the bookmaker's cut taken out. This is the number worth comparing against, and it is never the number posted.",["fair","fair price","market prob fair"]],
+  ["Posted price","Betting","The price as the book or exchange is actually showing it, cut included.",["raw price","your price","market","market prob"]],
+  ["Our probability","Betting","What the model thinks the chance is, straight from the simulation, with no market input at all.",["pylon","model prob"]],
+  ["Conviction","Betting","How much of the disagreement survives the model's own error bars. A lean is a difference of opinion. Strong means the gap is bigger than the model's usual miss.",["conviction"]],
+  ["Liquidity","Betting","How much money is sitting in the market. A large edge in a market with a few thousand dollars in it is not an edge you can act on.",["liquidity"]],
+  ["Return per dollar","Betting","What one dollar returns on average at this price, if the model's probability is right. It is not a prediction that you win.",["ev / $1","ev / 1","ev per $1","ev"]],
+  ["Book","Betting","Which sportsbook or exchange the price came from. They disagree, and the disagreement is often bigger than the edge.",["book"]],
+  ["Outcomes","Betting","How many results the market covers. A market with two outcomes has less room to hide a cut than one with thirty-two.",["outcomes"]],
+  ["Raw sum","Betting",
+   "Add up every posted price in a market as if it were a probability. It should come to 1.00. It never does, and the amount it overshoots by is the bookmaker's cut.",
+   ["raw sum"]],
+  ["Overround","Betting","How far past 100% the posted prices add up to. That excess is the house edge, and every comparison on this site removes it first.",["overround","overround pct"]],
+  ["Power k","Betting",
+   "The exponent that pulls a market's prices back to summing to one. Dividing everything evenly would take too much off the longshots, and this takes proportionally more off them instead, which is closer to how the cut is really applied.",
+   ["power k"]],
+  ["Blend weight","Model",
+   "How fast the model forgets the preseason once real games start. It was fitted by replaying three seasons rather than chosen, and it lands at eight games, meaning halfway through the season the ratings are half preseason and half this year.",
+   ["k","blend"]],
+  ["Log loss","Model","Another score for probability forecasts, harsher than Brier on confident mistakes. Lower is better.",["log loss"]],
+  ["Accuracy","Model","How often the side we picked actually won. Useful, but less honest than Brier, because it gives no credit for being appropriately unsure.",["accuracy","straight up"]],
+  ["Scoring rule","Model","How a prediction will be graded once it resolves, written down before the season so it cannot be argued about afterwards.",["scoring rule","prediction"]],
+  ["Average miss","Model","How far off the win total was, on average.",["avg miss"]],
+];
+
+/* Headers arrive with a sort arrow stuck on the end, a currency symbol in the
+   middle, or a stray hash. Both the index and the lookup run through the same
+   cleaner so an alias written the way the column is written still matches. */
+function normTerm(x){
+  return String(x).toLowerCase().replace(/[\u25B2\u25BC]/g,'')
+    .replace(/[^a-z0-9+/ -]/g,' ').replace(/\s+/g,' ').trim();
+}
+const TERM_INDEX = {};
+TERMS.forEach((t,i)=>{
+  [t[0], ...(t[3]||[])].forEach(a=>{
+    const k = normTerm(a);
+    if(k && TERM_INDEX[k]===undefined) TERM_INDEX[k] = i;
+  });
+});
+function termId(label){ return TERM_INDEX[normTerm(label)]; }
+function termTag(label){
+  const i = termId(label);
+  return i===undefined ? esc(label) : `<span class="term" data-term="${i}" tabindex="0" role="button">${esc(label)}</span>`;
+}
+
+/* ---- the glossary itself ---- */
+const GROUPS = ["Fantasy","Team","Betting","Model"];
+const GROUP_BLURB = {
+  Fantasy:"Everything on the roster, draft and start-sit pages.",
+  Team:"How a team gets a number, and what the number means.",
+  Betting:"Prices, probabilities, and the difference between them.",
+  Model:"How wrong this thing is, and how that was measured.",
+};
+function openGlossary(focusId){
+  openSheet(`
+    <div class="sheet-head">
+      <div style="flex:1;min-width:0">
+        <div class="eyebrow" style="margin-bottom:3px">Plain English</div>
+        <h3 style="font-size:19px;margin:0">What every word on this site means</h3>
+      </div>
+      <button class="iconbtn" data-close aria-label="Close">&times;</button>
+    </div>
+    <div class="sheet-body">
+      <input class="txt" id="glQ" placeholder="Search a word..." autocomplete="off" aria-label="Search the glossary">
+      <div id="glList" class="gl"></div>
+    </div>`);
+  const list = document.getElementById('glList');
+  function render(q){
+    const s = q.trim().toLowerCase();
+    let n = 0;
+    list.innerHTML = GROUPS.map(g=>{
+      const rows = TERMS.map((t,i)=>[t,i]).filter(([t])=>t[1]===g)
+        .filter(([t])=>!s || t[0].toLowerCase().includes(s) || t[2].toLowerCase().includes(s)
+                       || (t[3]||[]).some(a=>a.toLowerCase().includes(s)));
+      n += rows.length;
+      if(!rows.length) return '';
+      return `<section><div class="eyebrow">${g}</div>
+        <p class="muted" style="font-size:12.5px;margin:2px 0 10px">${GROUP_BLURB[g]}</p>
+        ${rows.map(([t,i])=>`<div class="gl-row" id="gl-${i}">
+            <dt>${esc(t[0])}${(t[3]||[]).length?`<em>${esc((t[3]||[]).slice(0,3).join(', '))}</em>`:''}</dt>
+            <dd>${esc(t[2])}</dd></div>`).join('')}
+      </section>`;
+    }).join('');
+    if(!n) list.innerHTML = '<p class="muted" style="font-size:13.5px">Nothing matches that. Try a shorter word.</p>';
+  }
+  render('');
+  const q = document.getElementById('glQ');
+  q.addEventListener('input',e=>render(e.target.value));
+  if(focusId!==undefined){
+    const row = document.getElementById('gl-'+focusId);
+    if(row){ row.classList.add('hit'); row.scrollIntoView({block:'center'}); }
+  } else {
+    q.focus();
+  }
+}
+
+/* Any element carrying data-term explains itself: hover on a pointer, tap or
+   Enter anywhere else. */
+document.addEventListener('mouseover', e=>{
+  const t = e.target.closest('.term'); if(!t) return;
+  const d = TERMS[+t.dataset.term];
+  if(d) tipShow(e, `<b>${esc(d[0])}</b><br>${esc(d[2].length>150 ? d[2].slice(0,148)+'...' : d[2])}`);
+});
+document.addEventListener('mouseout', e=>{ if(e.target.closest('.term')) tipHide(); });
+document.addEventListener('click', e=>{
+  const t = e.target.closest('.term'); if(!t) return;
+  e.stopPropagation(); tipHide(); openGlossary(+t.dataset.term);
+});
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const t = document.activeElement && document.activeElement.closest && document.activeElement.closest('.term');
+  if(t){ e.preventDefault(); openGlossary(+t.dataset.term); }
+});
+/* Most tables come from makeTable, which wires its own headers. A handful are
+   written out by hand in the page that needs them. Rather than thread the
+   affordance through every one of those, anything that lands in the document
+   with a plain-text header gets decorated here, once, after it appears. A
+   header holding a logo or any other element is left alone. */
+function decorateHeads(root){
+  root.querySelectorAll('thead th').forEach(th=>{
+    if(th.children.length || th.dataset.termDone) return;
+    const raw = th.textContent.trim();
+    if(!raw || termId(raw)===undefined) return;
+    th.dataset.termDone = '1';
+    th.innerHTML = termTag(raw);
+  });
+}
+new MutationObserver(muts=>{
+  muts.forEach(m=>m.addedNodes.forEach(n=>{
+    if(n.nodeType===1) decorateHeads(n.matches('thead') ? n.parentElement : n);
+  }));
+}).observe(document.body, {childList:true, subtree:true});
+decorateHeads(document);
+
+document.getElementById('helpBtn').addEventListener('click',()=>openGlossary());
+document.getElementById('glossBtn').addEventListener('click',()=>openGlossary());
+document.getElementById('tourBtn').addEventListener('click',()=>openWelcome());
+
+/* ==========================================================================
+   FIRST VISIT
+   Shown once. Three doors, in the order a stranger is most likely to want
+   them, and a way out that does not require picking one.
+   ========================================================================== */
+const SEEN_KEY = 'pylon-seen-v1';
+function openWelcome(){
+  const w = document.getElementById('welcome');
+  w.classList.add('on');
+  w.querySelector('button').focus();
+}
+function closeWelcome(){
+  const w = document.getElementById('welcome');
+  w.classList.remove('on');
+  try{ localStorage.setItem(SEEN_KEY,'1'); }catch(e){}
+}
+document.getElementById('welcome').addEventListener('click', e=>{
+  const go2 = e.target.closest('[data-w]');
+  if(go2){ closeWelcome(); go(go2.dataset.w); return; }
+  if(e.target.closest('[data-wclose]') || e.target.id==='welcome') closeWelcome();
+});
+addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.getElementById('welcome').classList.contains('on')) closeWelcome();
+});
+try{
+  if(!localStorage.getItem(SEEN_KEY)) setTimeout(openWelcome, 420);
+}catch(e){}
 </script>
 <script>
 "use strict";
