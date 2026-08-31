@@ -102,8 +102,9 @@ Runs end to end in about 22 seconds and writes every published number to `out/`.
 ```bash
 PYTHONPATH=src python -m pylon.webdata   # pack outputs into a single JSON bundle
 cd web && ./build.sh                     # inline the bundle and logos into index.html
-node test.mjs                            # headless check: all pages, both themes, three breakpoints,
-                                         # plus the roster import from paste and from a stubbed Sleeper
+node audit.mjs                           # contrast, overflow and clipping: 11 pages, 2 themes, 3 widths
+node test.mjs                            # behaviour: every page renders, the glossary resolves,
+                                         # and the roster import works from paste, Sleeper and ESPN
 ```
 
 `build.sh` writes the built page to both `web/index.html` and `docs/index.html`. GitHub Pages serves
@@ -280,10 +281,15 @@ There are three ways in and the order matters:
   so a superflex league gets a superflex lineup rather than a guess. Every roster
   in the league comes back too, which makes the free agent list the real one
   instead of "good players you do not have".
-- **ESPN,** by league id, for public leagues. The read host sends the same CORS
-  header. Private leagues need `espn_s2` and `SWID` cookies, which a page on
-  another origin cannot send and should not ask for, so a private league returns
-  401 and the page says so plainly and points at the paste box.
+- **ESPN,** by league id or by pasting the whole league address, for public
+  leagues. The read host sends the same CORS header. It reads the league's real
+  lineup slots out of `lineupSlotCounts`, the same way the Sleeper path reads
+  `roster_positions`, so an ESPN superflex league gets a superflex lineup too,
+  and it names each team with its owner so you can find yours. A league exists
+  for one season at a time, so a 404 retries against last season before giving
+  up. Private leagues need `espn_s2` and `SWID` cookies, which a page on another
+  origin cannot send and should not ask for, so those return 401 and the page
+  says so plainly and points at the paste box.
 - **Paste.** Copy a roster out of any app at all. This one has no network in it
   and therefore cannot break, which is why it is the fallback everywhere else
   fails, including under a content policy that blocks outside connections.
@@ -409,6 +415,29 @@ Kept here deliberately. Each was silently producing wrong answers, and each is t
 8. **Silent ADP join failure.** The player-to-ADP join matched on raw name, so "James Cook" versus "James Cook III" dropped ADP for around fifty players. Now joins on a normalised key.
 
 9. **Kelly sizing across nested markets.** The market page summed line-by-line Kelly stakes across 160 correlated lines and reported "189% of bankroll deployed". Those markets all resolve off the same season. It now caps deployment and discloses the scaling factor.
+
+---
+
+## Colour is checked, not eyeballed
+
+`web/audit.mjs` walks all eleven pages in both themes at three widths and
+computes contrast against the ground each element actually sits on, not the one
+it nominally sits on. It exits non-zero and CI gates on it.
+
+The first run found **70 failures**, almost all of them in the small grey labels
+that carry the explanations, which is the worst place to be under-contrast. Four
+things came out of fixing them and they are worth stating as rules:
+
+1. A colour chosen to work as a **fill** is not automatically legible as **text**.
+   The sequential-ramp green was printing a 24px number at 2.5:1 because nobody
+   had asked. Semantic status colours are now their own tokens, and the bar keeps
+   the ramp while the number takes the semantic set.
+2. The same split applies to the categorical series, which the comparison views
+   use as direct labels rather than as a legend.
+3. A tinted chip under a word is a tighter contrast problem than the same colour
+   on a plain surface, so the direction pills have their own text tokens.
+4. One accent value has to clear both being read as text and carrying white text
+   on top of it. That moved the orange from `#DB5A00` to `#B54900`.
 
 ---
 
