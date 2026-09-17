@@ -11,7 +11,7 @@ player projections, and a de-vigged comparison against live prediction markets.
 Joshua Powers
 joshpowersbiz@gmail.com
 github.com/Joshuapowers1/pylon-nfl
-linkedin.com/in/joshuampowers
+linkedin.com/in/joshuampowerss
 instagram.com/joshuampowers
 
 Released under the MIT License. See LICENSE.

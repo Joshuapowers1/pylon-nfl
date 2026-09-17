@@ -23,7 +23,7 @@ seventeen. A weekly projection needs a binary: is he playing this week.
 --------------------------------------------------------------------------
 PYLON . NFL projection and market-edge engine
 Joshua Powers . joshpowersbiz@gmail.com
-github.com/Joshuapowers1/pylon-nfl . linkedin.com/in/joshuampowers . @joshuampowers
+github.com/Joshuapowers1/pylon-nfl . linkedin.com/in/joshuampowerss . @joshuampowers
 """
 from __future__ import annotations
 import json

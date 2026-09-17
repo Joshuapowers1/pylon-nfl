@@ -6,6 +6,15 @@ fs.writeFileSync('preview.html', `<!doctype html><html><head><meta charset="utf-
 
 const browser = await chromium.launch({ executablePath: process.env.PW_CHROME });
 const errors = [];
+
+/* The live page calls a real endpoint. Under file:// the origin is null, so the
+   browser refuses it before any of our code runs and logs a CORS error that no
+   catch can suppress. Intercepting at the network layer instead of stubbing
+   window.fetch satisfies the browser, keeps the suite offline, and exercises
+   the same parsing path a real response would. */
+const SCOREBOARD = JSON.parse(fs.readFileSync('scoreboard-fixture.json','utf8'));
+const stubScoreboard = pg => pg.route('**/site.api.espn.com/**', route =>
+  route.fulfill({status:200, contentType:'application/json', body: JSON.stringify(SCOREBOARD)}));
 for (const theme of ['dark','light']) {
   const page = await browser.newPage({ viewport:{width:1440,height:1000},
     colorScheme: theme });
@@ -14,6 +23,7 @@ for (const theme of ['dark','light']) {
   // fall back silently, so a sandbox with no network is not a test failure.
   page.on('console', m => { if(m.type()==='error' && !/Failed to load resource/.test(m.text()))
     errors.push(`[${theme}] CONSOLE: ${m.text()}`); });
+  await stubScoreboard(page);
   await page.goto('file://'+process.cwd()+'/preview.html');
   await page.waitForTimeout(1200);
   if(theme==='dark'){
@@ -24,7 +34,7 @@ for (const theme of ['dark','light']) {
   }
   await page.evaluate(()=>closeWelcome());
   await page.waitForTimeout(150);
-  for (const id of ['overview','myteam','matchups','startsit','teams','players','draft','market','sim','record','model']) {
+  for (const id of ['overview','live','matchups','startsit','teams','players','draft','market','sim','record','model']) {
     await page.evaluate(i => go(i), id);
     await page.waitForTimeout(500);
     const vis = await page.evaluate(i => {
@@ -54,144 +64,41 @@ for (const theme of ['dark','light']) {
   await page.close();
 }
 /* ------------------------------------------------------------------ */
-/* Roster import. Both routes matter and neither can be checked by eye:
-   the paste parser has to survive whatever an app puts around a name, and
-   the Sleeper route has to map ids onto our own rows. The transport is
-   stubbed with a response shaped exactly like the live API so this runs in
-   CI with no network. */
+/* The roster import (Sleeper, public ESPN, paste) was retired. Its checks went
+   with it rather than being left to rot against elements that no longer exist.
+   The live scoreboard that replaced it is covered below. */
 const r = await browser.newPage({ viewport:{width:1440,height:1400}, colorScheme:'dark' });
 r.on('pageerror', e=>errors.push(`[import] PAGEERROR: ${e.message}`));
+await stubScoreboard(r);
 await r.goto('file://'+process.cwd()+'/preview.html');
 await r.waitForTimeout(900);
 await r.evaluate(()=>closeWelcome());
-await r.evaluate(()=>{ try{localStorage.removeItem('pylon-myteam-v1')}catch(e){} go('myteam'); });
-await r.waitForTimeout(300);
 
-// A roster copied out of ESPN, position prefixes, bye weeks, injury flags,
-// a defense that will never match, and a name that does not exist.
-await r.click('#mtSrc button[data-s="paste"]');
-await r.fill('#mtPaste', [
-  "QB  Josh Allen Buf QB1  Bye 7",
-  "RB  Bijan Robinson Atl RB2",
-  "RB  De'Von Achane Mia RB4   Q",
-  "WR  Ja'Marr Chase Cin WR1",
-  "WR  Malik Nabers NYG WR9",
-  "WR  Garrett Wilson NYJ WR14",
-  "TE  Brock Bowers LV TE1",
-  "FLEX Chase Brown Cin RB21",
-  "BE  Jayden Daniels Was QB6",
-  "BE  Tyrone Tracy Jr. NYG RB33",
-  "BE  Jaxon Smith-Njigba Sea WR6",
-  "BE  Trey McBride Ari TE3",
-  "D/ST Ravens D/ST",
-].join('\n'));
-await r.click('#mtParse');
-await r.waitForTimeout(600);
-const pasted = await r.evaluate(()=>({
-  n: MT.roster.length,
-  chase: MT.roster.includes("Ja'Marr Chase"),
-  tracy: MT.roster.includes("Tyrone Tracy Jr."),
-  filled: [...document.querySelectorAll('#pg-myteam .slot')].filter(s=>!s.classList.contains('empty')).length,
-  pts: document.querySelector('#pg-myteam .kpi .v')?.textContent,
+/* Live scoreboard. The network is stubbed with a payload shaped exactly like
+   ESPN's so this runs in CI with no connection, the same way the Sleeper route
+   used to be checked. What matters is that every game gets a model number and
+   a sentence a person can read, not that the feed is reachable. */
+await r.evaluate(()=>go('live'));
+await r.waitForTimeout(1500);
+const lv = await r.evaluate(()=>({
+  cards: document.querySelectorAll('#liveBody .livecard').length,
+  says: document.querySelectorAll('#liveBody .live-say').length,
+  blank: [...document.querySelectorAll('#liveBody .live-say')].filter(n=>!n.innerText.trim()).length,
+  notice: !!document.querySelector('#liveBody .notice'),
 }));
-if(pasted.n !== 12) errors.push(`[import] paste matched ${pasted.n} players, expected 12`);
-if(!pasted.chase) errors.push('[import] apostrophe name did not resolve');
-if(!pasted.tracy) errors.push('[import] suffixed name did not resolve');
-if(pasted.filled < 8) errors.push(`[import] only ${pasted.filled} lineup slots filled`);
-if(!(parseFloat(pasted.pts) > 50)) errors.push(`[import] lineup total read ${pasted.pts}`);
-await r.screenshot({path:'shot-myteam.png'});
+if(lv.notice) errors.push('[live] fell back to the offline notice with a good payload');
+if(lv.cards < 12) errors.push(`[live] only ${lv.cards} games rendered`);
+if(lv.says !== lv.cards) errors.push(`[live] ${lv.cards} cards but ${lv.says} explanations`);
+if(lv.blank) errors.push(`[live] ${lv.blank} games rendered an empty sentence`);
 
-// Sleeper, with the transport stubbed. Ids below are real Sleeper ids for
-// the three players named, which is the point of the check.
-await r.evaluate(()=>{
-  const ids = Object.entries(IDS.sleeper);
-  const idOf = n => (ids.find(([,v])=>v[0]===n)||[null])[0];
-  const mine  = ['Josh Allen','Bijan Robinson','Brock Bowers','Puka Nacua','Chase Brown'].map(idOf);
-  const other = ['Saquon Barkley','CeeDee Lamb','Trey McBride'].map(idOf);
-  window.__stubIds = {mine, other};
-  window.fetch = async (url)=>{
-    const u = String(url);
-    let body;
-    if(/\/v1\/user\/[^/]+$/.test(u)) body = {user_id:'42', display_name:'test'};
-    else if(/\/leagues\/nfl\//.test(u)) body = [{league_id:'99', name:'Test League', total_rosters:12,
-      roster_positions:['QB','RB','RB','WR','WR','TE','FLEX','BN','BN','K','DEF']}];
-    else if(/league\/99\/rosters/.test(u)) body = [
-      {roster_id:1, owner_id:'42', players:mine},
-      {roster_id:2, owner_id:'43', players:other}];
-    else return {ok:false, status:404, json:async()=>({})};
-    return {ok:true, status:200, json:async()=>body};
-  };
+// The model must price a game the pipeline never ran, from committed ratings.
+const mm = await r.evaluate(()=>{
+  const g = LIVE.games[0];
+  return {pair:[g.away,g.home], m: modelMargin(g.away,g.home), p: winProb(modelMargin(g.away,g.home))};
 });
-await r.click('#mtSrc button[data-s="sleeper"]');
-await r.fill('#slUser','test');
-await r.click('#slGo');
-await r.waitForTimeout(500);
-await r.click('#slLoad');
-await r.waitForTimeout(800);
-const sl = await r.evaluate(()=>({
-  ids: window.__stubIds,
-  mine: MT.roster, taken: MT.taken.length, teams: MT.teams, slots: MT.slots,
-  adds: [...document.querySelectorAll('#mtAdds tbody tr td:first-child')].map(td=>td.textContent.trim()),
-}));
-if(sl.ids.mine.some(x=>!x)) errors.push('[import] Sleeper id table is missing a named player');
-if(sl.mine.length !== 5) errors.push(`[import] Sleeper roster resolved ${sl.mine.length} of 5`);
-if(sl.taken !== 8) errors.push(`[import] league-wide rostered count was ${sl.taken}, expected 8`);
-if(String(sl.slots) !== 'QB,RB,RB,WR,WR,TE,FLEX') errors.push(`[import] league slots read ${sl.slots}`);
-if(sl.adds.some(n=>sl.mine.includes(n))) errors.push('[import] waiver list is offering a player already rostered');
-if(sl.adds.includes('Trey McBride')) errors.push('[import] waiver list is offering another team\'s player');
-/* ESPN, against a response captured from a real public league in 2026 with
-   the owner names replaced. The shape is the thing under test: where the
-   player names live, where the league's own lineup slots live, and that a
-   pasted league address does not turn into the wrong league id. */
-const ESPN = JSON.parse(fs.readFileSync('espn-fixture.json','utf8'));
-await r.evaluate(fx=>{
-  window.fetch = async (url)=>{
-    const u=String(url);
-    if(/seasons\/\d+\/segments\/0\/leagues\/1241838\?/.test(u)) return {ok:true,status:200,json:async()=>fx};
-    if(/\/leagues\/\d+\?/.test(u)) return {ok:false,status:404,json:async()=>({})};
-    return {ok:true,status:200,json:async()=>({week:1})};
-  };
-  try{localStorage.removeItem('pylon-myteam-v1')}catch(e){}
-}, ESPN);
-// A pasted league address, not a bare number.
-const idCases = await r.evaluate(()=>[
-  espnLeagueId('https://fantasy.espn.com/football/team?leagueId=1241838&teamId=4&seasonId=2026'),
-  espnLeagueId('1241838'),
-  espnLeagueId('  1241838  '),
-  espnLeagueId('https://fantasy.espn.com/football/league?leagueId=1241838'),
-]);
-if(idCases.some(x=>x!=='1241838')) errors.push(`[espn] league id parsing returned ${JSON.stringify(idCases)}`);
-const slCases = await r.evaluate(()=>[
-  sleeperHandle('@ninja'), sleeperHandle(' ninja '), sleeperHandle('https://sleeper.com/user/ninja'),
-]);
-if(slCases.some(x=>x!=='ninja')) errors.push(`[sleeper] username parsing returned ${JSON.stringify(slCases)}`);
-
-await r.evaluate(()=>go('myteam'));
-await r.waitForTimeout(300);
-await r.click('#mtSrc button[data-s="espn"]');
-await r.fill('#esId','https://fantasy.espn.com/football/team?leagueId=1241838&teamId=4');
-await r.click('#esGo');
-await r.waitForTimeout(700);
-const teamOpts = await r.evaluate(()=>[...document.querySelectorAll('#esTm option')].map(o=>o.textContent));
-if(teamOpts.length !== 10) errors.push(`[espn] offered ${teamOpts.length} teams, expected 10`);
-if(!teamOpts[0] || !/\(Manager/.test(teamOpts[0])) errors.push(`[espn] team label lost the owner: ${teamOpts[0]}`);
-await r.click('#esLoad');
-await r.waitForTimeout(800);
-const es = await r.evaluate(()=>({
-  mine: MT.roster.length, taken: MT.taken.length, teams: MT.teams,
-  slots: (MT.slots||[]).join(','), league: MT.league,
-  starters: [...document.querySelectorAll('#pg-myteam .slot')].length,
-  pts: parseFloat(document.querySelector('#pg-myteam .kpi .v')?.textContent),
-  dupes: MT.taken.length !== new Set(MT.taken).size,
-}));
-if(es.league !== 'The Keeper League') errors.push(`[espn] league name read as ${es.league}`);
-if(es.teams !== 10) errors.push(`[espn] league size read as ${es.teams}`);
-if(es.slots !== 'QB,RB,RB,WR,WR,WR,TE,FLEX') errors.push(`[espn] lineup slots read as ${es.slots}`);
-if(!(es.mine >= 8)) errors.push(`[espn] resolved only ${es.mine} players on the selected roster`);
-if(!(es.taken >= 80)) errors.push(`[espn] resolved only ${es.taken} rostered players league-wide`);
-if(es.dupes) errors.push('[espn] the same player was counted twice as rostered');
-if(!(es.pts > 60)) errors.push(`[espn] lineup total read ${es.pts}`);
-await r.screenshot({path:'shot-espn.png'});
+if(!Number.isFinite(mm.m)) errors.push(`[live] no model margin for ${mm.pair.join(' at ')}`);
+if(!(mm.p > 0 && mm.p < 1)) errors.push(`[live] win probability out of range: ${mm.p}`);
+await r.screenshot({path:'shot-live.png'});
 
 // The glossary. Every abbreviation in a column header should resolve to a
 // definition, and clicking one should open the list at that entry.
@@ -231,6 +138,7 @@ await r.close();
 // mobile
 const m = await browser.newPage({ viewport:{width:390,height:844}, colorScheme:'dark' });
 m.on('pageerror', e=>errors.push(`[mobile] PAGEERROR: ${e.message}`));
+await stubScoreboard(m);
 await m.goto('file://'+process.cwd()+'/preview.html');
 await m.waitForTimeout(900);
 await m.evaluate(()=>closeWelcome());
@@ -240,4 +148,4 @@ const mow = await m.evaluate(()=>document.documentElement.scrollWidth - document
 if(mow>2) errors.push(`[mobile] horizontal overflow of ${mow}px at 390`);
 await browser.close();
 
-console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, roster import from paste, Sleeper and a real ESPN league, no overflow at 1440 or 390');
+console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, live scoreboard priced from committed ratings, no overflow at 1440 or 390');

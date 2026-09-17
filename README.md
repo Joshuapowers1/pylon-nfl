@@ -1,21 +1,17 @@
-<div align="center">
+# Pylon
 
-# PYLON
+An NFL projection and market-edge engine. Opponent-adjusted ridge ratings on nine
+seasons of play-by-play, shrinkage measured out of sample rather than assumed,
+25,000 simulated seasons on the real schedule, and a de-vigged comparison against
+live prediction markets.
 
-**Play-level Yield & League Outcome Network**
+**[Open the live terminal](https://joshuapowers1.github.io/pylon-nfl/)** ·
+[How it works](#how-it-works) ·
+[The backtest](#the-honest-backtest) ·
+[Sealed predictions](#the-sealed-ledger)
 
-An NFL projection and market-edge engine. Opponent-adjusted ridge ratings on nine seasons of play-by-play, shrinkage measured out of sample rather than assumed, 25,000 simulated seasons on the real schedule, and a de-vigged comparison against live prediction markets.
-
-[**Open the live terminal →**](https://joshuapowers1.github.io/pylon-nfl/)
-
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-ridge-F7931E?logo=scikitlearn&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-DB5A00)
 [![tests](https://github.com/Joshuapowers1/pylon-nfl/actions/workflows/tests.yml/badge.svg)](https://github.com/Joshuapowers1/pylon-nfl/actions/workflows/tests.yml)
-![Backtest](https://img.shields.io/badge/backtest-160%20team--seasons-2a78d6)
-![Runtime deps](https://img.shields.io/badge/frontend%20dependencies-0-1baf7a)
-
-</div>
+[![License: MIT](https://img.shields.io/badge/License-MIT-DB5A00)](LICENSE)
 
 ![Overview](docs/01-overview.jpg)
 
@@ -50,6 +46,45 @@ Every projection below was built with **zero information from the season it pred
 | Straight-up game accuracy | **58.2%** |
 
 Read that honestly. 58.2% straight up is well above a coin flip and well below a closing Vegas line, which lands near 66%. This is a serious estimate that disagrees with the market in specific, defensible places. It is not an edge-printing machine, and any preseason model claiming a much better backtest without publishing this table should be treated with suspicion.
+
+---
+
+## The sealed ledger
+
+The backtest above is retrospective, which is the easy kind of honesty. This is
+the other kind.
+
+Every 2026 prediction was written down before the season started, with the
+de-vigged closing market number stored beside it, and the file was stamped and
+hashed. `out/prediction_ledger.json` holds win totals, playoff, division and
+championship probabilities for all 32 teams, plus a spread, total and win
+probability for each of the 16 Week 1 games.
+
+```
+stamped   2026-08-28T22:48:32Z
+digest    ba1a2fa087412d22
+```
+
+The digest is a SHA-256 over the sorted-key JSON of the ledger with the digest
+field removed, so it can be recomputed by anyone:
+
+```bash
+python - <<'PY'
+import json, hashlib
+led = json.load(open("out/prediction_ledger.json"))
+body = {k: v for k, v in led.items() if k != "digest"}
+print(hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()[:16])
+PY
+```
+
+Change one probability by 0.0001 and it stops matching. The scoring rules were
+fixed at the same time and are stored in the file, so the metric cannot be
+chosen after the outcome is known.
+
+`ledger.py` grades it: straight-up accuracy, mean absolute spread error and
+Brier score for the model and for the market, on the same games. Anyone can
+publish projections. Publishing them where they can be marked, against a
+benchmark that was recorded first, is the part that can fail.
 
 ---
 
@@ -129,7 +164,7 @@ from `/docs` on `main`, so the published site is always the file that was just b
 | Sensitivity of every projection to the judgment layer | `out/sensitivity_priors.csv` |
 | Game-by-game spread, total and win probability vs the posted line | `out/matchups_week1.csv` |
 | Frozen vs updated accuracy, week by week | `out/inseason_curve.csv` |
-| This season's predictions, sealed with a timestamp and a digest | `out/prediction_ledger.json` |
+| This season's predictions, [sealed and hashed](#the-sealed-ledger) before kickoff | `out/prediction_ledger.json` |
 | Weekly player projections with floor, ceiling and matchup adjustment | `out/weekly_week1.csv` |
 | The measured streaming premium | `config/streaming_premium.json` |
 
@@ -202,10 +237,10 @@ Two ideas do most of the work. **Empirical Bayes**: observed share is shrunk tow
 
 | Book | Outcomes | Raw sum | Overround |
 |---|---|---|---|
-| Super Bowl (Polymarket) | 32 | 1.0490 | +4.90% |
-| Super Bowl (DraftKings) | 32 | 1.2266 | +22.66% |
-| AFC Champion (Polymarket) | 16 | 0.9830 | **-1.70%** |
-| NFC Champion (Polymarket) | 16 | 0.9735 | **-2.65%** |
+| Super Bowl (Polymarket) | 32 | 1.0395 | +3.95% |
+| Super Bowl (DraftKings) | 32 | 1.2249 | +22.49% |
+| AFC Champion (Polymarket) | 16 | 0.9725 | **-2.75%** |
+| NFC Champion (Polymarket) | 16 | 0.9815 | **-1.85%** |
 
 A fair book sums to 1.00. Comparing a model to raw sportsbook prices produces an "edge" on all 32 teams, which is arithmetic rather than insight. De-vigging uses the power method, solving for the exponent that makes prices sum to one, because the margin sits disproportionately in the longshots.
 
@@ -460,7 +495,23 @@ things came out of fixing them and they are worth stating as rules:
 - **Prediction markets** - Polymarket Gamma API, order-book midpoints
 - **Sportsbook lines** - DraftKings board, converted from American odds
 
-Team names, logos and marks are the property of their respective owners and appear here for identification in an independent analytical project. Not affiliated with or endorsed by the NFL or any club. Projections are estimates and nothing here is financial advice.
+## Disclaimer
+
+Provided as is, without warranty of any kind. Nothing in this repository or on the site is
+financial, investment, betting or professional advice, and no output is a recommendation to place
+a wager or make a transaction. The model publishes its own error rate precisely because that rate
+is high: roughly 58 games in 100 called correctly, against about 66 for a closing sportsbook line.
+Sports wagering is legal only where expressly permitted, is age restricted, and carries a real risk
+of loss. US national helpline: 1-800-GAMBLER.
+
+This is an independent analytical project with no connection to, sponsorship from, or endorsement
+by the National Football League, any member club, Sleeper, ESPN, DraftKings, Polymarket or any
+other named service. Team names, logos and marks are the property of their respective owners and
+appear solely for identification. The optional roster lookups read publicly available league data
+at the visitor's own direction and are subject to those services' own terms.
+
+No personal data is collected. Rosters entered on the site stay in the visitor's own browser, are
+never uploaded, and there is no account.
 
 ---
 
@@ -468,7 +519,7 @@ Team names, logos and marks are the property of their respective owners and appe
 
 **Joshua Powers**
 
-[joshpowersbiz@gmail.com](mailto:joshpowersbiz@gmail.com) · [LinkedIn](https://www.linkedin.com/in/joshuampowers) · [Instagram](https://instagram.com/joshuampowers) · [GitHub](https://github.com/Joshuapowers1)
+[joshpowersbiz@gmail.com](mailto:joshpowersbiz@gmail.com) · [LinkedIn](https://www.linkedin.com/in/joshuampowerss) · [Instagram](https://instagram.com/joshuampowers) · [GitHub](https://github.com/Joshuapowers1)
 
 If you disagree with a number, the code that produced it is right here. I would rather hear the argument than not.
 

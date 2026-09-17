@@ -31,3 +31,7 @@ web/logos-src/
 # playwright is a dev-only test dependency, installed ad hoc
 web/package.json
 web/package-lock.json
+
+# scratch written by a preview run, never part of the build
+.shots-preview.json
+.sb-preview.json

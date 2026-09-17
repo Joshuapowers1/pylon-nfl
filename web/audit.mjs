@@ -10,12 +10,21 @@
 import { chromium } from 'playwright';
 import fs from 'fs';
 fs.writeFileSync('preview.html', `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${fs.readFileSync('index.html','utf8')}</body></html>`);
-const b = await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
-const PAGES=['overview','myteam','matchups','startsit','teams','players','draft','market','sim','record','model'];
+/* Prefer a browser that is already on the machine, but fall back to whatever
+   Playwright resolves for itself. The hardcoded path is right inside the
+   sandbox this was written in and wrong on a GitHub runner, where
+   `npx playwright install` puts chromium under ~/.cache/ms-playwright. */
+const EXEC = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome']
+  .find(p => fs.existsSync(p));
+const b = await chromium.launch(EXEC ? { executablePath: EXEC } : {});
+const PAGES=['overview','live','matchups','startsit','teams','players','draft','market','sim','record','model'];
 const problems=[];
 for(const theme of ['dark','light']){
   for(const w of [1440,768,390]){
     const p = await b.newPage({viewport:{width:w,height:900}, colorScheme:theme});
+    // Same reason as the behaviour suite: the live page must not reach out.
+    await p.route('**/site.api.espn.com/**', route => route.fulfill({status:200,
+      contentType:'application/json', body: fs.readFileSync('scoreboard-fixture.json','utf8')}));
     p.on('pageerror',e=>problems.push(`[${theme}/${w}] PAGEERROR ${e.message}`));
     await p.goto('file://'+process.cwd()+'/preview.html');
     await p.waitForTimeout(500);

@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 
 from pylon import players, market, simulate, usage
-from pylon.config import OUT, CONF, DIVISIONS, TEAM_CONF
+from pylon.config import OUT, RAW, CONF, DIVISIONS, TEAM_CONF
 
 
 # --------------------------------------------------------------------------
@@ -83,6 +83,12 @@ def test_win_spread_matches_measured_error(teams):
 
 
 def test_simulator_reproduces_the_schedule():
+    # data/raw is deliberately not committed: it is 183MB and re-fetchable.
+    # The weekly workflow fetches it and does run this. On a fresh clone it
+    # skips, because a suite that fails before you have downloaded anything
+    # tells you nothing about the code.
+    if not (RAW / "schedules.csv").exists():
+        pytest.skip("no data/raw/schedules.csv; run ./scripts/fetch_data.sh first")
     sched = simulate.load_schedule()
     assert len(sched) == 272
     counts = pd.concat([sched["home_team"], sched["away_team"]]).value_counts()

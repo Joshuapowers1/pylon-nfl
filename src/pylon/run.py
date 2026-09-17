@@ -10,7 +10,7 @@ Carlo -> player projections -> market edge board -> diagnostics.
 --------------------------------------------------------------------------
 PYLON · NFL projection and market-edge engine
 Joshua Powers · joshpowersbiz@gmail.com
-github.com/Joshuapowers1/pylon-nfl · linkedin.com/in/joshuampowers · @joshuampowers
+github.com/Joshuapowers1/pylon-nfl · linkedin.com/in/joshuampowerss · @joshuampowers
 """
 from __future__ import annotations
 import argparse, json, warnings, time
@@ -20,7 +20,26 @@ warnings.filterwarnings("ignore")
 
 from . import (ingest, ratings, adjustments, simulate, players, market, diagnostics,
                draft, backtest, matchups, ledger, weekly, usage as usage_mod)
-from .config import PROC, OUT, CONF, TRAIN_SEASONS, N_SIMS, TEAM_DIV, TEAM_CONF
+from .config import PROC, OUT, CONF, TRAIN_SEASONS, N_SIMS, TEAM_DIV, TEAM_CONF, TARGET_SEASON
+
+
+def current_week(season: int = TARGET_SEASON) -> int:
+    """The week the league is actually in.
+
+    This was hardcoded to 1, which was true in August and quietly wrong from
+    the moment Week 2 started: the site kept serving Week 1 opponents under a
+    heading that implied this week. A weekly job that regenerates last week
+    forever is worse than no weekly job, because it looks like it is working.
+
+    A week is "current" until its last game has a result, so Tuesday's refit
+    picks up the week that is about to be played rather than the one just gone.
+    """
+    import pandas as pd
+    from .config import RAW
+    g = pd.read_csv(RAW / "schedules.csv", low_memory=False)
+    g = g[(g["season"] == season) & (g["game_type"] == "REG")]
+    unplayed = g[g["result"].isna()]
+    return int(unplayed["week"].min()) if len(unplayed) else int(g["week"].max())
 
 
 def _t(msg, t0):
@@ -93,11 +112,12 @@ def main(n_sims=N_SIMS, rebuild=False, player_sims=8000):
     dboard, dinfo = draft.board(out)
     _t(f"built draft board vs {dinfo['drafts_sampled']:,} live ADP drafts", t0)
 
-    mu, scoring = matchups.build(adj, trans, week=1)
-    _t(f"projected {len(mu)} week 1 matchups", t0)
+    wk_no = current_week()
+    mu, scoring = matchups.build(adj, trans, week=wk_no)
+    _t(f"projected {len(mu)} week {wk_no} matchups", t0)
 
-    wk = weekly.build(out, adj, ctx26, week=1)
-    _t(f"projected {len(wk):,} players for week 1", t0)
+    wk = weekly.build(out, adj, ctx26, week=wk_no)
+    _t(f"projected {len(wk):,} players for week {wk_no}", t0)
 
     led = ledger.build(res, board, mu)
     _t(f"stamped prediction ledger ({led['digest']})", t0)

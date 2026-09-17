@@ -38,4 +38,4 @@ node test.mjs                                             # headless check, all 
 ---
 
 Part of [Pylon](https://github.com/Joshuapowers1/pylon-nfl) by Joshua Powers.
-[joshpowersbiz@gmail.com](mailto:joshpowersbiz@gmail.com) · [LinkedIn](https://www.linkedin.com/in/joshuampowers) · [@joshuampowers](https://instagram.com/joshuampowers)
+[joshpowersbiz@gmail.com](mailto:joshpowersbiz@gmail.com) · [LinkedIn](https://www.linkedin.com/in/joshuampowerss) · [@joshuampowers](https://instagram.com/joshuampowers)

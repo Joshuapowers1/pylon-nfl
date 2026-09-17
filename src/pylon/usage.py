@@ -19,7 +19,7 @@ draft-day value lives.
 --------------------------------------------------------------------------
 PYLON · NFL projection and market-edge engine
 Joshua Powers · joshpowersbiz@gmail.com
-github.com/Joshuapowers1/pylon-nfl · linkedin.com/in/joshuampowers · @joshuampowers
+github.com/Joshuapowers1/pylon-nfl · linkedin.com/in/joshuampowerss · @joshuampowers
 """
 from __future__ import annotations
 import numpy as np

@@ -2,7 +2,7 @@
 <meta name="author" content="Joshua Powers">
 <meta name="description" content="Pylon Terminal: an NFL projection engine by Joshua Powers. Opponent-adjusted ridge model on nine seasons of play-by-play, 25,000 simulated seasons, a de-vigged market board, and a fantasy roster import that turns a Sleeper or ESPN league into a set lineup.">
 <meta name="theme-color" content="#B54900">
-<link rel="author" href="https://www.linkedin.com/in/joshuampowers">
+<link rel="author" href="https://www.linkedin.com/in/joshuampowerss">
 <link rel="canonical" href="https://joshuapowers1.github.io/pylon-nfl/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Pylon Terminal">
@@ -242,6 +242,28 @@ a.iconbtn{text-decoration:none;}
   border-radius:4px; padding:1px 4px; color:var(--ink-4);
 }
 
+/* ---------- second-level navigation ---------- */
+.subbar{
+  position:sticky; top:58px; z-index:55; background:var(--glass-strong);
+  -webkit-backdrop-filter:saturate(190%) blur(30px); backdrop-filter:saturate(190%) blur(30px);
+  border-bottom:1px solid var(--line);
+}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  .subbar{background:var(--ground);}
+}
+.subbar-in{
+  max-width:1480px; margin:0 auto; padding:9px 20px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.subbar .seg{flex:none;}
+.subbar-note{font-size:12px; line-height:1.4; min-width:0;}
+@media (max-width:640px){
+  .subbar-in{padding:8px 13px; gap:7px;}
+  .subbar-note{font-size:11.5px;}
+  .subbar .seg{overflow-x:auto; scrollbar-width:none; max-width:100%;}
+  .subbar .seg::-webkit-scrollbar{display:none;}
+}
+
 /* ---------- section furniture ---------- */
 section.page{display:none; padding-top:30px;}
 section.page.on{display:block; animation:fade .22s ease;}
@@ -270,6 +292,125 @@ section.page.on{display:block; animation:fade .22s ease;}
 @media (max-width:520px){ .byline-sep{display:none;} }
 .hero-copy h2{font-size:clamp(28px,4.2vw,46px); line-height:1.02; margin:12px 0 12px; letter-spacing:-.035em;}
 .hero-copy p{margin:0 0 16px; color:var(--ink-2); font-size:15px; line-height:1.62; max-width:60ch;}
+/* The brief was "understandable to anyone, without losing the intellectuality".
+   That is two registers rather than one compromise between them: the plain
+   sentence leads at reading size, the precise version sits under it a step
+   quieter. Neither replaces the other and nothing was deleted to fit. */
+/* ---------- the wordmark ----------
+   Acrylic rather than foil. The colour sweep is gone and what moves now is
+   light: a graphite-to-silver gradient clipped to the glyphs, and a narrow
+   specular band crossing it on a slower, offset cycle so the two never land in
+   step. On a light ground the highlight is a mid grey, because a white band
+   across near-black letters reads as a hole punched through them rather than as
+   gloss. On a dark ground it goes to full white, which is where the material
+   actually looks lit. The soft drop shadow follows the glyph alpha and gives
+   the letters a few millimetres of apparent thickness. */
+:root{
+  /* Neutral greys, not the cool ink the rest of the palette uses. Acrylic has
+     no hue of its own, and a wordmark that leans blue stops reading as glass. */
+  --holo-base:#0D0D0D; --holo-mid:#7C7C7C; --holo-lift:#4E4E4E;
+  --holo-sheen:rgba(128,128,128,.82); --holo-depth:rgba(0,0,0,.20);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --holo-base:#D9D9D9; --holo-mid:#FFFFFF; --holo-lift:#8E8E8E;
+    --holo-sheen:rgba(255,255,255,.95); --holo-depth:rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --holo-base:#D9D9D9; --holo-mid:#FFFFFF; --holo-lift:#8E8E8E;
+  --holo-sheen:rgba(255,255,255,.95); --holo-depth:rgba(0,0,0,.55);
+}
+.holo-wrap{display:flex; align-items:center; gap:clamp(10px,1.6vw,20px); margin:16px 0 14px;}
+.holo-mark{flex:none;}
+.holo-mark svg{width:clamp(26px,3.4vw,44px); height:auto; display:block;
+  filter:drop-shadow(0 3px 10px color-mix(in srgb, var(--accent), transparent 62%));}
+.holo{
+  font-family:var(--f-display); font-weight:800; letter-spacing:-.045em; line-height:.92;
+  font-size:clamp(52px,9.5vw,116px); margin:0; position:relative; display:inline-block;
+  background-image:linear-gradient(96deg,
+    var(--holo-base) 0%, var(--holo-base) 22%, var(--holo-lift) 34%,
+    var(--holo-mid) 44%, var(--holo-lift) 54%, var(--holo-base) 68%, var(--holo-base) 100%);
+  background-size:260% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:holo-drift 11s ease-in-out infinite;
+  filter:drop-shadow(0 2px 1px var(--holo-depth));
+}
+.holo::after{
+  content:"PYLON"; position:absolute; inset:0; pointer-events:none;
+  background-image:linear-gradient(72deg,
+    transparent 42%, var(--holo-sheen) 50%, transparent 58%);
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:holo-sheen 6.5s ease-in-out infinite;
+}
+@keyframes holo-drift{ 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+@keyframes holo-sheen{ 0%,100%{background-position:140% 50%;} 50%{background-position:-40% 50%;} }
+.holo-year{
+  font-family:var(--f-mono); font-size:.19em; font-weight:500; letter-spacing:.22em;
+  color:var(--ink-4); background:none; -webkit-text-fill-color:var(--ink-4);
+  vertical-align:super; margin-left:.14em;
+}
+
+/* ---------- the flip panel ----------
+   One card, replaced on an interval, with a short page-turn on each swap. The
+   height is fixed so nothing below it moves as the contents change, which is
+   the difference between a device and a layout bug. */
+.flip{
+  height:72px; display:flex; align-items:center; gap:12px; margin:0 0 18px;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:0 2px; overflow:hidden; perspective:700px; max-width:520px;
+}
+/* The turn has to be much shorter than the dwell or the card never settles.
+   At 190ms inside a 200ms slot it was in motion 95% of the time and read as a
+   smear; at 90ms each card sits still and legible for the remaining 110ms,
+   which is what makes it look like pages turning rather than a glitch. */
+.flip-card{
+  /* Full width, or the margin-left:auto on the right-hand label has no space
+     to push into and the label sits against the name instead of at the edge. */
+  display:flex; align-items:center; gap:11px; min-width:0; width:100%;
+  transform-origin:center top; animation:flip-in .09s cubic-bezier(.2,.7,.3,1);
+}
+@keyframes flip-in{
+  from{ opacity:0; transform:rotateX(-58deg) translateY(-3px); }
+  to  { opacity:1; transform:none; }
+}
+.flip-card.is-club{--flip-accent:1;}
+.flip-card > img{width:34px; height:34px; object-fit:contain; flex:none;}
+/* Photo over badge, same box. Hiding a broken image uncovers the rank. */
+.flip-shot{position:relative; width:40px; height:40px; flex:none;}
+.flip-shot .flip-badge{position:absolute; inset:0; width:40px; height:40px;}
+.flip-shot img{
+  position:absolute; inset:0; width:40px; height:40px; border-radius:50%;
+  object-fit:cover; object-position:50% 12%;
+  background:var(--sunken); border:1px solid var(--line);
+}
+.flip-badge{
+  flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  font-family:var(--f-mono); font-size:10px; font-weight:600; color:var(--accent);
+  background:var(--accent-wash); border:1px solid color-mix(in srgb, var(--accent), transparent 74%);
+}
+.flip-main{min-width:0; flex:1;}
+.flip-main b{display:block; font-size:15px; font-weight:600; line-height:1.15;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.flip-main span{font-size:11.5px; color:var(--ink-3); font-family:var(--f-mono);}
+.flip-n{margin-left:auto; flex:none; font-family:var(--f-mono); font-size:10.5px;
+  letter-spacing:.1em; color:var(--ink-4); text-transform:uppercase;}
+@media (max-width:520px){ .flip{max-width:100%;} .flip-n{display:none;} }
+
+/* Von Restorff: one element that breaks the visual pattern is the one that
+   gets remembered. The miss rate is the only thing on this page set at this
+   size, so it is the thing somebody recalls an hour later. */
+.hero-hook{
+  font-size:clamp(29px,4.6vw,50px); line-height:1.04; letter-spacing:-.04em;
+  margin:14px 0 12px; max-width:18ch;
+}
+.hero-num{color:var(--accent); font-family:var(--f-mono); font-weight:600; font-variant-numeric:tabular-nums;}
+.hero-copy p.lede{font-size:15px; line-height:1.6; color:var(--ink-2); max-width:58ch;}
+/* A secondary action that looks secondary. Two buttons of equal weight is the
+   same problem as three, one step quieter. */
+.chip.ghost{background:none; border-color:var(--line-strong); color:var(--ink-2); padding:7px 14px; font-size:13px;}
+.chip.ghost:hover{border-color:var(--accent); color:var(--accent);}
 .hero-cta{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;}
 .chip.go{
   background:var(--accent); color:var(--accent-ink); border-color:var(--accent);
@@ -534,6 +675,63 @@ tbody tr:hover td{background:var(--sunken);}
 .startcard span{font-size:12.5px; font-weight:600; color:var(--accent);}
 .startcard span::after{content:" >"; }
 
+.sample-row{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-top:12px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:12.5px;
+}
+.sample-row .dim{flex:1; min-width:200px; line-height:1.45;}
+
+/* ---------- the verdict card ----------
+   Sized so a phone screenshot of just this block is self-explanatory: a single
+   headline that survives being cropped, three facts, and the address it came
+   from. It deliberately does not use the glass treatment, because translucency
+   over a scrolled page screenshots badly. */
+.verdict{
+  border:1px solid var(--line-strong); border-radius:var(--r);
+  background:var(--surface); padding:18px 20px 15px; margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+.verdict-top{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+.verdict-top .pylon{width:11px; height:20px; flex:none;}
+.verdict-head{
+  font-family:var(--f-display); font-weight:800; letter-spacing:-.035em; line-height:1.02;
+  font-size:clamp(27px,4.6vw,40px); margin-bottom:8px; text-wrap:balance;
+}
+.verdict-sub{margin:0 0 14px; font-size:14.5px; line-height:1.55; color:var(--ink-2); max-width:60ch;}
+.verdict-sub b{color:var(--ink); font-weight:600;}
+.verdict-facts{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:1px;
+  background:var(--line); border:1px solid var(--line); border-radius:var(--r-sm);
+  overflow:hidden; margin-bottom:12px;
+}
+.verdict-facts > div{background:var(--surface); padding:9px 11px; min-width:0;}
+.verdict-facts dt{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-4); font-family:var(--f-mono); margin-bottom:3px;}
+.verdict-facts dd{margin:0; font-size:13.5px; font-weight:500; line-height:1.35; overflow-wrap:anywhere;}
+/* The button lives on the footer line rather than the header. It has no
+   business being in the screenshot, and at phone width a header-right control
+   strands itself on a line of its own with a hole beside it. */
+.verdict-foot{
+  font-family:var(--f-mono); font-size:11px; color:var(--ink-3);
+  border-top:1px solid var(--line); padding-top:10px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.verdict-foot > span{flex:1; min-width:190px; line-height:1.5;}
+.verdict-foot .chip{flex:none; font-family:var(--f-body);}
+@media (max-width:520px){ .verdict{padding:15px 15px 12px;} }
+
+/* ---------- live cards ---------- */
+.livecard{display:flex; flex-direction:column; gap:2px;}
+.livecard.is-live{border-color:var(--accent);}
+.live-score{display:flex; align-items:center; gap:9px; padding:5px 0; font-size:15px;}
+.live-score .num{margin-left:auto; font-size:20px; font-weight:600;}
+.live-say{
+  margin:10px 0 0; padding-top:10px; border-top:1px solid var(--line);
+  font-size:13px; line-height:1.55; color:var(--ink-2);
+}
+.live-say b{color:var(--ink); font-weight:600;}
+
 /* ---------- my team ---------- */
 .slotgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(248px,1fr)); gap:9px;}
 .slotgrid > *{min-width:0;}
@@ -679,6 +877,19 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
   </div>
 </header>
 
+<!-- Second-level navigation. Eleven top-level tabs asked a first-time visitor to
+     understand the whole information architecture before clicking anything. The
+     tabs above are now five destinations; this bar holds the views inside the
+     one you are in, and hides itself when there is only one. It reuses the
+     segmented control the pages already use rather than introducing a second
+     row of tabs, because two rows of tabs reads as more navigation, not less. -->
+<div class="subbar" id="subbar" hidden>
+  <div class="subbar-in">
+    <div class="seg" id="subtabs" role="tablist" aria-label="Views"></div>
+    <span class="subbar-note dim" id="subnote"></span>
+  </div>
+</div>
+
 <div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle">
   <div class="welcome-in glass">
     <div class="eyebrow">Pylon &middot; 2026</div>
@@ -686,9 +897,9 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
     <p>Pick one. Everything else stays where it is, and the question mark in the
        top corner explains any word on the site in plain English.</p>
     <div class="welcome-opts">
-      <button data-w="myteam"><b>I play fantasy football</b><span>Pull in your roster and get a lineup, the close calls, and who is worth adding.</span></button>
-      <button data-w="matchups"><b>I want to know who wins</b><span>Projected scores for every game this week, next to what the sportsbooks are posting.</span></button>
-      <button data-w="model"><b>I want to see how it works</b><span>The method, the backtest, and the six ways this model is wrong.</span></button>
+      <button data-w="matchups"><b>Who the model picks this week</b><span>A projected score and a win probability for every game, next to the number the sportsbooks are posting.</span></button>
+      <button data-w="model"><b>How the model works</b><span>The method, the backtest, and the six bugs that were quietly producing wrong answers.</span></button>
+      <button data-w="live"><b>What is happening right now</b><span>Live scores from every game, with the model's guess sitting beside each one.</span></button>
     </div>
     <button class="wskip" data-wclose>Just let me look around</button>
   </div>
@@ -709,7 +920,7 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
         <div class="foot-role">Built and maintained by Joshua Powers</div>
         <div class="foot-links">
           <a href="mailto:joshpowersbiz@gmail.com">joshpowersbiz@gmail.com</a>
-          <a href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://www.linkedin.com/in/joshuampowerss" target="_blank" rel="noopener">LinkedIn</a>
           <a href="https://github.com/Joshuapowers1/pylon-nfl" target="_blank" rel="noopener">GitHub</a>
           <a href="https://instagram.com/joshuampowers" target="_blank" rel="noopener">@joshuampowers</a>
         </div>
@@ -724,9 +935,28 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
       </div>
     </div>
     <div class="foot-fine">
-      Team names, logos and marks are the property of their respective owners and appear here for
-      identification in an independent analytical project. Not affiliated with or endorsed by the NFL
-      or any club. Projections are estimates and nothing here is financial advice.
+      <b>No warranty.</b> Everything here is a statistical estimate produced by a model that
+      publishes its own error rate, and that rate is high: it calls roughly 58 games in 100
+      correctly. It is provided as is, without warranty of any kind, and the author accepts no
+      liability for any loss arising from its use. Nothing on this site is financial, investment,
+      betting or professional advice of any kind, and no output constitutes a recommendation to
+      place any wager or make any transaction.
+      <br><br>
+      <b>Betting.</b> The market pages exist to compare a model number against a posted price.
+      They are analysis, not a tip service. Sports wagering is restricted by jurisdiction and age,
+      is legal only where expressly permitted, and carries a real risk of financial loss. If
+      gambling is affecting you or someone you know, the US national helpline is
+      1-800-GAMBLER (1-800-426-2537).
+      <br><br>
+      <b>Not affiliated.</b> This is an independent analytical project with no connection to,
+      sponsorship from, or endorsement by the National Football League, any member club, Sleeper,
+      ESPN, DraftKings, Polymarket, or any other named service. Team names, logos and marks are
+      the property of their respective owners and appear solely for identification. Optional
+      roster lookups read publicly available league data at the user's own direction and are
+      subject to those services' own terms.
+      <br><br>
+      <b>Your data.</b> Nothing you enter is uploaded. Rosters live in your own browser and are
+      deleted when you clear it. There is no account and no personal information is collected.
     </div>
   </footer>
 </div>
@@ -1341,6 +1571,88 @@ function head(title, sub){
 }
 
 /* ---------------------------------------------------------------- OVERVIEW */
+/* ---- the flip panel ------------------------------------------------------
+   All 32 clubs, interleaved with the hundred players the model rates highest,
+   one every 200ms. Interleaved rather than run in two blocks so the panel never
+   spends twenty seconds looking like it only does one thing.
+
+   Three things it does not do: run when the tab is in the background, run when
+   the operating system asks for reduced motion, or run when its own page is not
+   on screen. A decorative timer that keeps firing behind a hidden tab is the
+   kind of detail nobody notices except on a laptop battery. */
+function buildFlipDeck(){
+  /* Club, then that club's players inside the model's top 100, then the next
+     club. AFC first, then NFC, each in division order, so the panel reads as a
+     tour of the league rather than a shuffle.
+
+     Headshots are referenced by URL and fetched by the browser from the NFL's
+     own public image host. Nothing is copied into this repository or inlined
+     into this page, which is the same rule the club marks are fetched under in
+     scripts/fetch_logos.py: display, not redistribution. Any photo that fails
+     to load, or is blocked by a page policy that forbids outside images, falls
+     back to the player's rank rather than leaving a hole. */
+  const top = PLAYERS
+    .filter(p => POS.includes(p.position) && Number.isFinite(p.value_rank))
+    .slice()
+    .sort((a,b) => a.value_rank - b.value_rank)
+    .slice(0,100);
+  const byTeam = {};
+  top.forEach((p,i) => (byTeam[p.team] = byTeam[p.team] || []).push({...p, n:i+1}));
+
+  const clubs = TEAMS.slice().sort((x,y) =>
+    (x.conf||'').localeCompare(y.conf||'') ||
+    (x.division||'').localeCompare(y.division||'') ||
+    (x.nick||'').localeCompare(y.nick||''));
+
+  const deck = [];
+  clubs.forEach(t => {
+    deck.push({kind:'club', team:t.team, name:t.nick, sub:t.division, tag:t.conf || 'club'});
+    (byTeam[t.team] || []).forEach(pl => deck.push({
+      kind:'player', team:pl.team, name:pl.player,
+      sub:`${pl.position}${pl.pos_rank || ''} ${pl.team}`,
+      rank:pl.n, shot:pl.headshot || null,
+    }));
+  });
+  return deck;
+}
+function startFlipbook(){
+  const el = document.getElementById('flipbook');
+  if(!el) return;
+  const deck = buildFlipDeck();
+  if(!deck.length) return;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i = 0, timer = null;
+
+  const draw = () => {
+    const d = deck[i % deck.length];
+    let art;
+    if(d.kind === 'club'){
+      art = mark(d.team, 34);
+    } else if(d.shot){
+      /* The badge sits underneath and is revealed by hiding the image, so a
+         blocked or missing photo costs nothing and shifts nothing. */
+      art = `<span class="flip-shot"><span class="flip-badge">${esc(String(d.rank).padStart(2,'0'))}</span>`
+          + `<img src="${esc(d.shot)}" alt="" loading="lazy" decoding="async"`
+          + ` onerror="this.style.display='none'"></span>`;
+    } else {
+      art = `<span class="flip-badge">${esc(String(d.rank).padStart(2,'0'))}</span>`;
+    }
+    el.innerHTML = `<div class="flip-card${d.kind === 'club' ? ' is-club' : ''}">${art}
+      <span class="flip-main"><b>${esc(d.name)}</b><span>${esc(d.sub)}</span></span>
+      <span class="flip-n">${d.kind === 'club' ? esc(d.tag) : 'NFL top 100'}</span></div>`;
+  };
+  const tick  = () => { i++; draw(); };
+  const stop  = () => { if(timer){ clearInterval(timer); timer = null; } };
+  const start = () => { if(!timer && !still && !document.hidden) timer = setInterval(tick, 500); };
+
+  draw();
+  if(still){ el.title = 'Cycling is off because your system asks for reduced motion.'; return; }
+  document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(es => es[0].isIntersecting ? start() : stop(), {threshold:0}).observe(el);
+  } else { start(); }
+}
+
 function pageOverview(){
   const topEdges = EDGES.filter(e=>e.market==='Make Playoffs')
     .sort((a,b)=>Math.abs(b.edge_pp)-Math.abs(a.edge_pp)).slice(0,10)
@@ -1363,7 +1675,7 @@ function pageOverview(){
        <div class="byline" itemscope itemtype="https://schema.org/Person">
          <span>Built by <b itemprop="name">Joshua Powers</b></span>
          <span class="byline-sep" aria-hidden="true"></span>
-         <a itemprop="sameAs" href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener me">
+         <a itemprop="sameAs" href="https://www.linkedin.com/in/joshuampowerss" target="_blank" rel="noopener me">
            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M3.4 5.9h2.4V14H3.4zM4.6 1.9a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8M7.3 5.9h2.3v1.1h.03a2.5 2.5 0 0 1 2.26-1.24c2.4 0 2.85 1.59 2.85 3.65V14h-2.4v-3.6c0-.86-.02-1.96-1.2-1.96-1.2 0-1.38.94-1.38 1.9V14H7.3z"/></svg>
            LinkedIn</a>
          <a itemprop="email" href="mailto:joshpowersbiz@gmail.com">
@@ -1376,24 +1688,36 @@ function pageOverview(){
            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
            Source</a>
        </div>
-       <h2>An NFL projection engine you can argue with</h2>
-       <p>
-         Nine seasons of play-by-play, an opponent-adjusted ridge model, shrinkage measured out of
-         sample rather than assumed, and 25,000 simulated seasons on the real 2026 schedule. Then the
-         part almost nobody ships: the same simulator runs in this page, so you can move a team and
-         watch the league re-solve, and the backtest that says how often it is wrong is on the site
-         instead of in a footnote.
-       </p>
+       <!-- The wordmark is set in a holographic sweep: a wide multi-stop
+            gradient clipped to the glyphs and animated across them, plus a
+            narrow specular band travelling the other way. Both are pure CSS on
+            one element, so this costs nothing at runtime and adds no
+            dependency to a page that deliberately has none.
+
+            The flip panel beside it cycles all 32 clubs and the hundred players
+            the model rates highest, a fifth of a second each. Team marks are
+            already inlined and are used here as they are everywhere else on the
+            site, to identify a club. Players appear as type rather than as
+            photographs: headshots are owned by the league and the wire
+            services, and a player's likeness is his own, so a hundred of them
+            running as decoration would be an ornamental use with no
+            identification defence behind it. -->
+       <div class="holo-wrap">
+         <div class="holo-mark">
+           <svg viewBox="0 0 11 20" aria-hidden="true">
+             <path d="M5.5 4.2 9.2 2.4 10 17.6 5.5 19.8z" fill="var(--accent)" style="fill:color-mix(in srgb, var(--accent), #000 28%)"/>
+             <path d="M1.8 2.4 5.5 4.2v15.6L1 17.6z" fill="var(--accent)" style="fill:color-mix(in srgb, var(--accent), #000 8%)"/>
+             <path d="M5.5 .6 9.2 2.4 5.5 4.2 1.8 2.4z" fill="var(--accent)" style="fill:color-mix(in srgb, var(--accent), #fff 24%)"/>
+           </svg>
+         </div>
+         <h2 class="holo">PYLON<span class="holo-year">2026</span></h2>
+       </div>
+       <div class="flip" id="flipbook" role="img" aria-label="Every NFL club and the hundred players this model rates highest, cycling"></div>
        <div class="hero-cta">
-         <button class="chip go" data-go="myteam">Open my team</button>
-         <button class="chip go" data-go="sim">Run your own scenario</button>
-         <button class="chip go" data-go="market">Price a market</button>
+         <button class="chip go" data-go="matchups">This week's games</button>
+         <button class="chip ghost" data-go="model">How it works</button>
+         <button class="chip ghost" data-go="record">Track record</button>
        </div>
-       <div class="stack">
-         ${['Python','pandas','scikit-learn ridge','Monte Carlo','nflverse play-by-play','Polymarket API','vanilla JS','hand-built SVG']
-           .map(x=>`<span>${x}</span>`).join('')}
-       </div>
-     </div>
      <div class="hero-side">
        <div class="eyebrow" style="margin-bottom:8px">Live model, right now</div>
        ${TEAMS.slice().sort((a,b)=>b.super_bowl-a.super_bowl).slice(0,5).map((t,i)=>`
@@ -1407,24 +1731,6 @@ function pageOverview(){
      </div>
    </div>
    <div class="yards"></div>
-
-   <div class="startrow">
-     <button class="startcard" data-go="myteam">
-       <div class="q">What do I do with my fantasy team?</div>
-       <p>Pull your roster in from Sleeper, a public ESPN league, or by pasting it out of any app. You get a lineup, the calls that are too close to matter, where your roster is thin, and who is worth adding.</p>
-       <span>Open your team</span>
-     </button>
-     <button class="startcard" data-go="matchups">
-       <div class="q">Who wins this weekend?</div>
-       <p>A projected score and a win probability for all sixteen games, next to the number the sportsbooks are posting, so you can see where the model disagrees and by how much.</p>
-       <span>See this week</span>
-     </button>
-     <button class="startcard" data-go="market">
-       <div class="q">Is there a bet worth making?</div>
-       <p>Every futures market with the bookmaker's cut stripped out first, so a price is compared with a real probability rather than a padded one. Most of the board has no edge, and it says so.</p>
-       <span>Check the board</span>
-     </button>
-   </div>
 
    <div class="kpis">
      <div class="kpi"><div class="v">0.57<small> / 0.14</small></div><div class="l">Offense carries over. Defense barely does. The engine's core finding.</div></div>
@@ -1522,6 +1828,7 @@ function pageOverview(){
      </div>
    </div>`;
   wireDiverging(p);
+  startFlipbook();
 }
 
 /* ------------------------------------------------------------------- TEAMS */
@@ -2022,7 +2329,7 @@ function pageModel(){
          </p>
          <div class="foot-links" style="font-size:13.5px">
            <a href="mailto:joshpowersbiz@gmail.com">joshpowersbiz@gmail.com</a>
-           <a href="https://www.linkedin.com/in/joshuampowers" target="_blank" rel="noopener">LinkedIn</a>
+           <a href="https://www.linkedin.com/in/joshuampowerss" target="_blank" rel="noopener">LinkedIn</a>
            <a href="https://github.com/Joshuapowers1/pylon-nfl" target="_blank" rel="noopener">Source on GitHub</a>
            <a href="https://instagram.com/joshuampowers" target="_blank" rel="noopener">@joshuampowers</a>
          </div>
@@ -2088,6 +2395,47 @@ function wireDiverging(root){
    ========================================================================== */
 /* A registry rather than a literal, so feature modules further down the file
    can add their own page without this block needing to know about them. */
+/* ---- the plain-English line ---------------------------------------------
+   Every view gets one sentence saying what you are looking at, in the words a
+   person would actually use, and it always appears in the same place. The
+   precise vocabulary is still everywhere in the tables below, and every term
+   in them is still tappable for its real definition. Nothing was removed and
+   nothing was made vaguer. The sentence is the way in, not a replacement. */
+const PLAIN = {
+  startsit:"Two players, one spot. This says how often each one actually outscores the other, instead of just ranking them.",
+  draft:   "Ranks players by how much better they are than someone you could get for free, for your league's size and scoring.",
+  live:    "What is happening in every game right now, with the model's guess sitting next to the real score so you can see it be right or wrong.",
+  matchups:"A predicted score for every game this week, next to the number the sportsbooks are posting.",
+  market:  "Where this model and the betting markets disagree, after the bookmaker's cut is taken back out of the prices.",
+  teams:   "How good every team is, measured in points per game against an average opponent.",
+  players: "Every projected player, with a realistic bad week and good week, not just one number in the middle.",
+  sim:     "Drag any team up or down and watch all 32 playoff pictures work themselves out again, in about a third of a second.",
+  record:  "Every prediction was written down and locked before the season started. This is the running score against Vegas.",
+  model:   "How the whole thing works, in plain English, including the six bugs that were quietly producing wrong answers.",
+};
+
+/* ---- information architecture -------------------------------------------
+   Eleven top-level tabs is a table of contents, not a product. Worse, three of
+   them answered the same question a normal person asks once: "what about my
+   guys this week". Roster, start-sit and the draft board are three views of
+   your team, so they sit inside one destination instead of beside each other.
+
+   Page ids are deliberately unchanged, so every existing link, the command
+   palette and the welcome modal keep working without knowing groups exist. */
+const NAV = [
+  {id:'home',  label:'Home',          pages:[['overview','Overview']]},
+  {id:'week',  label:'This week',
+   pages:[['live','Live now'],['matchups','The model\'s picks'],['market','Betting edges']]},
+  {id:'fantasy', label:'Fantasy',
+   pages:[['startsit','Start or sit'],['draft','Draft board']]},
+  {id:'league',label:'The league',    note:'How good every team is, how good every player is, and what happens if you change one.',
+   pages:[['teams','Teams'],['players','Players'],['sim','What if']]},
+  {id:'record',label:'Was it right?', note:'Every prediction was written down before the season. This is the running score.',
+   pages:[['record','Track record']]},
+  {id:'how',   label:'How it works',  note:'The method, in plain English, including the parts that are wrong.',
+   pages:[['model','The method']]},
+];
+
 const PAGES=[];
 function registerPage(id,label,build,opts){
   PAGES.push([id,label,build,opts||{}]);
@@ -2104,25 +2452,71 @@ const built={};
 /* Resolved per call rather than captured in a const, because registerPage runs
    during this block and a const declared below it would still be in its
    temporal dead zone. */
+/* A declaration rather than a const arrow: registerPage() calls renderTabs()
+   during boot, and a const defined further down would still be in its
+   temporal dead zone. Declarations hoist, so order stops mattering. */
+function registered(id){ return PAGES.some(p => p[0] === id); }
+function navGroup(pageId){
+  return NAV.find(g => g.pages.some(([id]) => id === pageId)) || NAV[0];
+}
+/* A group only appears once at least one page inside it has registered, so the
+   bar does not flash entries that cannot be clicked yet during boot. */
+function liveGroups(){
+  return NAV.map(g => ({...g, pages: g.pages.filter(([id]) => registered(id))}))
+            .filter(g => g.pages.length);
+}
+function badgeFor(id){
+  const p = PAGES.find(x => x[0] === id);
+  return p && p[3] && p[3].badge ? p[3].badge : '';
+}
 function renderTabs(){
   const tabs=document.getElementById('tabs');
   if(!tabs) return;
   const cur=location.hash.slice(1)||'overview';
-  tabs.innerHTML = PAGES.map(([id,label,,o])=>
-    `<button data-id="${id}" aria-current="${id===cur}">${label}${o&&o.badge?`<em>${o.badge}</em>`:''}</button>`).join('');
+  const curGroup = navGroup(cur).id;
+  tabs.innerHTML = liveGroups().map(g=>{
+    /* Only the group's landing view can badge the group. Inheriting a badge
+       from a view two clicks in labels the wrong thing: "live" belongs to the
+       simulator, not to the league section that happens to contain it. */
+    const badge = badgeFor(g.pages[0][0]);
+    return `<button data-group="${g.id}" data-id="${g.pages[0][0]}" aria-current="${g.id===curGroup}">`
+         + `${g.label}${badge?`<em>${badge}</em>`:''}</button>`;
+  }).join('');
+  renderSubtabs(cur);
 }
+function renderSubtabs(cur){
+  const bar=document.getElementById('subbar'), seg=document.getElementById('subtabs'),
+        note=document.getElementById('subnote');
+  if(!bar||!seg) return;
+  const g = navGroup(cur);
+  const pages = g.pages.filter(([id]) => registered(id));
+  const line = PLAIN[cur] || '';
+  /* The home page states its own case in the hero, so the bar stays out of its
+     way. Everywhere else the bar is always present and always says the same
+     kind of thing in the same spot, which is most of what "uniform" means. */
+  if(pages.length < 2 && !line){ bar.hidden = true; seg.innerHTML=''; note.textContent=''; return; }
+  bar.hidden = false;
+  seg.innerHTML = pages.length < 2 ? '' : pages.map(([id,label])=>
+    `<button role="tab" data-id="${id}" aria-pressed="${id===cur}" aria-selected="${id===cur}">${label}</button>`).join('');
+  note.textContent = line;
+}
+
 renderTabs();
 const tabs=document.getElementById('tabs');
 function go(id, push=true){
   if(!PAGES.some(p=>p[0]===id)) id='overview';
   if(!built[id]){ PAGES.find(p=>p[0]===id)[2](); built[id]=1; }
   document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('on', s.id==='pg-'+id));
-  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current', String(b.dataset.id===id)));
   if(push && location.hash.slice(1)!==id) history.replaceState(null,'','#'+id);
+  /* renderTabs marks the current group and redraws the view switcher, so the
+     old per-button aria-current pass here would only fight it. */
   renderTabs();
   scrollTo({top:0,behavior:'instant'});
 }
 tabs.addEventListener('click',e=>{const b=e.target.closest('button'); if(b) go(b.dataset.id);});
+document.getElementById('subtabs').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(b) go(b.dataset.id);
+});
 addEventListener('hashchange',()=>go(location.hash.slice(1)||'overview',false));
 
 /* ---- theme ---- */
@@ -2675,6 +3069,18 @@ function pageEV(){
    ${head('Edge and expected value',
      "Every price here is de-vigged before anything is compared to it. Edit any price to your live one and the expected value and stake recompute. A sportsbook's thirty-two Super Bowl prices sum to well over a hundred percent, and comparing a model to raw prices manufactures an edge on all thirty-two teams, which is arithmetic rather than insight.")}
 
+   <!-- The one page on this site where somebody could lose money acting on a
+        number. It says so at the top, not in the footer, and it says it in the
+        same plain voice as everything else rather than in legal boilerplate
+        nobody reads. -->
+   <div class="notice" style="border-left-color:var(--bad);margin:0 0 16px">
+     <b>Analysis, not advice.</b> This model calls about 58 games in 100 correctly and a closing
+     sportsbook line calls 66, so it is measurably worse than the market it is being compared
+     against. Nothing here is betting or financial advice and no row is a recommendation to place
+     a wager. Sports wagering is legal only where expressly permitted, is age restricted, and can
+     lose you money. Help is at 1-800-GAMBLER.
+   </div>
+
    <div class="bar">
      <div class="seg" id="mSel">${groups.map((g,i)=>`<button data-i="${i}" aria-pressed="${i===0}">${g.n}</button>`).join('')}</div>
      <button class="chip" id="evPos" aria-pressed="false">Positive EV only</button>
@@ -2896,14 +3302,14 @@ function spreadText(team, sp){
 }
 function pageMatchups(){
   const p=document.getElementById('pg-matchups');
-  if(!MATCHUPS.length){ p.innerHTML = head('Week 1','No schedule loaded.'); return; }
+  if(!MATCHUPS.length){ p.innerHTML = head('${WEEK_LABEL}','No schedule loaded.'); return; }
   const withLines = MATCHUPS.filter(g=>g.market_spread_home!=null);
   const biggestSp = withLines.slice().sort((a,b)=>Math.abs(b.spread_edge)-Math.abs(a.spread_edge))[0];
   const biggestTot = withLines.slice().sort((a,b)=>Math.abs(b.total_edge)-Math.abs(a.total_edge))[0];
   const meanSp = withLines.reduce((a,b)=>a+Math.abs(b.spread_edge),0)/Math.max(withLines.length,1);
 
   p.innerHTML = `
-   ${head('Week 1, game by game',
+   ${head('${WEEK_LABEL}, game by game',
      'Every game with a projected score, a winner, and the sportsbook line next to it. The model and the market usually agree, which is the point. Where they do not is where it gets interesting.')}
 
    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
@@ -3293,6 +3699,11 @@ function pageStartSit(){
    error worth a stack trace, so it is caught and answered with the paste box.
    ========================================================================== */
 
+/* The heading said "Week 1" because somebody typed it. It now comes from the
+   bundle, which comes from the schedule, so the page cannot claim to be showing
+   a week it is not showing. */
+const WEEK_NO = (D.meta && D.meta.week) || 1;
+const WEEK_LABEL = 'Week ' + WEEK_NO;
 const MT_KEY = 'pylon-myteam-v1';
 const SEASON = String(D.meta.season);
 const IDS = D.ids || {sleeper:{}, keys:{}};
@@ -3391,7 +3802,7 @@ function holes(starters, slots, teams){
             gap: m.s.proj_ppg - benchmark.proj_ppg, par: benchmark.proj_ppg};
   }).filter(Boolean).sort((a,b)=>a.gap-b.gap);}
 
-let MT = {roster:[], format:'sleeper', teams:12, source:'', taken:[], slots:null, league:''};
+let MT = {roster:[], format:'sleeper', teams:12, source:'', taken:[], slots:null, league:'', opponents:[]};
 try{ const s=localStorage.getItem(MT_KEY); if(s) MT=Object.assign(MT, JSON.parse(s)); }catch(e){}
 function mtSave(){ try{ localStorage.setItem(MT_KEY, JSON.stringify(MT)); }catch(e){} }
 
@@ -3431,19 +3842,259 @@ function checkNet(){
 }
 
 function netMessage(err){
-  if(err && err.status===401) return "That league is set to private. ESPN only lets an outside page read public leagues, so use the paste box instead: open your team, select the whole roster, copy, paste.";
+  if(err && err.status===401) return `That league is set to private. ESPN only lets an outside page read public leagues, so paste it instead: open your team, select the whole roster, copy, paste. `
+       + `<div style="margin-top:10px"><button class="chip" data-sample="1">Or show me a sample team</button></div>`;
   if(err && err.status===404) return "Nothing came back for that. Check the spelling and try again.";
   if(err && err.name==='AbortError') return "The lookup took longer than ten seconds and was called off. Try again, or paste your roster, which needs no connection at all.";
-  return `This copy of the page cannot reach the outside, which is what an embedded preview does. Paste your roster instead, which needs no connection at all, or open the hosted copy at <a href="${LIVE_SITE}" target="_blank" rel="noopener">${LIVE_SITE.replace('https://','')}</a> where the lookups run.`;
+  /* Lead with the thing that works right here and takes one click. Sending
+     somebody off to another URL is the last resort, not the first suggestion:
+     most people who read this will not come back. */
+  return `This copy of the page cannot reach the outside, which is what an embedded preview does. `
+       + `The quickest way to see what this page actually does is a sample team, which needs no `
+       + `connection at all. You can also paste your own roster, or open the hosted copy at `
+       + `<a href="${LIVE_SITE}" target="_blank" rel="noopener">${LIVE_SITE.replace('https://','')}</a> where the lookups run.`
+       + `<div style="margin-top:10px"><button class="chip go" data-sample="1">Show me a sample team</button></div>`;
+}
+
+/* ---- live scoreboard -----------------------------------------------------
+   Every number on the rest of this site was computed in August and frozen.
+   This page is the opposite: it asks the scoreboard what is happening right
+   now and puts the model's call next to it, so a visitor can watch the thing
+   be right or wrong in real time instead of taking a backtest on faith.
+
+   It runs on a static page with no server. ESPN publish a scoreboard endpoint
+   that sends access-control-allow-origin:*, so the browser can read it
+   directly. Nothing is proxied, stored or logged.
+
+   The model's line for a game the pipeline has not re-run is computed here from
+   the committed power ratings and the fitted home-field constant, which is the
+   same arithmetic the Python uses. Checked against all 16 sealed ${WEEK_LABEL}
+   predictions: max disagreement 0.006 points. */
+const LIVE_URL = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
+const LIVE_ALIAS = {LAR:'LA', WSH:'WAS', OAK:'LV', SD:'LAC', STL:'LA'};
+const liveTeam = a => LIVE_ALIAS[String(a||'').toUpperCase()] || String(a||'').toUpperCase();
+/* The schedule is committed, so the page already knows who plays whom and when
+   without asking anybody. It renders that immediately and upgrades to real
+   scores when the feed answers. The previous version showed an error box when
+   it could not reach the feed, which meant a locked-down browser, an offline
+   laptop or an embedded preview saw a failure instead of a full slate the page
+   could have drawn from its own data all along. */
+function seedLive(){
+  const seed = (D.live_seed && D.live_seed.games) || [];
+  return seed.map(g => ({
+    away:g.away, home:g.home,
+    awayScore:g.awayScore || 0, homeScore:g.homeScore || 0,
+    state: g.homeScore == null ? 'pre' : 'post',
+    detail: g.homeScore == null ? kickLabel(g.kick) : 'Final',
+    done: g.homeScore != null, kickoff:g.kick, seeded:true,
+  }));
+}
+function kickLabel(iso){
+  const d = new Date(iso + (/[Z+]/.test(iso) ? '' : 'Z'));
+  if(isNaN(d)) return 'scheduled';
+  return d.toLocaleString(undefined,{weekday:'short', hour:'numeric', minute:'2-digit'});
+}
+let LIVE = {games:[], week:null, fetched:null, error:null, seeded:true};
+let liveTimer = null;
+
+/* margin the model expects the home team to win by. Positive means home. */
+function modelMargin(away, home){
+  const A = BYTEAM[away], H = BYTEAM[home];
+  if(!A || !H) return null;
+  return D.calibration.translation.hfa + H.power_rating - A.power_rating;
+}
+function winProb(margin){
+  const s = D.calibration.translation.sigma;
+  return 1 - 0.5 * (1 + erf((0 - margin) / (s * Math.SQRT2)));
+}
+/* Abramowitz and Stegun 7.1.26. The page has no math library and needs one
+   normal CDF, so it carries its own rather than pulling in a dependency. */
+function erf(x){
+  const sgn = x < 0 ? -1 : 1; x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - ((((1.061405429*t - 1.453152027)*t + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x);
+  return sgn * y;
+}
+
+async function fetchLive(){
+  try{
+    const r = await fetch(LIVE_URL, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    LIVE.week = j.week && j.week.number;
+    LIVE.games = (j.events || []).map(ev => {
+      const c = ev.competitions[0], st = c.status.type;
+      const away = c.competitors.find(x => x.homeAway === 'away');
+      const home = c.competitors.find(x => x.homeAway === 'home');
+      return {
+        away: liveTeam(away.team.abbreviation), home: liveTeam(home.team.abbreviation),
+        awayScore: +(away.score || 0), homeScore: +(home.score || 0),
+        state: st.state, detail: st.shortDetail || '', done: !!st.completed,
+        kickoff: ev.date,
+      };
+    });
+    LIVE.error = null; LIVE.seeded = false;
+  }catch(e){ LIVE.error = e.message || String(e); }
+  LIVE.fetched = new Date();
+  return LIVE;
+}
+
+/* Plain sentences. The brief was that somebody who does not watch football
+   should get something out of this, and "ATS", "cover" and "the spread" all
+   assume a reader who already knows. Nothing here needs a glossary. */
+function liveSentence(g, m){
+  const favTeam = m > 0 ? g.home : g.away, by = Math.abs(m);
+  const favName = (BYTEAM[favTeam] || {}).nick || favTeam;
+  if(g.state === 'pre')
+    return `Pylon expects <b>${esc(favName)}</b> to win by about ${by.toFixed(0)}.`;
+  const lead = g.homeScore - g.awayScore;
+  const leaderName = (BYTEAM[lead > 0 ? g.home : g.away] || {}).nick || '';
+  if(g.state === 'in'){
+    if(lead === 0) return `Pylon expected <b>${esc(favName)}</b> by ${by.toFixed(0)}. It is tied right now.`;
+    const right = (lead > 0) === (m > 0);
+    return `Pylon expected <b>${esc(favName)}</b> by ${by.toFixed(0)}. `
+         + `<b>${esc(leaderName)}</b> leads by ${Math.abs(lead)}, which is the ${right ? 'side it picked' : 'other side'}.`;
+  }
+  if(lead === 0) return `Pylon expected <b>${esc(favName)}</b> by ${by.toFixed(0)}. The game was a tie.`;
+  const right = (lead > 0) === (m > 0);
+  const miss = Math.abs(Math.abs(lead) - by);
+  return `Pylon expected <b>${esc(favName)}</b> by ${by.toFixed(0)}. `
+       + `<b>${esc(leaderName)}</b> won by ${Math.abs(lead)}. `
+       + `Winner <b>${right ? 'correct' : 'wrong'}</b>, margin off by ${miss.toFixed(0)}.`;
+}
+
+function pageLive(){
+  const p = document.getElementById('pg-live');
+  p.innerHTML = head('Live right now',
+    "Every other number on this site was worked out in August and frozen. This page asks the scoreboard what is actually happening and puts the model's guess beside it, so you can watch it be right or wrong instead of taking anybody's word for it.")
+    + '<div id="liveBody"></div>';
+  /* Draw the committed slate first. Nothing is ever blank or spinning. */
+  LIVE.games = seedLive(); LIVE.week = (D.live_seed && D.live_seed.week) || WEEK_NO;
+  renderLive();
+  fetchLive().then(renderLive).then(armLive);
+}
+function armLive(){
+  if(liveTimer) clearInterval(liveTimer);
+  const anyLive = LIVE.games.some(g => g.state === 'in');
+  /* Poll hard only while something is actually being played. */
+  if(LIVE.error && LIVE.seeded) return;   // blocked here; stop retrying
+  liveTimer = setInterval(() => fetchLive().then(renderLive).then(armLive), anyLive ? 45000 : 300000);
+}
+function renderLive(){
+  const b = document.getElementById('liveBody');
+  if(!b) return;
+  if(!LIVE.games.length){
+    b.innerHTML = `<div class="notice">No games scheduled for this week.</div>`;
+    return;
+  }
+  const rows = LIVE.games.map(g => ({g, m: modelMargin(g.away, g.home)})).filter(x => x.m !== null);
+  const done = rows.filter(x => x.g.done);
+  const right = done.filter(x => {
+    const lead = x.g.homeScore - x.g.awayScore;
+    return lead !== 0 && (lead > 0) === (x.m > 0);
+  }).length;
+  const mae = done.length
+    ? done.reduce((a,x) => a + Math.abs(x.m - (x.g.homeScore - x.g.awayScore)), 0) / done.length
+    : null;
+
+  const tally = done.length
+    ? `<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">
+         <div class="kpi"><div class="v">${right}<small> of ${done.length}</small></div>
+           <div class="l">games finished this week where Pylon picked the winner correctly</div></div>
+         <div class="kpi"><div class="v">${mae.toFixed(1)}</div>
+           <div class="l">points, on average, that it missed the final margin by</div></div>
+       </div>` : '';
+
+  b.innerHTML = tally + `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(330px,1fr))">
+    ${rows.map(({g,m}) => {
+      const live = g.state === 'in';
+      const tag = g.done ? 'final' : live ? 'live' : 'soon';
+      return `<div class="card livecard${live ? ' is-live' : ''}">
+        <div class="bar" style="margin-bottom:8px">
+          <span class="tag ${live ? 'acc' : ''}">${tag}</span>
+          <span class="dim" style="font-size:12px;margin-left:auto">${esc(g.detail)}</span>
+        </div>
+        <div class="live-score">
+          <span>${mark(g.away,22)} <b>${esc((BYTEAM[g.away]||{}).nick || g.away)}</b></span>
+          <span class="num">${g.state === 'pre' ? '' : g.awayScore}</span>
+        </div>
+        <div class="live-score">
+          <span>${mark(g.home,22)} <b>${esc((BYTEAM[g.home]||{}).nick || g.home)}</b></span>
+          <span class="num">${g.state === 'pre' ? '' : g.homeScore}</span>
+        </div>
+        <p class="live-say">${liveSentence(g,m)}</p>
+      </div>`;
+    }).join('')}
+  </div>
+  <p class="dim" style="font-size:11.5px;margin-top:14px">
+    ${LIVE.seeded
+      ? `Showing this week's schedule from the copy built into this page, with Pylon's number for each game.
+         Live scores need a connection to the public ESPN scoreboard, which this copy of the page cannot reach.
+         On the hosted site the scores fill in and refresh themselves.`
+      : `Scores from the public ESPN scoreboard, refreshed ${LIVE.games.some(g=>g.state==='in') ? 'every 45 seconds while games are being played' : 'every five minutes'}.
+         Last checked ${LIVE.fetched ? LIVE.fetched.toLocaleTimeString() : 'just now'}.`}
+    Pylon's number for each game is worked out from ratings fixed in August, so it never sees the score before guessing.
+  </p>`;
 }
 
 function pageMyTeam(){
   const p = document.getElementById('pg-myteam');
   p.innerHTML = head('Your team',
-    "Everything else on this site is about the league. This page is about the eleven or fifteen players you actually own. Pull them in from Sleeper, from a public ESPN league, or by pasting your roster out of any app, and the model tells you who to start, where you are thin, and who is worth adding.")
+    "Beta. Everything else on this site is about the league, and this page is about the players you actually own. Paste a roster from any app, or connect a Sleeper or public ESPN league. The league lookups depend on services outside this project and are the least tested thing here, so paste is the reliable path.")
     + '<div id="mtImport"></div><div id="mtBody"></div>';
   renderImport();
   renderTeam();
+}
+
+/* ---- the sample league ---------------------------------------------------
+   The roster import is the reason to visit, and until now the first thing a
+   stranger met was an empty box asking for a username they have to go and look
+   up. That is a wall in front of the payoff, and it is why nobody who does not
+   already play fantasy ever sees what this page does.
+
+   This fills the page from a deterministic snake draft of the projections, so
+   it needs no network at all. It therefore works in the places the real import
+   cannot: a file:// copy, an embedded preview, a locked-down browser. It also
+   never goes stale, because it is drawn from whatever the model currently
+   projects rather than from a hardcoded list of last year's names. */
+function sampleLeague(teams = 12, rounds = 14){
+  const pool = PLAYERS
+    .filter(p => BYWEEK[p.player] && POS.includes(p.position))
+    .slice()
+    .sort((a, b) => (BYWEEK[b.player].points || 0) - (BYWEEK[a.player].points || 0));
+  const rosters = Array.from({length: teams}, () => []);
+  let i = 0;
+  for(let round = 0; round < rounds; round++){
+    // Snake order, so the sample team is plausibly built rather than being the
+    // top fourteen players, which would rank first every time and prove nothing.
+    const order = [...Array(teams).keys()];
+    if(round % 2) order.reverse();
+    for(const t of order){ if(pool[i]) rosters[t].push(pool[i++].player); }
+  }
+  return {rosters};
+}
+function loadSample(){
+  const {rosters} = sampleLeague();
+  /* Which of the twelve is "yours" matters. A snake draft does not guarantee
+     that any particular seat finishes mid-table, and a demo that always opens
+     on "best roster in the league" is both suspicious and boring: the whole
+     point of the card is that the number is arguable. So the seats are ranked
+     and the one sitting fifth is handed over. */
+  const slots = FORMATS[MT.format].slots;
+  const ranked = rosters
+    .map((r, i) => ({i, pts: lineupPoints(r, slots)}))
+    .sort((a, b) => b.pts - a.pts);
+  const mineIdx = (ranked[4] || ranked[Math.floor(ranked.length / 2)]).i;
+  MT.roster    = rosters[mineIdx];
+  MT.opponents = rosters.filter((_, i) => i !== mineIdx);
+  MT.taken     = rosters.flat();
+  MT.teams     = rosters.length;
+  MT.slots     = null;
+  MT.source    = 'sample';
+  MT.league    = 'Sample league';
+  mtSave();
+  renderTeam();
+  announce('Loaded a sample team.');
 }
 
 function renderImport(){
@@ -3460,7 +4111,18 @@ function renderImport(){
      </div>
      <div id="mtForm"></div>
      <div id="mtMsg"></div>
+     <div class="sample-row">
+       <button class="chip" id="mtSample">See it with a sample team</button>
+       <span class="dim">No account, no username, no connection needed. Swap in your own whenever.</span>
+     </div>
    </div>`;
+  box.querySelector('#mtSample').addEventListener('click', loadSample);
+  /* The notices are re-rendered from several places and can appear inside any
+     of them, so the button is caught by delegation on the card rather than
+     wired up at each call site and forgotten at one of them. */
+  box.addEventListener('click', e => {
+    if(e.target.closest('[data-sample]')) loadSample();
+  });
   const seg = box.querySelector('#mtSrc');
   let src = NET===false ? 'paste' : 'sleeper';
   checkNet().then(ok=>{
@@ -3504,7 +4166,7 @@ function renderImport(){
       f.querySelector('#mtParse').addEventListener('click',()=>{
         const {found,missed} = parseRoster(f.querySelector('#mtPaste').value);
         if(!found.length){ msg("No names in that text matched a projected player. Check that you copied the roster and not the scoreboard."); return; }
-        MT.roster = found; MT.source='paste'; MT.taken=[]; MT.slots=null; MT.league=''; mtSave();
+        MT.roster = found; MT.source='paste'; MT.taken=[]; MT.slots=null; MT.league=''; MT.opponents=[]; mtSave();
         msg(`Matched <b>${found.length}</b> players.` + (missed.length? ` ${missed.length} line${missed.length===1?'':'s'} did not match anything: ${esc(missed.slice(0,4).join(', '))}.` : ''), true);
         renderTeam();
       });
@@ -3592,6 +4254,12 @@ async function sleeperLookup(){
         const nameOf = id => (IDS.sleeper[String(id)]||[null])[0];
         MT.roster = resolveNames((mine.players||[]).map(nameOf));
         MT.taken  = resolveNames(rosters.flatMap(r=>r.players||[]).map(nameOf));
+        /* The per-roster split was being thrown away by the flatMap above. Keeping
+           it costs one line and is the difference between "here are your points"
+           and "here is where you stand", which is the only version anyone repeats
+           out loud. Yours is excluded so the ranking has something to rank against. */
+        MT.opponents = rosters.filter(r=>r!==mine)
+          .map(r=>resolveNames((r.players||[]).map(nameOf))).filter(x=>x.length);
         MT.teams  = lg.total_rosters || rosters.length || 12;
         MT.slots  = (lg.roster_positions||[]).filter(x=>Object.hasOwn(FLEXES,x) || POS.includes(x));
         if(!MT.slots.length) MT.slots = null;
@@ -3661,6 +4329,7 @@ async function espnLookup(){
       MT.roster = names(me);
       MT.taken  = resolveNames(teams.flatMap(t=>((t.roster&&t.roster.entries)||[])
         .map(e=>e.playerPoolEntry && e.playerPoolEntry.player && e.playerPoolEntry.player.fullName)));
+      MT.opponents = teams.filter(t=>t!==me).map(names).filter(x=>x.length);
       MT.teams  = settings.size || teams.length;
 
       // The real starting lineup, in the league's own slot order.
@@ -3687,12 +4356,88 @@ async function espnLookup(){
   }
 }
 
+/* ---- the verdict ---------------------------------------------------------
+   Everything else on this page is a tool: it rewards you for reading it. This
+   is the one block built to be understood by somebody who will never open the
+   site, because the way a thing like this actually travels is one person
+   screenshotting it into a twelve-person group chat.
+
+   So it has to clear three bars. It has to say something specific enough to
+   argue with, which is why it leads with a rank rather than a point total.
+   It has to be legible at phone-screenshot size. And it has to carry its own
+   attribution, because a screenshot loses the URL bar. */
+function lineupPoints(names, slots){
+  const {starters} = optimise(names, slots);
+  return starters.reduce((a,s)=>a+(s&&s.w?s.w.points:0),0);
+}
+function ordinal(n){
+  const t=n%100; if(t>=11&&t<=13) return n+'th';
+  return n + ({1:'st',2:'nd',3:'rd'}[n%10] || 'th');
+}
+function verdictCard({startPts, worst, calls, starters, slots}){
+  /* A rank needs opponents. Sleeper and public ESPN give them; a pasted roster
+     has nobody to be compared against, so that version leads with the number
+     it does have rather than inventing a league. */
+  const rivals = (MT.opponents||[]).map(r=>lineupPoints(r, slots)).filter(x=>x>0);
+  const has = rivals.length >= 3;
+  const better = rivals.filter(x=>x > startPts).length;
+  const rank = better + 1, of = rivals.length + 1;
+  const avg = has ? (rivals.reduce((a,b)=>a+b,0) + startPts) / of : 0;
+
+  const best = starters.filter(x=>x&&x.w).sort((a,b)=>b.w.points-a.w.points)[0];
+  const facts = [];
+  if(best) facts.push(['Best start', `${best.name}, ${f1(best.w.points)} pts`]);
+  if(worst && worst.gap < 0)
+    facts.push(['Thinnest spot', `${worst.slot}, ${f1(Math.abs(worst.gap))} pts a game behind average`]);
+  else if(has) facts.push(['Weak spots', 'none, every slot clears average']);
+  if(calls.length) facts.push(['Closest call', `${calls[0].start.name} over ${calls[0].sit.name}, ${pct(calls[0].p,0)}`]);
+
+  const head = !has ? `${f1(startPts)} points this week`
+             : rank === 1 ? `Best roster of ${of}`
+             : `${ordinal(rank)} best roster of ${of}`;
+  const sub  = has
+    ? `Pylon projects <b>${f1(startPts)}</b> points from your best lineup this week. The league averages ${f1(avg)}.`
+    : `That is what your best lineup scores if the week goes to form. Load a Sleeper or public ESPN league and it will rank you against the other managers too.`;
+
+  const copy = [
+    has ? `Pylon says my roster is ${rank === 1 ? 'the best' : ordinal(rank)} of ${of} this week.` : `Pylon projects my lineup at ${f1(startPts)} points this week.`,
+    ...facts.map(([k,v])=>`${k}: ${v}.`),
+    'joshuapowers1.github.io/pylon-nfl',
+  ].join(' ');
+
+  /* The projected total is the one value other things assert on, so it gets a
+     stable hook. Reading it out of whichever stat tile happens to be first is
+     how a passing test turns into a false alarm the moment the layout moves. */
+  return `<div class="verdict" id="verdict" data-lineup-total="${f1(startPts)}">
+    <div class="verdict-top">
+      <svg class="pylon" viewBox="0 0 11 20" aria-hidden="true">
+        <path d="M5.5 4.2 9.2 2.4 10 17.6 5.5 19.8z" fill="var(--accent)" style="fill:color-mix(in srgb, var(--accent), #000 28%)"/>
+        <path d="M1.8 2.4 5.5 4.2v15.6L1 17.6z" fill="var(--accent)" style="fill:color-mix(in srgb, var(--accent), #000 8%)"/>
+        <path d="M5.5 .6 9.2 2.4 5.5 4.2 1.8 2.4z" fill="var(--accent)" style="fill:color-mix(in srgb, var(--accent), #fff 24%)"/>
+      </svg>
+      <span class="eyebrow">${MT.source==='sample'?'Sample team':'Pylon'} &middot; ${WEEK_LABEL}${MT.league?' &middot; '+esc(MT.league):''} &middot; ${MT.roster.length} players matched</span>
+    </div>
+    <div class="verdict-head">${esc(head)}</div>
+    <p class="verdict-sub">${sub}</p>
+    <div class="verdict-facts">
+      ${facts.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}
+    </div>
+    <div class="verdict-foot">
+      <span>joshuapowers1.github.io/pylon-nfl<span class="dim"> &middot; it also publishes how often it is wrong</span></span>
+      <button class="chip" id="verdictCopy">Copy for the group chat</button>
+    </div>
+    <textarea id="verdictText" class="sr-only" readonly>${esc(copy)}</textarea>
+  </div>`;
+}
+
 function renderTeam(){
   const body=document.getElementById('mtBody');
   if(!body) return;
   if(!MT.roster.length){
     body.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:8px">Nothing loaded yet</h3>
-      <p class="muted" style="font-size:13.5px;margin:0;max-width:70ch">Pick one of the three above. If you are just looking around, paste is the fastest: copy your roster out of whatever app you use and drop it in. The page keeps it in this browser only, and forgets it if you clear it.</p></div>`;
+      <p class="muted" style="font-size:13.5px;margin:0 0 12px;max-width:70ch">Pick one of the three above. If you are just looking around, paste is the fastest: copy your roster out of whatever app you use and drop it in. The page keeps it in this browser only, and forgets it if you clear it.</p>
+      <button class="chip go" id="mtSample2">Or just show me a sample team</button></div>`;
+    body.querySelector('#mtSample2').addEventListener('click', loadSample);
     return;
   }
   const slots = MT.slots || FORMATS[MT.format].slots;
@@ -3733,14 +4478,7 @@ function renderTeam(){
     .sort((a,b)=>a.arb-b.arb);
 
   body.innerHTML = `
-   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(168px,1fr))">
-     <div class="kpi"><div class="v">${f1(startPts)}</div><div class="l">projected points from your best lineup this week</div></div>
-     <div class="kpi"><div class="v">${MT.roster.length}</div><div class="l">players matched${MT.league?' from '+esc(MT.league):''}</div></div>
-     <div class="kpi"><div class="v">${worst? esc(worst.player.split(' ').slice(-1)[0]) : '&ndash;'}</div><div class="l">${!worst? 'no starting spots to grade'
-        : worst.gap<0 ? 'your weakest starter, '+f1(Math.abs(worst.gap))+' points a game short of what an average team gets out of that spot'
-        : 'your weakest starter, and even he is '+f1(worst.gap)+' points a game clear of par. No holes on this roster.'}</div></div>
-     <div class="kpi"><div class="v">${calls.length}</div><div class="l">lineup calls close enough that the model will not pick for you</div></div>
-   </div>
+   ${verdictCard({startPts, worst, calls, starters, slots})}
 
    <div class="card" style="margin-bottom:14px">
      <div class="bar" style="margin-bottom:10px">
@@ -3807,7 +4545,7 @@ function renderTeam(){
     {h:'Team',k:'team',left:true,f:r=>`${mark(r.team,17)}${r.team}`,asc:true},
     {h:'Season',k:'proj_points',f:r=>`<b>${f0(r.proj_points)}</b>`,title:'Projected fantasy points for the season'},
     {h:'Per game',k:'proj_ppg',f:r=>f1(r.proj_ppg)},
-    {h:'Week 1',k:'player',f:r=>{const w=BYWEEK[r.player]; return w? f1(w.points) : '<span class="dim">&ndash;</span>';}},
+    {h:'${WEEK_LABEL}',k:'player',f:r=>{const w=BYWEEK[r.player]; return w? f1(w.points) : '<span class="dim">&ndash;</span>';}},
   ];
   document.getElementById('mtAdds').appendChild(
     makeTable(adds, addCols, {sort:'proj_points', noun:'players', onRow:r=>playerSheet(r)}));
@@ -3829,8 +4567,26 @@ function renderTeam(){
   if(fmt) fmt.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return;
     MT.format=b.dataset.f; mtSave(); renderTeam();});
   body.querySelector('#mtClear').addEventListener('click',()=>{
-    MT={roster:[],format:MT.format,teams:12,source:'',taken:[],slots:null,league:''}; mtSave();
+    MT={roster:[],format:MT.format,teams:12,source:'',taken:[],slots:null,league:'',opponents:[]}; mtSave();
     renderTeam(); announce('Roster cleared.');
+  });
+  wireVerdictCopy();
+}
+
+/* Clipboard first, with a select-and-copy fallback: the async clipboard API
+   needs a secure context and a user gesture, and this page is just as likely to
+   be opened from a file:// copy as from the hosted one. */
+function wireVerdictCopy(){
+  const btn=document.getElementById('verdictCopy'), ta=document.getElementById('verdictText');
+  if(!btn||!ta) return;
+  btn.addEventListener('click', async ()=>{
+    const done=()=>{ btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy for the group chat',1600); };
+    try{ await navigator.clipboard.writeText(ta.value); done(); }
+    catch(e){
+      ta.classList.remove('sr-only'); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(_){ btn.textContent='Press copy now'; }
+      ta.classList.add('sr-only');
+    }
   });
 }
 
@@ -4183,7 +4939,7 @@ try{
    likely to want their own roster handled than a shrinkage coefficient, so
    the four pages that answer a question about this weekend come first and the
    modelling pages sit at the end for whoever wants to check the work. */
-registerPage('myteam','My team',pageMyTeam,{badge:'new'});
+registerPage('live','Live',pageLive,{badge:'live'});
 registerPage('matchups','This week',pageMatchups);
 registerPage('startsit','Start or sit',pageStartSit);
 registerPage('draft','Draft',pageDraftRoom);
