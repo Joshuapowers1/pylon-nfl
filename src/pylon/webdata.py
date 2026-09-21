@@ -13,6 +13,7 @@ Joshua Powers · joshpowersbiz@gmail.com
 github.com/Joshuapowers1/pylon-nfl · linkedin.com/in/joshuampowerss · @joshuampowers
 """
 from __future__ import annotations
+import datetime as _dt
 import json
 import numpy as np
 import pandas as pd
@@ -154,13 +155,23 @@ def build() -> dict:
              "conviction","liquidity_usd","note"]
     eround = {"model_prob":4,"market_price_raw":4,"market_prob_fair":4,"edge_pp":2,"liquidity_usd":0}
 
+    # Freshness is generated, never typed. This bundle is rebuilt by the
+    # Tuesday job every week of the season; a hardcoded date would go on
+    # claiming August while the site served week ten, which is exactly the
+    # silent staleness the published page now warns about.
+    built = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
+    _snap = CONF / "market_snapshot_2026.json"
+    market_pulled = (
+        _dt.datetime.fromtimestamp(_snap.stat().st_mtime, _dt.timezone.utc)
+           .strftime("%Y-%m-%dT%H:%M:%SZ") if _snap.exists() else None)
+
     bundle = {
         "meta": {
-            "version": "1.0.0", "built": "2026-08-25", "season": 2026,
+            "version": "1.0.0", "built": built, "season": 2026,
             "n_sims": 25000, "n_player_sims": 10000,
             "adp_source": "FantasyFootballCalculator 12-team full PPR",
             "adp_drafts": 7726, "adp_window": "2026-08-18 to 2026-08-25",
-            "market_pulled": "2026-08-25T07:34:22Z",
+            "market_pulled": market_pulled,
             "plays_in_fit": 81389, "n_players": int(len(p)),
         },
         "calibration": cal, "backtest": btm, "inseason": inseason, "scoring": scoring,

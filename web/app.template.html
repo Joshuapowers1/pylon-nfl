@@ -820,7 +820,28 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
 @media (max-width:640px){
   .shell{padding:0 13px 80px;} .top-in{padding:0 13px; gap:11px;}
   .searchbtn span{display:none;} .brand span{display:none;}
+  .freshbar-in{padding:7px 13px;}
 }
+
+/* The freshness strip.
+
+   A site that rebuilds itself every Tuesday has one failure worth designing
+   for, and it is not a wrong number. It is the job stopping in week six and
+   the page going on serving week five's slate with nothing on it to say so.
+   A confident projection and a stale one look identical. So the build date
+   sits on every page, and when it falls behind it stops being a footnote. */
+.freshbar{border-bottom:1px solid var(--line); background:var(--sunken); font-size:12.5px;}
+.freshbar-in{
+  max-width:1480px; margin:0 auto; padding:7px 20px;
+  display:flex; gap:9px; align-items:flex-start; line-height:1.5;
+}
+/* Pinned to the first line rather than centred, so a wrapped sentence on a
+   narrow screen does not leave the dot floating in the middle of nowhere. */
+.freshbar .dot{width:7px; height:7px; border-radius:50%; background:var(--ok);
+  flex:none; margin-top:5px;}
+.freshbar.stale{background:var(--accent-wash); border-bottom-color:var(--accent);}
+.freshbar.stale .dot{background:var(--accent);}
+.freshbar b{font-weight:600;}
 </style>
 
 <header class="top">
@@ -876,6 +897,10 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
     </div>
   </div>
 </header>
+
+<!-- Filled by renderFreshness() at boot rather than written here, so the date
+     on it is the date this bundle was actually built. -->
+<div class="freshbar" id="freshbar" hidden></div>
 
 <!-- Second-level navigation. Eleven top-level tabs asked a first-time visitor to
      understand the whole information architecture before clicking anything. The
@@ -1003,6 +1028,62 @@ const pp  = v => v==null? '&ndash;' : (v>0?'+':'')+(+v).toFixed(1);
 const sgn = v => v>0? '+'+(+v).toFixed(1) : (+v).toFixed(1);
 const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------------------------------------------------------------------
+   Every clock on this page reads Eastern and says so.
+
+   Two reasons, one of them a bug this replaces. The NFL schedules in Eastern:
+   the broadcast, the article and the group chat all quote Eastern, so a reader
+   in Denver who sees "Sun 1:00 PM ET" can do the subtraction, whereas a bare
+   "11:00 AM" in their own zone matches nothing anyone else is saying. And the
+   schedule baked into this page comes from nflverse, whose gametime column is
+   ALREADY Eastern with no zone marker on the end of it. The old code appended
+   a Z to those strings, which declared Eastern to be UTC and then re-rendered
+   it in the reader's zone - a silent four-hour shift that turned an 8:15 PM
+   kickoff into 4:15 PM and the Sunday one o'clock slate into nine in the
+   morning. Nothing here guesses the reader's zone at all.                    */
+const ET_ZONE = 'America/New_York';
+
+/* Eastern's offset from UTC at a given instant, in minutes, asked of the
+   platform rather than hardcoded, so the March and November DST switches are
+   somebody else's problem. */
+function etOffset(at){
+  try{
+    const part = new Intl.DateTimeFormat('en-US',
+      {timeZone:ET_ZONE, timeZoneName:'shortOffset'})
+      .formatToParts(at).find(p => p.type === 'timeZoneName');
+    const m = part && /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(part.value);
+    if(m) return (m[1] === '-' ? -1 : 1) * (+m[2] * 60 + (+m[3] || 0));
+  }catch(e){}
+  return -240;   /* EDT, the offset that covers the whole NFL season bar January */
+}
+
+/* Turn a timestamp into a real instant. A string carrying Z or a numeric offset
+   is already unambiguous and is taken at face value - that is what the ESPN feed
+   sends. A bare "2026-09-17T20:15" is Eastern wall time and gets resolved
+   against Eastern's offset at that moment, with a second pass in case the first
+   guess landed on the far side of a daylight-saving boundary. */
+function etParse(v){
+  if(!v) return null;
+  if(v instanceof Date) return isNaN(v) ? null : v;
+  const s = String(v);
+  if(/[Zz]$|[+-]\d\d:?\d\d$/.test(s)){ const d = new Date(s); return isNaN(d) ? null : d; }
+  const provisional = new Date(s + 'Z');
+  if(isNaN(provisional)) return null;
+  const off = etOffset(provisional);
+  const first = new Date(provisional.getTime() - off * 60000);
+  const settled = etOffset(first);
+  return settled === off ? first : new Date(provisional.getTime() - settled * 60000);
+}
+
+/* Format in Eastern and stamp ET on the end, so the number is never ambiguous
+   to somebody reading it from another time zone. */
+function etFmt(v, opts){
+  const d = etParse(v);
+  if(!d) return '';
+  return d.toLocaleString('en-US', Object.assign({timeZone:ET_ZONE}, opts)) + ' ET';
+}
+
 /* A <div> host silently drops table-scoped tags like <th> and <tr>, because they are
    invalid there and the parser throws them away. <template> parses any fragment. */
 const el = (h) => { const t=document.createElement('template'); t.innerHTML=h.trim(); return t.content.firstElementChild; };
@@ -3353,8 +3434,8 @@ function pageMatchups(){
       const wp = homeFav ? g.home_win_prob : 1-g.home_win_prob;
       const spEdge = g.spread_edge, toEdge = g.total_edge;
       const big = spEdge!=null && Math.abs(spEdge)>=3;
-      const kick = g.kickoff ? new Date(g.kickoff).toLocaleString(undefined,
-        {weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) : '';
+      const kick = etFmt(g.kickoff,
+        {weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
       return `<div class="card mk" ${big?'style="border-color:var(--accent)"':''}>
         <div class="eyebrow" style="margin-bottom:9px">${esc(kick)}${big?' &middot; <span style="color:var(--accent)">model disagrees</span>':''}</div>
         <button class="mk-team${homeFav?'':' fav'}" data-t="${g.away}">
@@ -3890,9 +3971,7 @@ function seedLive(){
   }));
 }
 function kickLabel(iso){
-  const d = new Date(iso + (/[Z+]/.test(iso) ? '' : 'Z'));
-  if(isNaN(d)) return 'scheduled';
-  return d.toLocaleString(undefined,{weekday:'short', hour:'numeric', minute:'2-digit'});
+  return etFmt(iso, {weekday:'short', hour:'numeric', minute:'2-digit'}) || 'scheduled';
 }
 let LIVE = {games:[], week:null, fetched:null, error:null, seeded:true};
 let liveTimer = null;
@@ -3929,7 +4008,16 @@ async function fetchLive(){
       return {
         away: liveTeam(away.team.abbreviation), home: liveTeam(home.team.abbreviation),
         awayScore: +(away.score || 0), homeScore: +(home.score || 0),
-        state: st.state, detail: st.shortDetail || '', done: !!st.completed,
+        /* ESPN's own shortDetail is Eastern already, but formatted "9/17 - 8:15
+           PM EDT", which would not match the labels the seeded slate draws. The
+           quarter and clock on a game in progress is exactly what we want, so
+           that is kept; a kickoff time is redrawn from the event's UTC stamp
+           through the same Eastern formatter as everything else. */
+        state: st.state,
+        detail: st.state === 'pre'
+          ? (etFmt(ev.date, {weekday:'short', hour:'numeric', minute:'2-digit'}) || st.shortDetail || '')
+          : (st.shortDetail || ''),
+        done: !!st.completed,
         kickoff: ev.date,
       };
     });
@@ -4032,7 +4120,7 @@ function renderLive(){
          Live scores need a connection to the public ESPN scoreboard, which this copy of the page cannot reach.
          On the hosted site the scores fill in and refresh themselves.`
       : `Scores from the public ESPN scoreboard, refreshed ${LIVE.games.some(g=>g.state==='in') ? 'every 45 seconds while games are being played' : 'every five minutes'}.
-         Last checked ${LIVE.fetched ? LIVE.fetched.toLocaleTimeString() : 'just now'}.`}
+         Last checked ${LIVE.fetched ? etFmt(LIVE.fetched, {hour:'numeric', minute:'2-digit', second:'2-digit'}) : 'just now'}.`}
     Pylon's number for each game is worked out from ratings fixed in August, so it never sees the score before guessing.
   </p>`;
 }
@@ -4954,5 +5042,51 @@ document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
   const h=e.target.closest('.hero-row'); if(h) teamSheet(h.dataset.t);
 });
+/* ---------------------------------------------------------------------------
+   How old is what you are looking at?
+
+   Staleness is derived, not asserted. The page knows when the last game of
+   the week it published kicks off, so if that is more than two days behind
+   us the Tuesday rebuild has either not run or not finished, and the strip
+   says so in plain words instead of quietly serving old numbers. Two days is
+   the gap between the Monday night finish and the Tuesday 13:00 UTC job,
+   with room for a slow run on top.
+
+   It asks nothing of the network, so the warning still shows on a copy of
+   this file opened offline months from now.                                */
+function renderFreshness(){
+  const bar = document.getElementById('freshbar');
+  if(!bar || !D.meta || !D.meta.built) return;
+
+  const M = D.matchups || {}, cols = M.cols || [];
+  const ki = cols.indexOf('kickoff'), wi = cols.indexOf('week');
+  let last = null;
+  for(const r of (M.rows || [])){
+    if(wi >= 0 && r[wi] !== WEEK_NO) continue;
+    const d = ki >= 0 ? etParse(r[ki]) : null;
+    if(d && (!last || d > last)) last = d;
+  }
+  const stale = last ? (Date.now() - last.getTime()) > 48*3600*1000 : false;
+
+  /* Noon keeps a date-only stamp from sliding a day either way when it is
+     resolved against an offset. */
+  const d = etParse(D.meta.built + 'T12:00');
+  const built = d ? d.toLocaleDateString('en-US',
+    {timeZone:ET_ZONE, month:'long', day:'numeric', year:'numeric'}) : D.meta.built;
+
+  bar.className = 'freshbar' + (stale ? ' stale' : '');
+  bar.hidden = false;
+  bar.innerHTML = '<div class="freshbar-in"><span class="dot" aria-hidden="true"></span>' +
+    (stale
+      ? '<span><b>These numbers are out of date.</b> Last rebuilt ' + esc(built) +
+        ' for ' + esc(WEEK_LABEL) + ', and that week has finished. The Tuesday ' +
+        'rebuild has not landed anything newer.</span>'
+      : '<span><b>Rebuilt ' + esc(built) + '</b> for ' + esc(WEEK_LABEL) + '. Rebuilds ' +
+        'every Tuesday morning; the team ratings underneath stay fixed at August ' +
+        'and are never refit on results.</span>') +
+    '</div>';
+}
+renderFreshness();
+
 window.PYLON_BOOT();
 </script>

@@ -112,7 +112,7 @@ def project_week(ratings: pd.DataFrame, ctx26: pd.DataFrame, sc: dict, cal: dict
                "home_win_prob": wp,
                "market_spread_home": mk["spread_home"] if mk else None,
                "market_total": mk["total"] if mk else None,
-               "kickoff": mk["date"] if mk else x.get("gameday")}
+               "kickoff": mk["date"] if mk else _kick(x)}
         if mk:
             # A positive spread edge means the model likes the home side relative
             # to the number. A positive total edge means the model is over it.
@@ -124,6 +124,23 @@ def project_week(ratings: pd.DataFrame, ctx26: pd.DataFrame, sc: dict, cal: dict
     df = pd.DataFrame(out)
     df.to_csv(OUT / f"matchups_week{week}.csv", index=False)
     return df
+
+
+def _kick(row) -> str:
+    """Kickoff as a naive Eastern timestamp, e.g. "2026-09-17T20:15".
+
+    nflverse splits kickoff across two columns and its ``gametime`` is already
+    Eastern with no zone marker on it. Carrying only ``gameday`` used to leave
+    the web page a bare date, which it then had to render as midnight; carrying
+    the pair keeps the real kickoff and lets the page label everything ET.
+    """
+    day = row.get("gameday")
+    if not day:
+        return ""
+    t = row.get("gametime")
+    if t is None or (isinstance(t, float) and t != t) or not str(t).strip():
+        return str(day)
+    return f"{day}T{str(t).strip()}"
 
 
 def build(ratings: pd.DataFrame, cal: dict, week: int = 1):

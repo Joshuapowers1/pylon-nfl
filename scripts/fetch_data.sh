@@ -4,9 +4,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p data/raw data/raw/polymarket
 
+# A completed season's play-by-play never changes again, so a file restored
+# from the Actions cache is left alone. Without this the cache step in the
+# weekly workflow buys nothing: curl would overwrite all 183MB every Tuesday
+# regardless of what was already on disk.
 echo "play-by-play, 2017-2025..."
 for y in 2017 2018 2019 2020 2021 2022 2023 2024 2025; do
-  curl -sSL -o "data/raw/pbp_${y}.parquet" \
+  f="data/raw/pbp_${y}.parquet"
+  if [ -s "$f" ]; then echo "  ${y} already on disk, skipping"; continue; fi
+  curl -sSL -o "$f" \
     "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_${y}.parquet" &
 done
 wait

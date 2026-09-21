@@ -8,8 +8,12 @@ on:
     - cron: "0 13 * * 2"     # Tuesdays 13:00 UTC, after Monday night resolves
   workflow_dispatch:
 
+# contents to commit the rebuilt site, issues to raise the alarm when the
+# rebuild fails. Without issues:write the failure step below 403s, so the one
+# job whose whole purpose is to be noticed would itself fail unnoticed.
 permissions:
   contents: write
+  issues: write
 
 jobs:
   refit:

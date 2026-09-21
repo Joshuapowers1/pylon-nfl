@@ -4,7 +4,13 @@ import fs from 'fs';
 const body = fs.readFileSync('index.html','utf8');
 fs.writeFileSync('preview.html', `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${body}</body></html>`);
 
-const browser = await chromium.launch({ executablePath: process.env.PW_CHROME });
+/* Prefer a browser already on the machine, then the env override, then let
+   Playwright resolve its own. The bare env var alone fails on a GitHub runner,
+   where `npx playwright install` puts chromium under ~/.cache/ms-playwright. */
+const EXEC = [process.env.PW_CHROME, '/opt/pw-browsers/chromium',
+              '/opt/pw-browsers/chromium-1194/chrome-linux/chrome']
+  .find(p => p && fs.existsSync(p));
+const browser = await chromium.launch(EXEC ? { executablePath: EXEC } : {});
 const errors = [];
 
 /* The live page calls a real endpoint. Under file:// the origin is null, so the
@@ -100,6 +106,53 @@ if(!Number.isFinite(mm.m)) errors.push(`[live] no model margin for ${mm.pair.joi
 if(!(mm.p > 0 && mm.p < 1)) errors.push(`[live] win probability out of range: ${mm.p}`);
 await r.screenshot({path:'shot-live.png'});
 
+/* Every clock reads Eastern, labelled, whatever zone the reader is in.
+
+   This is a regression test for a real bug. The schedule baked into the page
+   comes from nflverse, whose gametime column is already Eastern with no zone
+   marker on it; the page used to append a Z, declaring Eastern to be UTC, and
+   then render the result in the reader's own zone. An 8:15 PM kickoff came out
+   as 4:15 PM and the Sunday one o'clock slate came out as nine in the morning.
+   Two things are checked and both matter: that no time is ever printed without
+   ET after it, and that the labels are IDENTICAL from four different time
+   zones, which is the property a zone-dependent formatter cannot have. */
+const zoneLabels = {};
+/* Both feeds matter and they are different code paths. With the scoreboard
+   answering, kickoff labels are drawn from the event's UTC stamp; with it
+   blocked - a locked-down browser, an offline laptop, an embedded preview -
+   they are drawn from the schedule committed inside the page, and it was that
+   second path that carried the four-hour shift. Checking only the first one
+   would have let this bug through. */
+for(const [tz, feed] of [['America/New_York','up'], ['America/New_York','blocked'],
+                         ['America/Los_Angeles','up'], ['America/Los_Angeles','blocked'],
+                         ['Asia/Tokyo','up'], ['Asia/Tokyo','blocked'],
+                         ['UTC','up'], ['UTC','blocked']]){
+  const c = await browser.newContext({timezoneId: tz, locale: 'en-US'});
+  const z = await c.newPage();
+  if(feed === 'up') await stubScoreboard(z);
+  else await z.route('**/site.api.espn.com/**', route => route.abort());
+  await z.goto('file://'+process.cwd()+'/preview.html');
+  await z.waitForTimeout(700);
+  await z.evaluate(()=>{ closeWelcome(); go('live'); });
+  await z.waitForTimeout(1400);
+  const labels = await z.$$eval('#liveBody .livecard .bar .dim', n=>n.map(x=>x.textContent.trim()));
+  await z.evaluate(()=>go('matchups'));
+  await z.waitForTimeout(700);
+  const eyebrows = await z.$$eval('#mkGrid .mk .eyebrow', n=>n.map(x=>x.textContent.trim()));
+  const all = labels.concat(eyebrows);
+  const unlabelled = all.filter(t => /\d:\d\d\s?(AM|PM)/.test(t) && !/\bET\b/.test(t));
+  const where = `${tz}, feed ${feed}`;
+  if(!labels.length) errors.push(`[time] ${where}: the live page printed no kickoff times at all`);
+  if(unlabelled.length) errors.push(`[time] ${where}: time with no zone on it: ${JSON.stringify(unlabelled.slice(0,3))}`);
+  zoneLabels[where] = labels.join('|');
+  await c.close();
+}
+const zoneKeys = Object.keys(zoneLabels);
+const drifted = zoneKeys.filter(k => zoneLabels[k] !== zoneLabels[zoneKeys[0]]);
+if(drifted.length)
+  errors.push(`[time] kickoff labels are not the same everywhere: ${drifted.join('; ')} differ from ${zoneKeys[0]}`);
+
+
 // The glossary. Every abbreviation in a column header should resolve to a
 // definition, and clicking one should open the list at that entry.
 await r.evaluate(()=>go('players'));
@@ -148,4 +201,4 @@ const mow = await m.evaluate(()=>document.documentElement.scrollWidth - document
 if(mow>2) errors.push(`[mobile] horizontal overflow of ${mow}px at 390`);
 await browser.close();
 
-console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, live scoreboard priced from committed ratings, no overflow at 1440 or 390');
+console.log(errors.length ? errors.join('\n') : 'CLEAN: 11 pages in both themes, first-visit overlay, glossary wired to column headers, live scoreboard priced from committed ratings, every clock in ET from four reader time zones on both the live and the offline feed, no overflow at 1440 or 390');
