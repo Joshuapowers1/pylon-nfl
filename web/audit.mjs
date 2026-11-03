@@ -1,7 +1,7 @@
 /* Contrast, overflow and clipping, on every page, in both themes, at three
-   widths. Written because a colour that reads fine to the person who chose it
+   widths. Written because a color that reads fine to the person who chose it
    is the single easiest thing to get wrong and the hardest to notice: the
-   first run of this found 70 failures, most of them the small grey labels
+   first run of this found 70 failures, most of them the small gray labels
    that carry the explanations.
 
    Exit code is non-zero on any failure, so CI can gate on it.
@@ -22,7 +22,7 @@ const problems=[];
 for(const theme of ['dark','light']){
   for(const w of [1440,768,390]){
     const p = await b.newPage({viewport:{width:w,height:900}, colorScheme:theme});
-    // Same reason as the behaviour suite: the live page must not reach out.
+    // Same reason as the behavior suite: the live page must not reach out.
     await p.route('**/site.api.espn.com/**', route => route.fulfill({status:200,
       contentType:'application/json', body: fs.readFileSync('scoreboard-fixture.json','utf8')}));
     p.on('pageerror',e=>problems.push(`[${theme}/${w}] PAGEERROR ${e.message}`));
