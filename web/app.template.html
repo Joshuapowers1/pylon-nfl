@@ -39,12 +39,12 @@
      they appear on. The fills are unchanged. */
   --ok:#127A56; --warn:#2E6FBC; --bad:#C33433;
   /* The pills print the direction as a word on a tinted chip, which is a
-     tighter contrast problem than the same colour on a plain surface. */
+     tighter contrast problem than the same color on a plain surface. */
   --up-ink:#256ABC; --down-ink:#C13332;
-  /* categorical, adjacent-validated, capped at 4 and always direct-labelled */
+  /* categorical, adjacent-validated, capped at 4 and always direct-labeled */
   --s1:#eb6834; --s2:#2a78d6; --s3:#1baf7a; --s4:#4a3aa7;
   /* The same four series, dark enough to be read as words. The comparison
-     views label each series in its own colour rather than with a legend, and
+     views label each series in its own color rather than with a legend, and
      a fill that is legible as a bar is not automatically legible as a name. */
   --s1t:#B04E27; --s2t:#266CC1; --s3t:#137C57; --s4t:#4a3aa7;
   /* sequential blue ramp */
@@ -129,7 +129,7 @@ body{
    Frosted glass only reads as glass when there is something behind it to
    soften. This is that something: three broad washes in the palette already
    in use, and the faintest set of yard lines, fixed so the panels appear to
-   float over a field rather than over a flat grey. It is drawn once, behind
+   float over a field rather than over a flat gray. It is drawn once, behind
    everything, and never scrolls. */
 body::before{
   content:""; position:fixed; inset:-10% -10% -10% -10%; z-index:-1; pointer-events:none;
@@ -297,10 +297,10 @@ section.page.on{display:block; animation:fade .22s ease;}
    sentence leads at reading size, the precise version sits under it a step
    quieter. Neither replaces the other and nothing was deleted to fit. */
 /* ---------- the wordmark ----------
-   Acrylic rather than foil. The colour sweep is gone and what moves now is
+   Acrylic rather than foil. The color sweep is gone and what moves now is
    light: a graphite-to-silver gradient clipped to the glyphs, and a narrow
    specular band crossing it on a slower, offset cycle so the two never land in
-   step. On a light ground the highlight is a mid grey, because a white band
+   step. On a light ground the highlight is a mid gray, because a white band
    across near-black letters reads as a hole punched through them rather than as
    gloss. On a dark ground it goes to full white, which is where the material
    actually looks lit. The soft drop shadow follows the glyph alpha and gives
@@ -835,7 +835,7 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
   max-width:1480px; margin:0 auto; padding:7px 20px;
   display:flex; gap:9px; align-items:flex-start; line-height:1.5;
 }
-/* Pinned to the first line rather than centred, so a wrapped sentence on a
+/* Pinned to the first line rather than centered, so a wrapped sentence on a
    narrow screen does not leave the dot floating in the middle of nowhere. */
 .freshbar .dot{width:7px; height:7px; border-radius:50%; background:var(--ok);
   flex:none; margin-top:5px;}
@@ -1268,7 +1268,7 @@ function scatter(pts, opts){
 }
 
 /* Multi-series lines for the compare view. Capped at four and every line is
-   direct-labelled at its peak, which is the secondary encoding the categorical
+   direct-labeled at its peak, which is the secondary encoding the categorical
    palette requires. */
 function multiLine(series, opts={}){
   const W=1000,H=opts.h||300,m={t:18,r:74,b:34,l:44};
@@ -1337,7 +1337,7 @@ SHEET.addEventListener('keydown', e=>{
 SCRIM.addEventListener('click',closeSheet);
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSheet(); closePal(); } });
 
-/* Team mark. The logo sits on a tinted plate mixed from the team's own colours
+/* Team mark. The logo sits on a tinted plate mixed from the team's own colors
    so a dark logo still reads on a dark surface and a light one still reads on
    light. Size is the only knob callers need. */
 function crest(t, size){
@@ -1862,7 +1862,7 @@ function pageOverview(){
        <div class="eyebrow" style="margin-bottom:8px">Tightest division races</div>
        ${rankBars(races,{rowH:22,labelW:104})}
        <p class="muted" style="font-size:12.5px;margin:8px 0 0">
-         The gap between the favourite and the second team in each division, in points of win probability.
+         The gap between the favorite and the second team in each division, in points of win probability.
          A small gap is a division nobody owns.
        </p>
      </div>
@@ -1877,7 +1877,7 @@ function pageOverview(){
          <ol style="margin:0;padding-left:17px;font-size:13px;line-height:1.6;color:var(--ink-2)">
            <li><b>Shares divided by full-season totals.</b> Every player who missed games looked like he had lost a third of his role. One receiver read a 12% target share instead of 33%. Fixing the denominator to games actually played moved dozens of players sixty or more draft slots.</li>
            <li><b>Quarterback scrambles vanished.</b> A scramble is logged as a dropback, so the rushing filter dropped it, and it is credited to the rusher field, so the passing query dropped it too. It fell through both. That is 40% of a mobile quarterback's carries.</li>
-           <li><b>The simulator was overconfident.</b> Modelling only game-level noise produced win distributions a third too narrow. The fix was splitting the residual into a season-long team error and a per-game error, and solving for the split by matching the model's own measured miss.</li>
+           <li><b>The simulator was overconfident.</b> Modeling only game-level noise produced win distributions a third too narrow. The fix was splitting the residual into a season-long team error and a per-game error, and solving for the split by matching the model's own measured miss.</li>
          </ol>
        </div>
        <div>
@@ -2301,7 +2301,7 @@ function pageModel(){
        <div class="eyebrow" style="margin-bottom:3px">Step one</div>
        <h3 style="font-size:16px;margin-bottom:7px">Strip out the schedule</h3>
        <p class="muted" style="font-size:13px;margin:0">
-         Raw efficiency leaderboards are schedule artefacts. A team that drew six bottom-five
+         Raw efficiency leaderboards are schedule artifacts. A team that drew six bottom-five
          defenses looks elite and is not. So every play's expected-points added is regressed on a
          one-hot design of offense, defense and home field, with an L2 penalty, fit separately for
          pass and rush across ${D.meta.plays_in_fit.toLocaleString()} competitive plays. Each team
@@ -2341,7 +2341,7 @@ function pageModel(){
        A team sigma of ${BT.variance_split.sigma_team_pts} points is drawn <em>once per team per simulated
        season</em> and applied to all seventeen of that team's games, because a team that is secretly two
        points better than its rating is two points better every week, not independently lucky seventeen
-       times. Modelling only game-level noise produces win distributions about a third too narrow, which
+       times. Modeling only game-level noise produces win distributions about a third too narrow, which
        makes every playoff probability on this site overconfident. That value is not guessed either: it is
        solved for by matching the simulator's spread to the model's own measured error.
      </p>
@@ -3724,7 +3724,7 @@ function pageStartSit(){
      One finding worth knowing before you use this. Fitting team attempts on the closing spread
      shows game script hammers the run and barely touches the pass: rushing attempts move
      ${GS.rush_att_per_point!=null?Math.abs(GS.rush_att_per_point).toFixed(2):''} per point of spread while pass
-     attempts move ${GS.pass_att_per_point!=null?GS.pass_att_per_point.toFixed(2):''}. Favourites do not throw less,
+     attempts move ${GS.pass_att_per_point!=null?GS.pass_att_per_point.toFixed(2):''}. Favorites do not throw less,
      they run more. Underdogs do not throw much more, they just get fewer plays. So a running back's
      week is far more matchup-dependent than a receiver's, which is the opposite of how most
      start-sit advice is written.
@@ -3829,7 +3829,7 @@ const SEASON = String(D.meta.season);
 const IDS = D.ids || {sleeper:{}, keys:{}};
 const SUFFIX = new Set(['jr','sr','ii','iii','iv','v']);
 
-/* Same normaliser the ADP join uses on the Python side. Both ends have to
+/* Same normalizer the ADP join uses on the Python side. Both ends have to
    agree or the keys built at bundle time will not match anything typed here. */
 function normKey(s){
   const parts = String(s).toLowerCase().trim()
@@ -5065,7 +5065,7 @@ try{
 /* Nav order is deliberate. Somebody arriving from a shared link is far more
    likely to want their own roster handled than a shrinkage coefficient, so
    the four pages that answer a question about this weekend come first and the
-   modelling pages sit at the end for whoever wants to check the work. */
+   modeling pages sit at the end for whoever wants to check the work. */
 registerPage('live','Live',pageLive,{badge:'live'});
 registerPage('matchups','This week',pageMatchups);
 registerPage('startsit','Start or sit',pageStartSit);

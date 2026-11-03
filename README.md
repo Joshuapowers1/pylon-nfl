@@ -231,7 +231,7 @@ from `/docs` on `main`, so the published site is always the file that was just b
 
 ### 1. Strip out the schedule
 
-Raw efficiency leaderboards are schedule artefacts. A team that drew six bottom-five defenses looks elite and is not. So instead of averaging expected points added, Pylon regresses it:
+Raw efficiency leaderboards are schedule artifacts. A team that drew six bottom-five defenses looks elite and is not. So instead of averaging expected points added, Pylon regresses it:
 
 ```
 epa_play ~ b0 + off_team + def_team + home_offense
@@ -271,7 +271,7 @@ sigma_total² = sigma_game² + 2 · sigma_team²
              = 12.50²      + 2 · 4.06²
 ```
 
-`sigma_team` is drawn **once per team per simulated season** and applied to all seventeen of that team's games. A team that is secretly two points better than its rating is two points better every week, not independently lucky seventeen times. Modelling only game-level noise produces win distributions roughly a third too narrow, which makes every playoff probability overconfident. That value is solved for by matching the simulator's spread to the model's own measured error.
+`sigma_team` is drawn **once per team per simulated season** and applied to all seventeen of that team's games. A team that is secretly two points better than its rating is two points better every week, not independently lucky seventeen times. Modeling only game-level noise produces win distributions roughly a third too narrow, which makes every playoff probability overconfident. That value is solved for by matching the simulator's spread to the model's own measured error.
 
 ### 6. Project players from opportunity
 
@@ -288,7 +288,7 @@ team plays per game
   = fantasy points
 ```
 
-Two ideas do most of the work. **Empirical Bayes**: observed share is shrunk toward a depth-chart-aware prior by sample size. **Availability-weighted normalisation**: every team's shares are rescaled so that `Σ(share × games / 17) = 1`, which prices competition for touches as the zero-sum thing it is and makes roster movement work without hand-writing 32 depth charts.
+Two ideas do most of the work. **Empirical Bayes**: observed share is shrunk toward a depth-chart-aware prior by sample size. **Availability-weighted normalization**: every team's shares are rescaled so that `Σ(share × games / 17) = 1`, which prices competition for touches as the zero-sum thing it is and makes roster movement work without hand-writing 32 depth charts.
 
 ### 7. De-vig before comparing anything
 
@@ -319,7 +319,7 @@ script effect is real but very lopsided:
 | Rush attempts | **-0.25** | -0.21 |
 | Pass attempts | +0.07 | +0.06 |
 
-**Favourites do not throw less, they run more. Underdogs do not throw much more,
+**Favorites do not throw less, they run more. Underdogs do not throw much more,
 they just get fewer plays.** A running back's week is therefore far more
 matchup-dependent than a receiver's, which is the opposite of how most start-sit
 advice is written.
@@ -386,7 +386,7 @@ There are three ways in and the order matters:
   and therefore cannot break, which is why it is the fallback everywhere else
   fails, including under a content policy that blocks outside connections.
 
-The paste parser walks word windows longest-first against a normalised name
+The paste parser walks word windows longest-first against a normalized name
 index rather than assuming a layout, so `QB Josh Allen Buf QB1 Bye 7` and
 `Tyrone Tracy Jr.` and `Ja'Marr Chase` all resolve, and anything that does not
 resolve is reported back by line rather than silently dropped.
@@ -502,17 +502,17 @@ Kept here deliberately. Each was silently producing wrong answers, and each is t
 
 2. **Vanishing quarterback scrambles.** A scramble is charged as a dropback, so it never lands in the rushing bucket, and nflverse credits it to `rusher_player_id` rather than `passer_player_id`, so it never lands in the passing bucket either. It fell through both. That is roughly 40% of a mobile quarterback's carries and 70% of his rushing yards.
 
-3. **Flat positional priors.** Every rostered receiver was given a 5.5% target-share prior. Twelve receivers × 5.5% sums past 100% of a team's targets before a single starter is counted, and the normalisation step then halved everybody. Replaced with depth-chart-aware priors.
+3. **Flat positional priors.** Every rostered receiver was given a 5.5% target-share prior. Twelve receivers × 5.5% sums past 100% of a team's targets before a single starter is counted, and the normalization step then halved everybody. Replaced with depth-chart-aware priors.
 
-4. **Double-taxed availability.** Quarterback dropback share was set to 0.90 to account for missed time, then multiplied by a projected games figure that already accounted for missed time. Every quarterback was penalised twice.
+4. **Double-taxed availability.** Quarterback dropback share was set to 0.90 to account for missed time, then multiplied by a projected games figure that already accounted for missed time. Every quarterback was penalized twice.
 
-5. **Naive share normalisation.** Normalising shares to sum to 1.0 taxes every healthy starter to pay for the projected absences of his own backups. Replaced with the availability-weighted identity.
+5. **Naive share normalization.** Normalizing shares to sum to 1.0 taxes every healthy starter to pay for the projected absences of his own backups. Replaced with the availability-weighted identity.
 
-6. **Overconfident simulation.** The original simulator modelled only game-level noise and produced a mean win standard deviation of 2.00 against a measured out-of-sample error of 2.87. It was claiming 44-point probability edges that were mostly its own false precision.
+6. **Overconfident simulation.** The original simulator modeled only game-level noise and produced a mean win standard deviation of 2.00 against a measured out-of-sample error of 2.87. It was claiming 44-point probability edges that were mostly its own false precision.
 
 7. **Unsourced vig figure.** The DraftKings overround was quoted in prose rather than computed, so the one number contrasting the two markets was not reproducible from the repo. It is now stored as American odds and converted by the same code path as everything else.
 
-8. **Silent ADP join failure.** The player-to-ADP join matched on raw name, so "James Cook" versus "James Cook III" dropped ADP for around fifty players. Now joins on a normalised key.
+8. **Silent ADP join failure.** The player-to-ADP join matched on raw name, so "James Cook" versus "James Cook III" dropped ADP for around fifty players. Now joins on a normalized key.
 
 9. **Kelly sizing across nested markets.** The market page summed line-by-line Kelly stakes across 160 correlated lines and reported "189% of bankroll deployed". Those markets all resolve off the same season. It now caps deployment and discloses the scaling factor.
 
@@ -528,23 +528,23 @@ crashed. Every one of them would have published a number that looked fine.
 
 ---
 
-## Colour is checked, not eyeballed
+## Color is checked, not eyeballed
 
 `web/audit.mjs` walks all eleven pages in both themes at three widths and
 computes contrast against the ground each element actually sits on, not the one
 it nominally sits on. It exits non-zero and CI gates on it.
 
-The first run found **70 failures**, almost all of them in the small grey labels
+The first run found **70 failures**, almost all of them in the small gray labels
 that carry the explanations, which is the worst place to be under-contrast. Four
 things came out of fixing them and they are worth stating as rules:
 
-1. A colour chosen to work as a **fill** is not automatically legible as **text**.
+1. A color chosen to work as a **fill** is not automatically legible as **text**.
    The sequential-ramp green was printing a 24px number at 2.5:1 because nobody
-   had asked. Semantic status colours are now their own tokens, and the bar keeps
+   had asked. Semantic status colors are now their own tokens, and the bar keeps
    the ramp while the number takes the semantic set.
 2. The same split applies to the categorical series, which the comparison views
    use as direct labels rather than as a legend.
-3. A tinted chip under a word is a tighter contrast problem than the same colour
+3. A tinted chip under a word is a tighter contrast problem than the same color
    on a plain surface, so the direction pills have their own text tokens.
 4. One accent value has to clear both being read as text and carrying white text
    on top of it. That moved the orange from `#DB5A00` to `#B54900`.
