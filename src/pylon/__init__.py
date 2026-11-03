@@ -16,7 +16,7 @@ instagram.com/joshuampowers
 
 Released under the MIT License. See LICENSE.
 """
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Joshua Powers"
 __email__ = "joshpowersbiz@gmail.com"
 __license__ = "MIT"

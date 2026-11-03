@@ -953,9 +953,9 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
       <div class="foot-meta">
         <span><button class="footlink" id="tourBtn">Show me around again</button>
               &middot; <button class="footlink" id="glossBtn">What every word means</button></span>
-        <span>PYLON v1.0 &middot; MIT licensed</span>
+        <span>PYLON v1.1 &middot; MIT licensed</span>
         <span>25,000 season simulations &middot; 10,000 per player</span>
-        <span>Markets pulled 2026-08-25 07:34 UTC</span>
+        <span id="footMarkets">Markets pulled 2026-08-25 07:34 UTC</span>
         <span>Backtested on 160 team-seasons, no lookahead</span>
       </div>
     </div>
@@ -1954,6 +1954,8 @@ function pageTeams(){
         </div>
         ${winRibbon(t.team,{h:44})}
         <div style="display:flex;gap:12px;font-size:11.5px" class="muted">
+          ${t.wins_to_date!=null && (t.wins_to_date+t.losses_to_date+t.ties_to_date)>0
+            ? `<span><b class="num" style="color:var(--ink)">${t.wins_to_date}-${t.losses_to_date}${t.ties_to_date?'-'+t.ties_to_date:''}</b> so far</span>` : ''}
           <span><b class="num" style="color:var(--ink)">${f1(t.proj_wins)}</b> wins</span>
           <span><b class="num" style="color:var(--ink)">${pct(t.make_playoffs,0)}</b> playoffs</span>
           <span><b class="num" style="color:var(--ink)">${pct(t.super_bowl,1)}</b> title</span>
@@ -1980,7 +1982,7 @@ function pageTeams(){
 function pagePlayers(){
   const p=document.getElementById('pg-players');
   p.innerHTML = `
-   ${head('Every projected player','${n} players with a projected role in 2026. Sort any column, filter by position or team, and click a row for the full simulated outcome range. Point totals are risk-adjusted for expected games played rather than assuming everyone plays seventeen.'.replace('${n}', D.meta.n_players))}
+   ${head('Every projected player',('${n} players with a projected role in 2026. Sort any column, filter by position or team, and click a row for the full simulated outcome range. Point totals are risk-adjusted for expected games played rather than assuming everyone plays seventeen'+(D.meta.in_season?', and in season each total is the points already scored plus a projection for the games left.':'.')).replace('${n}', D.meta.n_players))}
    <div class="bar">
      <input class="txt" id="plQ" placeholder="Filter by name..." style="width:190px">
      <div class="seg" id="plPos">
@@ -3383,14 +3385,14 @@ function spreadText(team, sp){
 }
 function pageMatchups(){
   const p=document.getElementById('pg-matchups');
-  if(!MATCHUPS.length){ p.innerHTML = head('${WEEK_LABEL}','No schedule loaded.'); return; }
+  if(!MATCHUPS.length){ p.innerHTML = head(WEEK_LABEL,'No schedule loaded.'); return; }
   const withLines = MATCHUPS.filter(g=>g.market_spread_home!=null);
   const biggestSp = withLines.slice().sort((a,b)=>Math.abs(b.spread_edge)-Math.abs(a.spread_edge))[0];
   const biggestTot = withLines.slice().sort((a,b)=>Math.abs(b.total_edge)-Math.abs(a.total_edge))[0];
   const meanSp = withLines.reduce((a,b)=>a+Math.abs(b.spread_edge),0)/Math.max(withLines.length,1);
 
   p.innerHTML = `
-   ${head('${WEEK_LABEL}, game by game',
+   ${head(WEEK_LABEL+', game by game',
      'Every game with a projected score, a winner, and the sportsbook line next to it. The model and the market usually agree, which is the point. Where they do not is where it gets interesting.')}
 
    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
@@ -3475,6 +3477,42 @@ function pageMatchups(){
    The in-season updating result, and the ledger that makes this season
    gradeable rather than deniable.
    ========================================================================== */
+/* The grade so far. Written from ledger_score.json, which is regenerated on
+   every refit from the sealed files and the real results, so nothing here is
+   typed. Season-long calls (playoffs, divisions, the title) only resolve in
+   January and say so instead of showing a partial number. */
+function gradedSoFar(){
+  const G = D.ledger_score || {}, gm = G.games || {};
+  if(!G.games_resolved || G.season !== Number(SEASON)) return '';
+  const weeks = D.ledger_weekly ? Object.keys(D.ledger_weekly).map(Number).sort((a,b)=>a-b) : [];
+  const off = (G.teams||[]).slice(-3).reverse(), under = (G.teams||[]).slice(0,3);
+  const row = t => `<tr><td class="l">${esc(t.team)}</td><td>${t.actual_wins}</td>
+      <td>${(t.preseason_proj_wins*t.games_played/17).toFixed(1)}</td><td>${sgn(t.pace_error)}</td></tr>`;
+  return `
+   <div class="card" style="margin-top:14px">
+     <div class="eyebrow" style="margin-bottom:3px">Graded through week ${G.through_week||'&ndash;'}</div>
+     <h3 style="font-size:17px;margin-bottom:6px">How the sealed calls are doing</h3>
+     <p class="muted" style="font-size:13px;margin:0 0 12px;max-width:80ch">
+       The August digest ${G.digest_verifies ? 'still verifies' : '<b>no longer verifies</b>'}: the file being graded
+       is the file that was published. Game calls are graded from Week 1, and every week since has been sealed
+       before its first kickoff${weeks.length ? ' (weeks ' + weeks.join(', ') + ' so far)' : ''}. Win totals are
+       compared with the August projection pro-rated to the games each team has played.
+     </p>
+     <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+       <div class="kpi"><div class="v">${gm.n!=null?gm.n:'&ndash;'}</div><div class="l">sealed game calls with a result</div></div>
+       <div class="kpi"><div class="v">${gm.straight_up!=null?pct(gm.straight_up,1):'&ndash;'}</div><div class="l">picked straight up</div></div>
+       <div class="kpi"><div class="v">${gm.brier_model!=null?gm.brier_model.toFixed(3):'&ndash;'}</div><div class="l">Brier on win probability, 0.250 is a coin flip</div></div>
+       <div class="kpi"><div class="v">${G.win_pace_mae!=null?G.win_pace_mae.toFixed(2):'&ndash;'}</div><div class="l">wins off the August pace, average team</div></div>
+     </div>
+     ${(G.teams||[]).length ? `<div class="two" style="margin-top:12px">
+       <div class="tw"><table><thead><tr><th scope="col" class="l">Ahead of August</th><th>Wins</th><th>Pace</th><th>Gap</th></tr></thead>
+         <tbody>${off.map(row).join('')}</tbody></table></div>
+       <div class="tw"><table><thead><tr><th scope="col" class="l">Behind August</th><th>Wins</th><th>Pace</th><th>Gap</th></tr></thead>
+         <tbody>${under.map(row).join('')}</tbody></table></div>
+     </div>` : ''}
+   </div>`;
+}
+
 function pageRecord(){
   const p=document.getElementById('pg-record');
   const IS = D.inseason || {}, LED = D.ledger || {};
@@ -3567,7 +3605,8 @@ w = games / (games + ${IS.k_best!=null?IS.k_best:'k'})</div>
        Guessing 50% on everything scores 0.25. Anything worse than that is worse than knowing
        nothing, and publishing the number either way is the entire point.
      </p>
-   </div>`;
+   </div>
+   ${gradedSoFar()}`;
 
   if(curve.length){
     const f=ser('frozen'), u=ser('updated');
@@ -3648,7 +3687,7 @@ function pageStartSit(){
   const best = WEEKLY.filter(x=>x.points>6).slice().sort((a,b)=>b.matchup_delta-a.matchup_delta);
 
   p.innerHTML = `
-   ${head('Start or sit, week 1',
+   ${head('Start or sit, '+WEEK_LABEL.toLowerCase(),
      "Season projections divided by seventeen are not weekly projections. These account for the game script, the actual opponent, and how wildly one football game varies. Pick two players and the model tells you how often each one wins.")}
 
    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(168px,1fr))">
@@ -4570,7 +4609,7 @@ function renderTeam(){
 
    <div class="card" style="margin-bottom:14px">
      <div class="bar" style="margin-bottom:10px">
-       <div><div class="eyebrow" style="margin-bottom:3px">Week 1</div>
+       <div><div class="eyebrow" style="margin-bottom:3px">${esc(WEEK_LABEL)}</div>
          <h3 style="font-size:17px;margin:0">Start these</h3></div>
        ${MT.slots? `<span class="dim" style="font-size:12px;margin-left:auto">Using your league's own lineup slots.</span>`
          : `<div class="seg" id="mtFmt" style="margin-left:auto">${Object.entries(FORMATS).map(([k,v])=>
@@ -4633,7 +4672,7 @@ function renderTeam(){
     {h:'Team',k:'team',left:true,f:r=>`${mark(r.team,17)}${r.team}`,asc:true},
     {h:'Season',k:'proj_points',f:r=>`<b>${f0(r.proj_points)}</b>`,title:'Projected fantasy points for the season'},
     {h:'Per game',k:'proj_ppg',f:r=>f1(r.proj_ppg)},
-    {h:'${WEEK_LABEL}',k:'player',f:r=>{const w=BYWEEK[r.player]; return w? f1(w.points) : '<span class="dim">&ndash;</span>';}},
+    {h:WEEK_LABEL,k:'player',f:r=>{const w=BYWEEK[r.player]; return w? f1(w.points) : '<span class="dim">&ndash;</span>';}},
   ];
   document.getElementById('mtAdds').appendChild(
     makeTable(adds, addCols, {sort:'proj_points', noun:'players', onRow:r=>playerSheet(r)}));
@@ -5082,11 +5121,23 @@ function renderFreshness(){
         ' for ' + esc(WEEK_LABEL) + ', and that week has finished. The Tuesday ' +
         'rebuild has not landed anything newer.</span>'
       : '<span><b>Rebuilt ' + esc(built) + '</b> for ' + esc(WEEK_LABEL) + '. Rebuilds ' +
-        'every Tuesday morning; the team ratings underneath stay fixed at August ' +
-        'and are never refit on results.</span>') +
+        'every Tuesday morning. ' + (D.meta.in_season && D.meta.through_week
+          ? 'Team ratings blend ' + Number(D.meta.plays_2026||0).toLocaleString() +
+            ' plays from weeks 1-' + D.meta.through_week + ' into the August prior at about ' +
+            Math.round(100*(D.meta.blend_weight_mean||0)) + '% weight, and every completed ' +
+            'game is locked to its real score in the season simulation.'
+          : 'Before kickoff the ratings are the August prior; from the first complete week ' +
+            'they blend in this season\'s plays.') + '</span>') +
     '</div>';
 }
 renderFreshness();
+
+/* The footer's market stamp used to be typed, so it said August in November.
+   It now reads the snapshot the edge board was actually built on. */
+(function(){
+  const el = document.getElementById('footMarkets'), t = D.meta && D.meta.market_pulled;
+  if(el && t) el.textContent = 'Markets pulled ' + String(t).slice(0,10) + ' ' + String(t).slice(11,16) + ' UTC';
+})();
 
 window.PYLON_BOOT();
 </script>

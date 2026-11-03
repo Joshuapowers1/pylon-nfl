@@ -79,8 +79,16 @@ def project_week(ratings: pd.DataFrame, ctx26: pd.DataFrame, sc: dict, cal: dict
     """Model spread, total and win probability for one week, against the market."""
     r = ratings.set_index("team")
     pace = ctx26.set_index("team")["proj_plays_per_game"]
-    snap = json.loads((CONF / "market_snapshot_2026.json").read_text())
-    lines = {(l["away"], l["home"]): l for l in snap.get("week1_lines_dk", [])} if week == 1 else {}
+    # Week 1 lines live in the August snapshot the ledger was sealed against.
+    # Every later week's lines come from the snapshot the refit pulled that day.
+    if week == 1:
+        snap = json.loads((CONF / "market_snapshot_2026.json").read_text())
+        posted = snap.get("week1_lines_dk", [])
+    else:
+        live = CONF / "market_snapshot_live.json"
+        snap = json.loads(live.read_text()) if live.exists() else {}
+        posted = snap.get("week_lines_dk", {}).get(str(week), [])
+    lines = {(l["away"], l["home"]): l for l in posted}
 
     g = _games([season])
     g = g[g["week"] == week]

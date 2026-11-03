@@ -117,6 +117,13 @@ def build_claims() -> list[tuple[str, str, str]]:
             claims.append((sec, num(float(row["raw_sum"]), 4), f"{row['book']} raw sum"))
             claims.append((sec, num(abs(float(row["overround_pct"])), 2) + "%", f"{row['book']} overround"))
 
+    ip = load_json("config/inseason_players.json")["k"]
+    for key, label in (("target_share", "Target share"), ("rush_share", "Carry share"),
+                       ("dropback_share", "Dropback share"), ("plays_per_game", "Plays per game"),
+                       ("dropback_rate", "Dropback rate"), ("off_td_per_game", "Touchdowns per game")):
+        claims.append(("What the live refit actually does", f"| {label} | **{ip[key]}** |",
+                       f"fitted in-season k for {key}"))
+
     claims.append(("The sealed ledger", led["digest"], "ledger digest"))
     claims.append(("The sealed ledger", led["stamped_at"], "ledger timestamp"))
     return claims

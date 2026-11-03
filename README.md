@@ -86,6 +86,14 @@ Brier score for the model and for the market, on the same games. Anyone can
 publish projections. Publishing them where they can be marked, against a
 benchmark that was recorded first, is the part that can fail.
 
+The file is write-once. `ledger.build` returns an existing ledger for the season
+untouched, and the test suite fails if the digest stops verifying. From Week 2
+on, every refit also seals the coming week's game calls into
+`out/prediction_ledger_weekly.json` with their own digest, and refuses to seal a
+week whose first game has already kicked off. Midseason, win totals are graded
+against the August projection pro-rated to the games each team has played,
+because half a season of wins cannot be compared with a seventeen-game number.
+
 ---
 
 ## In-season updating
@@ -116,8 +124,54 @@ The honest detail: through week five the updating model is *worse* than the froz
 one. Four games of data is mostly noise. It takes about six weeks before the season
 tells you more than the offseason did, and the weekly curve on the site shows it.
 
-`.github/workflows/weekly-update.yml` runs the whole refit every Tuesday and commits
-the result, so the published site does this on its own once the season starts.
+### What the live refit actually does
+
+`inseason.py` is where the blend stops being a backtest and starts feeding every
+published number. Each Tuesday, once a week has a final score in every game:
+
+1. **Teams.** This season's plays are run through the same ridge regression and
+   blended into the August rating at `w = n / (n + 8)`, per team, so a team coming
+   off its bye carries slightly less of this season than one that has not had it.
+   The roster prior is scaled by `(1 - w)` with the data, so the decomposition of
+   every rating into data and judgment stays true.
+2. **Uncertainty.** Under the same normal-normal model, the posterior variance of a
+   team's strength is `(1 - w)` times the prior's, so the simulator's team-constant
+   draw shrinks by `sqrt(1 - w)`. A rating that has absorbed eight weeks of
+   evidence is less uncertain than the one it replaced, and the win distributions
+   say so.
+3. **Results.** Completed games are not simulated. Their real margin is written
+   into every one of the 25,000 seasons, so a 6-1 team is 6-1 in all of them and
+   only the games left carry noise.
+4. **Context.** Pace, dropback rate and touchdown rate blend the same way, each with
+   its own fitted constant.
+5. **Players.** Usage shares move toward the measured 2026 share. Efficiency pools
+   this season's opportunities into the same empirical-Bayes estimate, which needs
+   no new constant. Season totals become points already scored plus a
+   rest-of-season projection, and value over replacement is measured on what is
+   left, because points already scored are sunk.
+
+The player and context constants were fitted the same way `k` was: replay 2024
+and 2025 from the same point in the season (prior from the preceding seasons,
+evidence from weeks 1 to 8, scored on weeks 9 to 18) and keep whichever constant
+predicted best. Each one beats both of its own ingredients, the prior alone and
+the season alone, and a test fails the build if that ever stops being true.
+
+| Blended quantity | Fitted k (games) |
+|---|---|
+| Target share | **3** |
+| Carry share | **1** |
+| Dropback share | **6** |
+| Plays per game | **24** |
+| Dropback rate | **8** |
+| Touchdowns per game | **8** |
+
+Roles settle fast and pace barely settles at all: a carry share is mostly this
+season's after two games, while plays per game needs the better part of a season
+before it outweighs the history. That was not the order I would have guessed.
+
+`.github/workflows/weekly-update.yml` runs the whole refit every Tuesday, re-prices
+the live market (`scripts/snapshot_markets.py`), seals the coming week, and
+commits the result, so the published site does this on its own.
 
 ---
 
@@ -155,17 +209,20 @@ from `/docs` on `main`, so the published site is always the file that was just b
 | Win totals, playoff, division and championship odds | `out/team_projections.csv` |
 | Full win distribution, 0 through 17, per team | `out/win_distributions.csv` |
 | Playoff seed distribution, 1 through 7 | `out/seed_distributions.csv` |
-| Fantasy projections for 581 players with percentile bands and finish probabilities | `out/player_projections.csv` |
-| Draft board against 7,726 live PPR drafts | `out/draft_board.csv` |
+| Fantasy projections for every rostered skill player: points so far, rest of season, percentile bands and finish probabilities | `out/player_projections.csv` |
+| Draft board against 7,726 live PPR drafts, frozen at its preseason build | `out/draft_board.csv` |
 | Model vs de-vigged market, every book | `out/market_edge_board.csv` |
 | Overround on every market used | `out/market_vig_report.csv` |
 | Five-season out-of-sample backtest | `out/backtest_win_projections.csv` |
 | How much of each rating is data vs analyst judgment | `out/rating_decomposition.csv` |
 | Sensitivity of every projection to the judgment layer | `out/sensitivity_priors.csv` |
-| Game-by-game spread, total and win probability vs the posted line | `out/matchups_week1.csv` |
+| Game-by-game spread, total and win probability vs the posted line | `out/matchups_week{N}.csv` |
 | Frozen vs updated accuracy, week by week | `out/inseason_curve.csv` |
 | This season's predictions, [sealed and hashed](#the-sealed-ledger) before kickoff | `out/prediction_ledger.json` |
-| Weekly player projections with floor, ceiling and matchup adjustment | `out/weekly_week1.csv` |
+| Each week's game calls, sealed before that week's first kickoff | `out/prediction_ledger_weekly.json` |
+| The sealed calls graded against what has happened so far | `out/ledger_score.json` |
+| Where the season is: weeks blended, weight, posterior team error | `config/inseason_status.json` |
+| Weekly player projections with floor, ceiling and matchup adjustment | `out/weekly_week{N}.csv` |
 | The measured streaming premium | `config/streaming_premium.json` |
 
 ---
@@ -355,7 +412,7 @@ rosterable players trimmed out of the 4,300 Sleeper carries, refreshed by
 
 ---
 
-## Week 1, game by game
+## Game by game, every week
 
 ![Week 1 matchups](docs/02-week1-matchups.jpg)
 
@@ -364,7 +421,9 @@ it in plain English. The margin comes from the calibrated game model and the tot
 from a fitted scoring model, so the two can never imply an impossible pair of team
 scores. Across Week 1 the model sits within 1.6 points of the closing line on
 average, which is what should happen: a preseason model that routinely disagreed
-with the market by a touchdown would be broken, not brilliant.
+with the market by a touchdown would be broken, not brilliant. From Week 2 the page
+follows the week the refit projected, with that week's DraftKings line beside each
+game, and the calls are sealed before the first kickoff.
 
 ---
 
@@ -395,7 +454,10 @@ pylon-nfl/
 ├── config/
 │   ├── offseason_2026.json         32 roster and scheme priors, each justified
 │   ├── roles_2026.json             58 player role priors: rookies, injuries, role changes
-│   ├── market_snapshot_2026.json   Polymarket and sportsbook prices, timestamped
+│   ├── market_snapshot_2026.json   August Polymarket and sportsbook prices the ledger was sealed against
+│   ├── market_snapshot_live.json   the same books re-priced by every refit, plus this week's lines
+│   ├── inseason.json               fitted team blend constant k
+│   ├── inseason_players.json       fitted usage and context blend constants, with both baselines
 │   ├── sleeper_ids.json            trimmed id table the roster import resolves against
 │   ├── calibration.json            fitted shrinkage and translation constants
 │   └── backtest.json               out-of-sample results and the variance split
@@ -407,6 +469,8 @@ pylon-nfl/
 │   ├── calibrate.py                fits shrinkage and translation out of sample
 │   ├── backtest.py                 five-season replay, solves the variance split
 │   ├── adjustments.py              2026 context projection + analyst priors
+│   ├── update.py                   in-season replay that fits the team blend
+│   ├── inseason.py                 the live blend: teams, context, players, to-date stats
 │   ├── game_model.py               ratings → spread → win probability
 │   ├── simulate.py                 25,000-season Monte Carlo with real tiebreakers
 │   ├── players.py                  opportunity-based fantasy projections
@@ -423,6 +487,7 @@ pylon-nfl/
 │   └── test.mjs                    headless Playwright check
 ├── scripts/
 │   ├── fetch_data.sh               play-by-play, rosters, schedule, ADP, market
+│   ├── snapshot_markets.py         live Polymarket books + DraftKings week lines
 │   └── refresh_sleeper.py          rebuilds config/sleeper_ids.json
 └── out/                            every published number
 ```
@@ -450,6 +515,16 @@ Kept here deliberately. Each was silently producing wrong answers, and each is t
 8. **Silent ADP join failure.** The player-to-ADP join matched on raw name, so "James Cook" versus "James Cook III" dropped ADP for around fifty players. Now joins on a normalised key.
 
 9. **Kelly sizing across nested markets.** The market page summed line-by-line Kelly stakes across 160 correlated lines and reported "189% of bankroll deployed". Those markets all resolve off the same season. It now caps deployment and discloses the scaling factor.
+
+The next five were found in November, by running the Tuesday job against a real
+half-played season instead of against the week it was written in. None of them
+crashed. Every one of them would have published a number that looked fine.
+
+10. **The weekly refit refit nothing.** `update.py` proved that blending the season into the rating helps, and then nothing called it. The job reloaded the August ratings every week and moved the matchup page forward. Now `inseason.py` does the blend and every published number runs through it.
+11. **The simulator ignored results.** It re-rolled all 272 games every Tuesday, so a team that had started 0-7 kept its August playoff odds minus whatever the rating shift caught. Completed games are now locked to their real margin.
+12. **The sealed ledger would have been re-sealed.** `run.py` called `ledger.build` on every refit, and `build` overwrote the file with that week's numbers under a new timestamp. The August predictions would have been replaced by November ones, which is the one thing the ledger exists to prevent. It is write-once now, and a test checks the digest.
+13. **The site could not show any week but Week 1.** `webdata.py` read `matchups_week1.csv` by name and the bundle never carried the week number the page was waiting for, so a Week 2 refit wrote Week 2 files that nothing loaded.
+14. **The draft board would have eaten itself.** In season the ADP feed thins to a few mock drafts (two players, on the day I checked). Rebuilding the board on that strips the ADP from every player on the site. The board now freezes at its preseason build once a week is complete.
 
 ---
 
@@ -485,12 +560,15 @@ things came out of fixing them and they are worth stating as rules:
 5. **The engine ranks quarterbacks earlier than the market does.** This was previously listed as a known flaw, on the assumption that streaming made replacement level higher. Measuring it found the opposite, so the adjustment is gone and the disagreement stands. It may still be wrong, but it is now wrong on the evidence rather than on a hunch.
 6. **Rookies and role-changers are asserted, not measured.** 58 of them, each with a stated reason.
 7. **The roster import cannot see a private ESPN league.** That needs `espn_s2` and `SWID` cookies, which a page on another origin cannot send and has no business asking for, so those leagues fall back to paste. Sleeper has no such limit because its read API is genuinely public.
+8. **The team model has no injury layer.** Ratings move on plays, not on who is playing them, so a starting quarterback ruled out on Wednesday shows up in the line long before it shows up here. The biggest model-versus-market gaps in a given week are usually this, not insight.
+9. **Reserve lists count as out until the player is activated.** The roster file says a player is on injured reserve but not when he is due back, so his rest-of-season projection is zero until he is activated. That is conservative on purpose: counting a player back too early is the worse error for a lineup.
 
 ---
 
 ## Data sources
 
-- **Play-by-play, rosters, schedule** - [nflverse](https://github.com/nflverse/nflverse-data), 2017-2025
+- **Play-by-play, rosters, schedule** - [nflverse](https://github.com/nflverse/nflverse-data), 2017-2025, plus 2026 to date, re-pulled every refit
+- **Weekly game lines** - ESPN scoreboard feed, DraftKings provider
 - **Average draft position** - FantasyFootballCalculator API, 12-team full PPR, 7,726 drafts
 - **Prediction markets** - Polymarket Gamma API, order-book midpoints
 - **Sportsbook lines** - DraftKings board, converted from American odds

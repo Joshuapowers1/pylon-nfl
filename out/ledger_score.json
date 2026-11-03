@@ -1,19 +1,248 @@
 {
-  "season": 2025,
-  "stamped_at": "2026-08-28T00:43:18Z",
-  "digest": "b4eec01ab6115c9e",
-  "games_resolved": 272,
-  "season_complete": true,
-  "win_total_mae": 2.416,
+  "season": 2026,
+  "stamped_at": "2026-08-28T22:48:32Z",
+  "digest": "ba1a2fa087412d22",
+  "digest_verifies": true,
+  "games_resolved": 121,
+  "season_complete": false,
+  "through_week": 8,
+  "win_total_mae": null,
+  "win_pace_mae": 1.391,
+  "teams": [
+    {
+      "team": "LAC",
+      "actual_wins": 0.0,
+      "games_played": 7,
+      "preseason_proj_wins": 9.2,
+      "pace_error": -3.79
+    },
+    {
+      "team": "TEN",
+      "actual_wins": 1.0,
+      "games_played": 8,
+      "preseason_proj_wins": 7.12,
+      "pace_error": -2.35
+    },
+    {
+      "team": "PHI",
+      "actual_wins": 2.0,
+      "games_played": 8,
+      "preseason_proj_wins": 8.95,
+      "pace_error": -2.21
+    },
+    {
+      "team": "IND",
+      "actual_wins": 2.0,
+      "games_played": 8,
+      "preseason_proj_wins": 8.85,
+      "pace_error": -2.16
+    },
+    {
+      "team": "HOU",
+      "actual_wins": 2.0,
+      "games_played": 7,
+      "preseason_proj_wins": 8.77,
+      "pace_error": -1.61
+    },
+    {
+      "team": "NYJ",
+      "actual_wins": 2.0,
+      "games_played": 8,
+      "preseason_proj_wins": 7.17,
+      "pace_error": -1.37
+    },
+    {
+      "team": "NO",
+      "actual_wins": 2.0,
+      "games_played": 7,
+      "preseason_proj_wins": 8.08,
+      "pace_error": -1.33
+    },
+    {
+      "team": "MIA",
+      "actual_wins": 1.0,
+      "games_played": 7,
+      "preseason_proj_wins": 5.43,
+      "pace_error": -1.24
+    },
+    {
+      "team": "ATL",
+      "actual_wins": 3.0,
+      "games_played": 8,
+      "preseason_proj_wins": 8.93,
+      "pace_error": -1.2
+    },
+    {
+      "team": "DAL",
+      "actual_wins": 3.0,
+      "games_played": 8,
+      "preseason_proj_wins": 8.87,
+      "pace_error": -1.17
+    },
+    {
+      "team": "WAS",
+      "actual_wins": 2.5,
+      "games_played": 7,
+      "preseason_proj_wins": 8.8,
+      "pace_error": -1.12
+    },
+    {
+      "team": "TB",
+      "actual_wins": 3.0,
+      "games_played": 8,
+      "preseason_proj_wins": 8.33,
+      "pace_error": -0.92
+    },
+    {
+      "team": "LA",
+      "actual_wins": 4.0,
+      "games_played": 8,
+      "preseason_proj_wins": 10.28,
+      "pace_error": -0.84
+    },
+    {
+      "team": "BAL",
+      "actual_wins": 4.0,
+      "games_played": 8,
+      "preseason_proj_wins": 10.11,
+      "pace_error": -0.76
+    },
+    {
+      "team": "ARI",
+      "actual_wins": 3.0,
+      "games_played": 8,
+      "preseason_proj_wins": 6.67,
+      "pace_error": -0.14
+    },
+    {
+      "team": "SEA",
+      "actual_wins": 4.0,
+      "games_played": 8,
+      "preseason_proj_wins": 8.46,
+      "pace_error": 0.02
+    },
+    {
+      "team": "CAR",
+      "actual_wins": 3.0,
+      "games_played": 7,
+      "preseason_proj_wins": 7.02,
+      "pace_error": 0.11
+    },
+    {
+      "team": "NE",
+      "actual_wins": 5.0,
+      "games_played": 8,
+      "preseason_proj_wins": 10.09,
+      "pace_error": 0.25
+    },
+    {
+      "team": "GB",
+      "actual_wins": 5.0,
+      "games_played": 8,
+      "preseason_proj_wins": 9.76,
+      "pace_error": 0.41
+    },
+    {
+      "team": "KC",
+      "actual_wins": 5.0,
+      "games_played": 7,
+      "preseason_proj_wins": 9.87,
+      "pace_error": 0.94
+    },
+    {
+      "team": "DET",
+      "actual_wins": 5.0,
+      "games_played": 7,
+      "preseason_proj_wins": 9.74,
+      "pace_error": 0.99
+    },
+    {
+      "team": "LV",
+      "actual_wins": 4.0,
+      "games_played": 8,
+      "preseason_proj_wins": 6.08,
+      "pace_error": 1.14
+    },
+    {
+      "team": "CIN",
+      "actual_wins": 5.0,
+      "games_played": 7,
+      "preseason_proj_wins": 8.93,
+      "pace_error": 1.32
+    },
+    {
+      "team": "NYG",
+      "actual_wins": 4.5,
+      "games_played": 7,
+      "preseason_proj_wins": 7.59,
+      "pace_error": 1.37
+    },
+    {
+      "team": "JAX",
+      "actual_wins": 5.0,
+      "games_played": 7,
+      "preseason_proj_wins": 8.03,
+      "pace_error": 1.69
+    },
+    {
+      "team": "PIT",
+      "actual_wins": 6.0,
+      "games_played": 8,
+      "preseason_proj_wins": 9.15,
+      "pace_error": 1.69
+    },
+    {
+      "team": "BUF",
+      "actual_wins": 6.0,
+      "games_played": 7,
+      "preseason_proj_wins": 10.38,
+      "pace_error": 1.73
+    },
+    {
+      "team": "DEN",
+      "actual_wins": 6.0,
+      "games_played": 8,
+      "preseason_proj_wins": 9.08,
+      "pace_error": 1.73
+    },
+    {
+      "team": "SF",
+      "actual_wins": 6.0,
+      "games_played": 7,
+      "preseason_proj_wins": 10.22,
+      "pace_error": 1.79
+    },
+    {
+      "team": "CLE",
+      "actual_wins": 5.0,
+      "games_played": 8,
+      "preseason_proj_wins": 5.76,
+      "pace_error": 2.29
+    },
+    {
+      "team": "CHI",
+      "actual_wins": 6.0,
+      "games_played": 8,
+      "preseason_proj_wins": 7.78,
+      "pace_error": 2.34
+    },
+    {
+      "team": "MIN",
+      "actual_wins": 6.0,
+      "games_played": 7,
+      "preseason_proj_wins": 8.51,
+      "pace_error": 2.5
+    }
+  ],
   "games": {
-    "n": 6,
-    "straight_up": 0.0,
-    "spread_mae_model": 10.467,
-    "spread_mae_market": 10.75,
-    "brier_model": 0.3108,
+    "n": 16,
+    "weeks": [
+      1
+    ],
+    "straight_up": 0.5625,
+    "spread_mae_model": 11.734,
+    "spread_mae_market": 11.625,
+    "brier_model": 0.233,
     "brier_coin_flip": 0.25
-  },
-  "brier_playoffs": 0.1937,
-  "brier_division": 0.1939,
-  "brier_playoffs_market": 0.1801
+  }
 }

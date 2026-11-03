@@ -37,8 +37,18 @@ from scipy.stats import norm
 from .config import CONF, OUT, EDGE_STRONG, EDGE_LEAN, DIVISIONS, TEAM_DIV
 
 
-def load_snapshot() -> dict:
-    return json.loads((CONF / "market_snapshot_2026.json").read_text())
+PRESEASON_SNAPSHOT = CONF / "market_snapshot_2026.json"
+LIVE_SNAPSHOT = CONF / "market_snapshot_live.json"
+
+
+def load_snapshot(live: bool = False) -> dict:
+    """The August book by default, because that is what the sealed ledger and
+    the README's worked de-vig example are about. `live=True` returns the book
+    `scripts/snapshot_markets.py` pulled on the day of the refit, falling back
+    to August when no refit has pulled one."""
+    if live and LIVE_SNAPSHOT.exists():
+        return json.loads(LIVE_SNAPSHOT.read_text())
+    return json.loads(PRESEASON_SNAPSHOT.read_text())
 
 
 def american_to_prob(odds: float) -> float:
@@ -95,11 +105,13 @@ def edge_board(model: pd.DataFrame, snap: dict, win_dist: pd.DataFrame | None = 
                 "liquidity_usd": liquidity, "note": note,
             })
 
-    add("Super Bowl LXI", snap["superbowl_lxi"], "super_bowl", 6_600_483, "Polymarket, deepest NFL book")
+    liq = snap.get("_market_liquidity_usd", {})
+    add("Super Bowl LXI", snap["superbowl_lxi"], "super_bowl", liq.get("superbowl", 6_600_483),
+        "Polymarket, deepest NFL book")
     afc = {k: v for k, v in snap["afc_champion"].items()}
     nfc = {k: v for k, v in snap["nfc_champion"].items()}
-    add("AFC Champion", afc, "conf_champ", 1_340_195, "Polymarket")
-    add("NFC Champion", nfc, "conf_champ", 1_563_912, "Polymarket")
+    add("AFC Champion", afc, "conf_champ", liq.get("afc", 1_340_195), "Polymarket")
+    add("NFC Champion", nfc, "conf_champ", liq.get("nfc", 1_563_912), "Polymarket")
 
     for dname, members in DIVISIONS.items():
         book = {t: snap["division_winner"][t] for t in members if t in snap["division_winner"]}
@@ -118,10 +130,14 @@ def edge_board(model: pd.DataFrame, snap: dict, win_dist: pd.DataFrame | None = 
         rows.append({"market": "Make Playoffs", "team": team, "model_prob": m,
                      "market_price_raw": v / 100.0, "market_prob_fair": q,
                      "edge_pp": (m - q) * 100.0, "edge_ratio": m / q if q > 0 else np.nan,
-                     "liquidity_usd": 281_987, "note": "Polymarket, normalised to 14 berths"})
+                     "liquidity_usd": liq.get("playoffs", 281_987),
+                     "note": "Polymarket, normalised to 14 berths"})
 
     # Win totals are a sportsbook market. Two-way, so the vig comes off the pair.
-    wt, op = snap["win_totals_dk"], snap["win_total_over_price_dk"]
+    # Only the August book has them: once games are played the preseason line is
+    # a different bet from the one a book would now offer, so in season they are
+    # graded in the ledger rather than traded against here.
+    wt, op = snap.get("win_totals_dk", {}), snap.get("win_total_over_price_dk", {})
     for team, line in wt.items():
         if team not in set(model["team"]):
             continue
@@ -146,7 +162,7 @@ def edge_board(model: pd.DataFrame, snap: dict, win_dist: pd.DataFrame | None = 
     return df
 
 
-def vig_report(snap: dict) -> pd.DataFrame:
+def vig_report(snap: dict, path=None) -> pd.DataFrame:
     """Publish the overround on every book. This is the number that explains why
     a market can look beatable when it is not."""
     rows = []
@@ -176,7 +192,7 @@ def vig_report(snap: dict) -> pd.DataFrame:
                      "power_k": round(_solve_k(book), 4),
                      "largest_method_gap_team": "", "power_vs_proportional_pp": None})
     out = pd.DataFrame(rows)
-    out.to_csv(OUT / "market_vig_report.csv", index=False)
+    out.to_csv(path or (OUT / "market_vig_report.csv"), index=False)
     return out
 
 

@@ -60,7 +60,10 @@ def build() -> dict:
     dec = pd.read_csv(OUT / "rating_decomposition.csv")
     sens = pd.read_csv(OUT / "sensitivity_priors.csv")
     edges = pd.read_csv(OUT / "market_edge_board.csv")
-    vig = pd.read_csv(OUT / "market_vig_report.csv")
+    status = json.loads((CONF / "inseason_status.json").read_text()) if (CONF / "inseason_status.json").exists() else {}
+    live = bool(status.get("applied"))
+    vig_live = OUT / "market_vig_report_live.csv"
+    vig = pd.read_csv(vig_live if (live and vig_live.exists()) else OUT / "market_vig_report.csv")
     players = pd.read_csv(OUT / "player_projections.csv")
     board = pd.read_csv(OUT / "draft_board.csv")
     bt = pd.read_csv(OUT / "backtest_win_projections.csv")
@@ -68,8 +71,16 @@ def build() -> dict:
     inseason = json.loads((CONF / "inseason.json").read_text()) if (CONF / "inseason.json").exists() else {}
     scoring = json.loads((CONF / "scoring_model.json").read_text()) if (CONF / "scoring_model.json").exists() else {}
     led = json.loads((OUT / "prediction_ledger.json").read_text()) if (OUT / "prediction_ledger.json").exists() else {}
-    mu = pd.read_csv(OUT / "matchups_week1.csv") if (OUT / "matchups_week1.csv").exists() else pd.DataFrame()
-    wk = pd.read_csv(OUT / "weekly_week1.csv") if (OUT / "weekly_week1.csv").exists() else pd.DataFrame()
+    # The week on the site is the week run.py projected, never a filename
+    # typed here. This used to read *_week1.csv unconditionally, so the Week 2
+    # refit wrote Week 2 files that the site never loaded.
+    week = int(status.get("current_week") or 1)
+    mu_f, wk_f = OUT / f"matchups_week{week}.csv", OUT / f"weekly_week{week}.csv"
+    mu = pd.read_csv(mu_f) if mu_f.exists() else pd.DataFrame()
+    wk = pd.read_csv(wk_f) if wk_f.exists() else pd.DataFrame()
+    grade = json.loads((OUT / "ledger_score.json").read_text()) if (OUT / "ledger_score.json").exists() else {}
+    wled_f = OUT / "prediction_ledger_weekly.json"
+    wled = json.loads(wled_f.read_text()) if wled_f.exists() else {}
     stream = json.loads((CONF / "streaming_premium.json").read_text()) if (CONF / "streaming_premium.json").exists() else {}
     gscript = json.loads((CONF / "game_script.json").read_text()) if (CONF / "game_script.json").exists() else {}
     curve = pd.read_csv(OUT / "inseason_curve.csv") if (OUT / "inseason_curve.csv").exists() else pd.DataFrame()
@@ -84,9 +95,24 @@ def build() -> dict:
         sched[c] = sched[c].replace(TEAM_ALIASES)
 
     # ---- team block --------------------------------------------------------
-    t = teams.merge(power[["team", "off_final", "def_final", "net_final", "off_delta", "def_delta",
-                           "seasons_used", "off_pass_prior", "def_pass_prior",
-                           "off_rush_prior", "def_rush_prior"]], on="team")
+    pcols_t = ["team", "off_final", "def_final", "net_final", "off_delta", "def_delta",
+               "seasons_used", "off_pass_prior", "def_pass_prior", "off_rush_prior", "def_rush_prior"]
+    pcols_t += [c for c in ("w_inseason", "games_2026", "pre_net_final") if c in power.columns]
+    t = teams.merge(power[pcols_t], on="team")
+    if "pre_net_final" in t.columns:
+        t["pre_power_rating"] = t["pre_net_final"] * cal["translation"]["points_per_rating"]
+    # Record to date, from the schedule, so the team pages can put the
+    # projection beside what has actually happened.
+    done = sched.dropna(subset=["result"])
+    rec = {tm: [0, 0, 0] for tm in TEAM_META}
+    for _, r in done.iterrows():
+        h, a, m = r["home_team"], r["away_team"], float(r["result"])
+        if m > 0: rec[h][0] += 1; rec[a][1] += 1
+        elif m < 0: rec[a][0] += 1; rec[h][1] += 1
+        else: rec[h][2] += 1; rec[a][2] += 1
+    t["wins_to_date"] = t["team"].map(lambda x: rec[x][0])
+    t["losses_to_date"] = t["team"].map(lambda x: rec[x][1])
+    t["ties_to_date"] = t["team"].map(lambda x: rec[x][2])
     t = t.merge(dec[["team", "pts_from_data", "pts_from_prior", "prior_share"]], on="team")
     t = t.merge(sens[["team", "swing"]], on="team", how="left")
     t = t.merge(ctx[["team", "proj_plays_per_game", "proj_pass_att_per_game",
@@ -102,12 +128,16 @@ def build() -> dict:
              "make_playoffs","win_division","conf_champ","super_bowl","one_seed","power_rating",
              "off_rank","def_rank","off_final","def_final","pts_from_data","pts_from_prior",
              "prior_share","swing","proj_plays_per_game","proj_pass_att_per_game",
-             "proj_rush_att_per_game","proj_off_td_per_game","proj_dropback_rate","prior_note"]
+             "proj_rush_att_per_game","proj_off_td_per_game","proj_dropback_rate","prior_note",
+             "wins_to_date","losses_to_date","ties_to_date"]
+    tcols += [c for c in ("w_inseason", "games_2026", "pre_power_rating") if c in t.columns]
     tround = {"proj_wins":2,"win_sd":2,"make_playoffs":4,"win_division":4,"conf_champ":4,
               "super_bowl":4,"one_seed":4,"power_rating":2,"off_rank":0,"def_rank":0,
               "off_final":4,"def_final":4,"pts_from_data":2,"pts_from_prior":2,"prior_share":3,
               "swing":2,"proj_plays_per_game":1,"proj_pass_att_per_game":1,
-              "proj_rush_att_per_game":1,"proj_off_td_per_game":2,"proj_dropback_rate":3}
+              "proj_rush_att_per_game":1,"proj_off_td_per_game":2,"proj_dropback_rate":3,
+              "wins_to_date":0,"losses_to_date":0,"ties_to_date":0,"w_inseason":3,
+              "games_2026":0,"pre_power_rating":2}
 
     winsd = {r["team"]: [round(r[f"p_{w}_wins"], 4) for w in range(18)] for _, r in wd.iterrows()}
     seeds = {r["team"]: [round(r[f"p_seed_{i}"], 4) for i in range(1, 8)] for _, r in sd.iterrows()}
@@ -141,12 +171,15 @@ def build() -> dict:
              "p_top3","p_top5","p_top12","p_bust","vorp","pos_rank","target_share_eb",
              "rush_share_eb","depth","adp","adp_formatted","adp_rank","value_rank","arb",
              "verdict","bye","override"]
+    pcols += [c for c in ("points_to_date", "games_to_date", "proj_ros", "games_ros", "status")
+              if c in p.columns]
     pround = {"games":1,"proj_points":1,"proj_ppg":1,"proj_points_17g":1,"targets":1,
               "receptions":1,"rec_yards":0,"rec_td":1,"rush_att":1,"rush_yards":0,"rush_td":1,
               "pass_att":0,"pass_yards":0,"pass_td":1,"interceptions":1,"p10":1,"p25":1,"p50":1,
               "p75":1,"p90":1,"p_top3":3,"p_top5":3,"p_top12":3,"p_bust":3,"vorp":1,"pos_rank":0,
               "target_share_eb":4,"rush_share_eb":4,"depth":0,"adp":1,"adp_rank":0,
-              "value_rank":0,"arb":0,"bye":0}
+              "value_rank":0,"arb":0,"bye":0,"points_to_date":1,"games_to_date":0,
+              "proj_ros":1,"games_ros":1}
     p = p.sort_values("proj_points", ascending=False)
 
     # ---- market ------------------------------------------------------------
@@ -160,20 +193,42 @@ def build() -> dict:
     # claiming August while the site served week ten, which is exactly the
     # silent staleness the published page now warns about.
     built = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
-    _snap = CONF / "market_snapshot_2026.json"
-    market_pulled = (
-        _dt.datetime.fromtimestamp(_snap.stat().st_mtime, _dt.timezone.utc)
-           .strftime("%Y-%m-%dT%H:%M:%SZ") if _snap.exists() else None)
+    # The pull time is read from the snapshot itself. A file's mtime is the
+    # time it was checked out, which on a fresh CI clone is "now" every week.
+    _snap = CONF / ("market_snapshot_live.json" if live else "market_snapshot_2026.json")
+    market_pulled = json.loads(_snap.read_text()).get("pulled_at") if _snap.exists() else None
+
+    # The live page's offline fallback: this week's slate from the schedule, so
+    # a browser that cannot reach the scoreboard still prices every game. The
+    # committed Week 2 bundle carried this, but it was patched in by hand and
+    # never written by this file, so a rebuild silently dropped it.
+    from .matchups import _kick
+    sw = sched[sched["week"] == week].sort_values(["gameday", "gametime"])
+    def _score(v):
+        return None if pd.isna(v) else int(v)
+    live_seed = {"week": week, "games": [
+        {"away": r["away_team"], "home": r["home_team"], "kick": _kick(r),
+         "awayScore": _score(r.get("away_score")), "homeScore": _score(r.get("home_score"))}
+        for _, r in sw.iterrows()]}
 
     bundle = {
         "meta": {
-            "version": "1.0.0", "built": built, "season": 2026,
+            "version": "1.1.0", "built": built, "season": 2026,
             "n_sims": 25000, "n_player_sims": 10000,
             "adp_source": "FantasyFootballCalculator 12-team full PPR",
             "adp_drafts": 7726, "adp_window": "2026-08-18 to 2026-08-25",
             "market_pulled": market_pulled,
             "plays_in_fit": 81389, "n_players": int(len(p)),
+            "week": week, "through_week": int(status.get("through_week") or 0),
+            "in_season": live,
+            "plays_2026": int(status.get("plays_2026") or 0),
+            "blend_weight_mean": status.get("w_mean"),
+            "sigma_team_mean": status.get("sigma_team_mean"),
         },
+        "inseason_status": status,
+        "ledger_score": grade,
+        "ledger_weekly": {w: {k: v for k, v in e.items() if k != "games"}
+                          for w, e in wled.get("weeks", {}).items()},
         "calibration": cal, "backtest": btm, "inseason": inseason, "scoring": scoring,
         "ledger": {k: v for k, v in led.items() if k != "teams"},
         "matchups": _tbl(mu, [c for c in ["week","away","home","kickoff","model_spread_home",
@@ -209,6 +264,7 @@ def build() -> dict:
         # Lets the browser turn a Sleeper roster, an ESPN roster or a pasted
         # block of text into our own player rows without a round trip.
         "ids": build_index(p),
+        "live_seed": live_seed,
     }
     out = OUT / "web_bundle.json"
     out.write_text(json.dumps(bundle, separators=(",", ":")))

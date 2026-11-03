@@ -30,11 +30,35 @@ import pandas as pd
 from .config import OUT, CONF, TARGET_SEASON
 
 LEDGER = OUT / "prediction_ledger.json"
+WEEKLY_LEDGER = OUT / "prediction_ledger_weekly.json"
+
+
+def _digest(payload: dict) -> str:
+    return hashlib.sha256(json.dumps({k: v for k, v in payload.items() if k != "digest"},
+                                     sort_keys=True).encode()).hexdigest()[:16]
+
+
+def verify(path=LEDGER) -> bool:
+    """True when the file on disk still hashes to the digest it was sealed with."""
+    led = json.loads(path.read_text())
+    return led.get("digest") == _digest(led)
 
 
 def build(teams: pd.DataFrame, edges: pd.DataFrame, matchups: pd.DataFrame | None = None,
-          stamped_at: str | None = None) -> dict:
-    """Freeze every preseason prediction with its scoring rule."""
+          stamped_at: str | None = None, force: bool = False) -> dict:
+    """Freeze every preseason prediction with its scoring rule.
+
+    Write-once. `run.py` calls this on every refit, and before this guard every
+    refit re-stamped the file with that week's numbers: the Tuesday job would
+    have quietly replaced the August predictions with November ones, under a new
+    timestamp, which is the exact thing a sealed ledger exists to make
+    impossible. (It would also have failed its own README check, because the
+    README quotes the original digest.) An existing ledger for this season is
+    returned untouched unless `force` is passed by hand."""
+    if LEDGER.exists() and not force:
+        led = json.loads(LEDGER.read_text())
+        if led.get("season") == TARGET_SEASON:
+            return led
     now = stamped_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     snap = json.loads((CONF / "market_snapshot_2026.json").read_text())
     mk = {(r["market"], r["team"]): r for _, r in edges.iterrows()}
@@ -93,11 +117,63 @@ def build(teams: pd.DataFrame, edges: pd.DataFrame, matchups: pd.DataFrame | Non
     }
     # A hash of the content makes the freeze checkable: if a number is edited
     # later the digest stops matching what was published.
-    payload["digest"] = hashlib.sha256(
-        json.dumps({k: v for k, v in payload.items() if k != "digest"},
-                   sort_keys=True).encode()).hexdigest()[:16]
+    payload["digest"] = _digest(payload)
     LEDGER.write_text(json.dumps(payload, indent=2))
     return payload
+
+
+def _first_kickoff_utc(week: int, season: int = TARGET_SEASON) -> datetime | None:
+    """nflverse gives kickoff as an Eastern wall-clock date and time."""
+    from zoneinfo import ZoneInfo
+    from .config import RAW
+    g = pd.read_csv(RAW / "schedules.csv", low_memory=False)
+    g = g[(g["season"] == season) & (g["game_type"] == "REG") & (g["week"] == week)]
+    if not len(g):
+        return None
+    ts = pd.to_datetime(g["gameday"].astype(str) + " " + g["gametime"].astype(str).str.strip(),
+                        errors="coerce").dropna()
+    if not len(ts):
+        return None
+    return ts.min().to_pydatetime().replace(tzinfo=ZoneInfo("America/New_York")).astimezone(timezone.utc)
+
+
+def seal_week(matchups: pd.DataFrame, week: int, now: datetime | None = None) -> dict:
+    """Append this week's game calls to the weekly ledger, once, before kickoff.
+
+    The August ledger holds Week 1 only. From Week 2 on, each refit seals the
+    coming week's spreads, totals and win probabilities with their own digest.
+    A week already sealed is never rewritten, and a week whose first game has
+    kicked off is never sealed at all, because a prediction stamped after the
+    fact is not a prediction."""
+    now = now or datetime.now(timezone.utc)
+    book = (json.loads(WEEKLY_LEDGER.read_text()) if WEEKLY_LEDGER.exists()
+            else {"season": TARGET_SEASON, "weeks": {}})
+    key = str(int(week))
+    if key in book["weeks"] or matchups is None or not len(matchups):
+        return book
+    ko = _first_kickoff_utc(week)
+    if ko is not None and now >= ko:
+        return book
+    games = []
+    for _, g in matchups.iterrows():
+        ms = g.get("market_spread_home")
+        mt = g.get("market_total")
+        games.append({
+            "id": f"{TARGET_SEASON}-W{int(g['week'])}-{g['away']}-{g['home']}",
+            "week": int(g["week"]), "away": g["away"], "home": g["home"],
+            "model_spread_home": round(float(g["model_spread_home"]), 2),
+            "model_total": round(float(g["model_total"]), 2),
+            "home_win_prob": round(float(g["home_win_prob"]), 4),
+            "market_spread_home": None if pd.isna(ms) else float(ms),
+            "market_total": None if pd.isna(mt) else float(mt),
+        })
+    entry = {"week": int(week), "stamped_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+             "first_kickoff_utc": ko.strftime("%Y-%m-%dT%H:%M:%SZ") if ko else None,
+             "games": games}
+    entry["digest"] = _digest(entry)
+    book["weeks"][key] = entry
+    WEEKLY_LEDGER.write_text(json.dumps(book, indent=2))
+    return book
 
 
 def score(season: int = TARGET_SEASON) -> dict:
@@ -151,14 +227,39 @@ def score(season: int = TARGET_SEASON) -> dict:
         rows.append(row)
     d = pd.DataFrame(rows)
 
-    out = {"season": season, "stamped_at": led["stamped_at"], "digest": led["digest"],
-           "games_resolved": int(len(played)), "season_complete": bool(complete),
-           "win_total_mae": round(float(d["win_error"].abs().mean()), 3) if len(d) else None}
+    gp = {}
+    for _, r in played.iterrows():
+        for t in (r["home_team"], r["away_team"]):
+            gp[t] = gp.get(t, 0) + 1
+    if len(d):
+        # Midseason, a full-season projection cannot be compared with half a
+        # season of wins. The preseason call is pro-rated to the games played.
+        d["games_played"] = d["team"].map(gp)
+        d["pace_error"] = d["actual_wins"] - d["proj_wins"] * d["games_played"] / 17.0
 
-    # Game-level calls, gradeable from week one.
-    if led.get("games"):
+    out = {"season": season, "stamped_at": led["stamped_at"], "digest": led["digest"],
+           "digest_verifies": verify(),
+           "games_resolved": int(len(played)), "season_complete": bool(complete),
+           "through_week": int(played["week"].max()),
+           "win_total_mae": round(float(d["win_error"].abs().mean()), 3) if (len(d) and complete) else None,
+           "win_pace_mae": round(float(d["pace_error"].abs().mean()), 3) if len(d) else None}
+    if len(d):
+        dd = d.sort_values("pace_error")
+        out["teams"] = [{"team": r["team"], "actual_wins": float(r["actual_wins"]),
+                         "games_played": int(r["games_played"]),
+                         "preseason_proj_wins": float(r["proj_wins"]),
+                         "pace_error": round(float(r["pace_error"]), 2)} for _, r in dd.iterrows()]
+
+    # Game-level calls, gradeable from week one: the August ledger's Week 1
+    # slate plus every week sealed since.
+    calls = list(led.get("games", []))
+    if WEEKLY_LEDGER.exists():
+        wl = json.loads(WEEKLY_LEDGER.read_text())
+        for wk in sorted(wl.get("weeks", {}).values(), key=lambda x: x["week"]):
+            calls.extend(wk["games"])
+    if calls:
         gl = []
-        for e in led["games"]:
+        for e in calls:
             hit = played[(played["home_team"] == e["home"]) & (played["away_team"] == e["away"])]
             if not len(hit):
                 continue
@@ -172,11 +273,13 @@ def score(season: int = TARGET_SEASON) -> dict:
                 "market_spread_err": abs(-e["market_spread_home"] - margin)
                 if e.get("market_spread_home") is not None else None,
                 "brier_model": (e["home_win_prob"] - (1.0 if margin > 0 else 0.0)) ** 2,
+                "week": int(e["week"]),
             })
         if gl:
             gd = pd.DataFrame(gl)
             out["games"] = {
                 "n": int(len(gd)),
+                "weeks": sorted(int(w) for w in gd["week"].unique()),
                 "straight_up": round(float(gd["model_correct"].mean()), 4),
                 "spread_mae_model": round(float(gd["model_spread_err"].mean()), 3),
                 "spread_mae_market": round(float(gd["market_spread_err"].dropna().mean()), 3)

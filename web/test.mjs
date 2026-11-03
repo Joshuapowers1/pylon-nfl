@@ -147,10 +147,16 @@ for(const [tz, feed] of [['America/New_York','up'], ['America/New_York','blocked
   zoneLabels[where] = labels.join('|');
   await c.close();
 }
-const zoneKeys = Object.keys(zoneLabels);
-const drifted = zoneKeys.filter(k => zoneLabels[k] !== zoneLabels[zoneKeys[0]]);
-if(drifted.length)
-  errors.push(`[time] kickoff labels are not the same everywhere: ${drifted.join('; ')} differ from ${zoneKeys[0]}`);
+/* Compared within a feed, not across them. The stubbed scoreboard is a fixed
+   fixture from one week and the offline path reads whatever week the bundle is
+   on, so from the next refit onward the two slates are different games. What
+   must hold is that the reader's zone never changes a label. */
+for(const feed of ['up', 'blocked']){
+  const zoneKeys = Object.keys(zoneLabels).filter(k => k.endsWith('feed '+feed));
+  const drifted = zoneKeys.filter(k => zoneLabels[k] !== zoneLabels[zoneKeys[0]]);
+  if(drifted.length)
+    errors.push(`[time] kickoff labels are not the same everywhere: ${drifted.join('; ')} differ from ${zoneKeys[0]}`);
+}
 
 
 // The glossary. Every abbreviation in a column header should resolve to a

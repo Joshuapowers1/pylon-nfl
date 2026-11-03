@@ -100,7 +100,7 @@ def load_roster(season=2026) -> pd.DataFrame:
     r["team"] = r["team"].replace({"AZ": "ARI", **TEAM_ALIASES})
     r = r[r["position"].isin(["QB", "RB", "WR", "TE", "FB"])]
     r["position"] = r["position"].replace({"FB": "RB"})
-    return r[["gsis_id", "full_name", "team", "position", "birth_date", "depth_chart_position"]] \
+    return r[["gsis_id", "full_name", "team", "position", "birth_date", "depth_chart_position", "status"]] \
         .rename(columns={"gsis_id": "player_id", "full_name": "player"})
 
 
@@ -260,6 +260,98 @@ def build_player_frame(usage: pd.DataFrame, roles: dict, usage_late: pd.DataFram
     return p
 
 
+def apply_in_season(p: pd.DataFrame, cur: pd.DataFrame, k: dict) -> pd.DataFrame:
+    """Move every player's role toward what this season has measured.
+
+    Shares blend at w = n / (n + k) with n the games he has appeared in and k
+    fitted by `inseason.fit` on a midseason replay of 2024 and 2025. This runs
+    after the role overrides on purpose: an August assertion about a rookie is
+    the prior, and eight weeks of his actual target share is the evidence.
+
+    Efficiency needs no new constant. The empirical-Bayes estimate was built
+    from n_hist opportunities plus K pseudo-opportunities of prior, so this
+    season's opportunities simply join the pool."""
+    if cur is None or not len(cur):
+        return p
+    c = cur.set_index("player_id")
+    p = p.copy()
+    j = p["player_id"].map
+    gp = j(c["games_played"]).fillna(0).to_numpy(dtype=float)
+    p["games_2026"] = gp
+
+    def w(key):
+        return gp / (gp + float(k[key]))
+
+    for col, src, key in (("target_share_eb", "target_share", "target_share"),
+                          ("rz_target_share_eb", "rz_target_share", "target_share"),
+                          ("rush_share_eb", "rush_share", "rush_share"),
+                          ("rz_rush_share_eb", "rz_rush_share", "rush_share"),
+                          ("dropback_share", "dropback_share", "dropback_share")):
+        obs = j(c[src]).to_numpy(dtype=float)
+        has = gp > 0
+        wt = w(key)
+        base = np.nan_to_num(p[col].to_numpy(dtype=float))
+        p[col] = np.where(has, (1 - wt) * base + wt * np.nan_to_num(obs), base)
+
+    def pool(eb_col, n_hist_col, obs_col, n_cur_col, k_prior):
+        n_hist = np.nan_to_num(p[n_hist_col].to_numpy(dtype=float)) if n_hist_col else 0.0
+        n_cur = np.nan_to_num(j(c[n_cur_col]).to_numpy(dtype=float))
+        obs = np.nan_to_num(j(c[obs_col]).to_numpy(dtype=float))
+        prior_w = n_hist + k_prior
+        p[eb_col] = (prior_w * p[eb_col].to_numpy(dtype=float) + n_cur * obs) / (prior_w + n_cur)
+
+    pool("catch_rate_eb", "n_targets", "catch_rate", "targets", K_EFF)
+    pool("ypt_eb", "n_targets", "yards_per_target", "targets", K_EFF)
+    pool("ypc_eb", "n_rush_att", "ypc", "rush_att", K_EFF)
+
+    # Quarterbacks: project() shrinks raw rates by the pass attempts behind
+    # them, so the rates and their attempt counts are pooled here and the same
+    # shrinkage then sees the combined sample.
+    n_old = np.nan_to_num(p["n_pass_att_p"].to_numpy(dtype=float))
+    n_new = np.nan_to_num(j(c["pass_att_p"]).to_numpy(dtype=float))
+    tot = np.maximum(n_old + n_new, 1e-9)
+    for rate in ("ypa", "td_rate_pass", "int_rate"):
+        old = np.nan_to_num(p[rate].to_numpy(dtype=float))
+        new = np.nan_to_num(j(c[rate]).to_numpy(dtype=float))
+        p[rate] = np.where(n_old + n_new > 0, (n_old * old + n_new * new) / tot, old)
+    p["n_pass_att_p"] = n_old + n_new
+    for hist, now in (("n_dropbacks", "dropbacks"), ("n_rush_att", "rush_att"),
+                      ("n_scrambles", "scrambles"), ("n_rush_yards", "rush_yards"),
+                      ("n_scramble_yards", "scramble_yards"), ("n_rush_td", "rush_td"),
+                      ("n_scramble_td", "scramble_td"), ("n_targets", "targets")):
+        p[hist] = np.nan_to_num(p[hist].to_numpy(dtype=float)) + np.nan_to_num(j(c[now]).to_numpy(dtype=float))
+
+    # A breakout who was sixth on the August depth chart has to be let back
+    # into the pool, or the normalisation zeroes the role he has since won.
+    p["role_score"] = (np.nan_to_num(p["target_share_eb"]) + np.nan_to_num(p["rush_share_eb"]) * 0.55
+                       + np.nan_to_num(p["n_targets"] + p["n_rush_att"]) * 1e-6)
+    p["depth"] = (p.groupby(["team", "position"])["role_score"].rank(ascending=False, method="first") - 1).astype(int)
+    p["in_pool"] = p["depth"] < p["position"].map(ROSTER_DEPTH_CAP).fillna(3)
+    return p
+
+
+def rest_of_season(p: pd.DataFrame, team_left: pd.Series) -> pd.DataFrame:
+    """Turn a full-season availability expectation into games still to come.
+
+    The August `games` figure is a risk-adjusted rate over seventeen; that rate
+    is applied to whatever the team has left. A player on a reserve list
+    (injured reserve, PUP, suspension) at the latest roster week is projected
+    for none of them: the roster file does not carry return dates, and a
+    projection that quietly counts him back is a worse error than one that
+    waits for him to be activated."""
+    p = p.copy()
+    left = p["team"].map(team_left).fillna(0).astype(float)
+    rate = (p["games"].clip(0, 17) / 17.0)
+    if "status" in p.columns:
+        rate = rate.where(p["status"] != "RES", 0.0)
+    p["games_left"] = left
+    p["games_ros"] = rate * left
+    p["avail"] = rate
+    p["games_pre"] = p["games"]
+    p["games"] = p["games_ros"]
+    return p
+
+
 def normalise_within_team(p: pd.DataFrame) -> pd.DataFrame:
     """Rescale each team's shares so the team's projected opportunity adds up.
 
@@ -278,7 +370,10 @@ def normalise_within_team(p: pd.DataFrame) -> pd.DataFrame:
     healthy alpha to pay for the projected absences of his own backups, and
     quietly shaves 10-15% off the top of every depth chart in the league."""
     p = p.copy()
-    avail = (p["games"].clip(0, 17) / 17.0)
+    # In season `avail` is the share of the team's REMAINING games a player is
+    # expected to be available for; before kickoff it is games / 17. Same
+    # identity either way: the team's opportunity is fully allocated.
+    avail = p["avail"] if "avail" in p.columns else (p["games"].clip(0, 17) / 17.0)
     # Zero out everyone outside the fantasy-relevant depth of their room first.
     if "in_pool" in p.columns:
         for c in ("target_share_eb", "rush_share_eb", "rz_target_share_eb", "rz_rush_share_eb"):
@@ -391,13 +486,22 @@ def simulate_players(p: pd.DataFrame, n_sims=8000, seed=RANDOM_SEED) -> pd.DataF
     n = len(p)
     base = p["proj_points"].to_numpy()
     g = p["games"].to_numpy()
+    # In season only the games still to play are uncertain. What a player has
+    # already scored is added back unchanged, and the availability spread is
+    # scaled to the games left, so a nine-game remainder is not given the
+    # injury variance of a full season.
+    left = p["games_left"].to_numpy(dtype=float) if "games_left" in p.columns else np.full(n, 17.0)
+    banked = p["points_to_date"].to_numpy(dtype=float) if "points_to_date" in p.columns else np.zeros(n)
+    base = base - banked
 
     # Availability: beta-binomial-ish. Expected games are the mean, and the
     # spread widens for players already carrying an injury flag.
     flagged = (p["override"] != "").to_numpy()
-    avail_sd = np.where(flagged, 3.4, 2.5)
-    games_sim = np.clip(rng.normal(g[:, None], avail_sd[:, None], size=(n, n_sims)), 0, 17)
-    avail_mult = np.divide(games_sim, np.maximum(g[:, None], 1e-9))
+    avail_sd = np.where(flagged, 3.4, 2.5) * np.sqrt(left / 17.0)
+    g_ros = p["games_ros"].to_numpy(dtype=float) if "games_ros" in p.columns else g
+    games_sim = np.clip(rng.normal(g_ros[:, None], np.maximum(avail_sd[:, None], 1e-9),
+                                   size=(n, n_sims)), 0, left[:, None])
+    avail_mult = np.divide(games_sim, np.maximum(g_ros[:, None], 1e-9))
 
     # Usage drift is lognormal and heavier for low-share players, whose roles
     # are the least locked in.
@@ -408,7 +512,7 @@ def simulate_players(p: pd.DataFrame, n_sims=8000, seed=RANDOM_SEED) -> pd.DataF
     eff_sd = np.where(p["position"].to_numpy() == "QB", 0.11, 0.17)
     eff_mult = rng.lognormal(-0.5 * eff_sd[:, None] ** 2, eff_sd[:, None], size=(n, n_sims))
 
-    sims = base[:, None] * avail_mult * usage_mult * eff_mult
+    sims = banked[:, None] + base[:, None] * avail_mult * usage_mult * eff_mult
     out = p.copy()
     for q, name in [(10, "p10"), (25, "p25"), (50, "p50"), (75, "p75"), (90, "p90")]:
         out[name] = np.percentile(sims, q, axis=1)
@@ -469,30 +573,35 @@ GAMES_IN_SEASON = 17
 
 
 def replacement_levels(df: pd.DataFrame, ranks: dict | None = None,
-                       stream: bool = False) -> dict:
+                       stream: bool = False, col: str = "proj_points") -> dict:
     """Season points a freely available player at each position is worth."""
     ranks = ranks or REPLACEMENT_RANK
     out = {}
     for posn, rep in ranks.items():
-        g = df[df["position"] == posn].sort_values("proj_points", ascending=False)
+        g = df[df["position"] == posn].sort_values(col, ascending=False)
         if not len(g):
             out[posn] = 0.0
             continue
-        naive = float(g["proj_points"].iloc[min(rep, len(g)) - 1])
+        naive = float(g[col].iloc[min(rep, len(g)) - 1])
         prem = STREAM_PREMIUM_PPG.get(posn, 0.0) * GAMES_IN_SEASON if stream else 0.0
         out[posn] = naive + prem
     return out
 
 
-def add_vorp(df: pd.DataFrame, ranks: dict | None = None, stream: bool = False) -> pd.DataFrame:
+def add_vorp(df: pd.DataFrame, ranks: dict | None = None, stream: bool = False,
+             col: str = "proj_points") -> pd.DataFrame:
     """Value over replacement, the only currency in which a quarterback and a
-    running back can be compared."""
+    running back can be compared.
+
+    In season `col` is the rest-of-season projection. Points already scored are
+    sunk: they decide a player's finish, but a waiver claim or a trade only buys
+    what he scores from here, so that is what value is measured on."""
     df = df.copy()
     df["vorp"] = np.nan
-    base = replacement_levels(df, ranks, stream)
+    base = replacement_levels(df, ranks, stream, col=col)
     for posn, baseline in base.items():
         g = df[df["position"] == posn]
-        df.loc[g.index, "vorp"] = g["proj_points"] - baseline
+        df.loc[g.index, "vorp"] = g[col] - baseline
     df["pos_rank"] = df.groupby("position")["proj_points"].rank(ascending=False, method="min")
     df["overall_value_rank"] = df["vorp"].rank(ascending=False, method="min")
     df.attrs["replacement"] = base

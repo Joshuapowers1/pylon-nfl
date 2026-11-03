@@ -78,8 +78,34 @@ def test_probabilities_are_ordered(teams):
 
 def test_win_spread_matches_measured_error(teams):
     """The simulator models a season-long team error on top of game noise. Drop
-    it and the spread collapses to about 2.0, which was a real shipped bug."""
-    assert teams["win_sd"].mean() > 2.4
+    it and the spread collapses to about 2.0, which was a real shipped bug.
+
+    In season the bar moves with the calendar: completed games carry no
+    variance at all, so the right comparison is against the spread a
+    game-noise-only model would give over the games still to play. The
+    team-constant draw (shrunk to its posterior) has to add to that, not
+    vanish into it."""
+    if not (RAW / "schedules.csv").exists():
+        st = CONF / "inseason_status.json"
+        if st.exists() and json.loads(st.read_text()).get("applied"):
+            pytest.skip("in season the bound needs the schedule; run ./scripts/fetch_data.sh")
+        assert teams["win_sd"].mean() > 2.4
+        return
+    from scipy.stats import norm
+    sched = simulate.load_schedule()
+    left = sched[sched["result"].isna()]
+    if len(left) == len(sched):
+        assert teams["win_sd"].mean() > 2.4
+        return
+    r = pd.read_csv(OUT / "team_power_ratings.csv").set_index("team")
+    tr = json.loads((CONF / "calibration.json").read_text())["translation"]
+    sg = json.loads((CONF / "backtest.json").read_text())["variance_split"]["sigma_game_pts"]
+    mu = (tr["points_per_rating"] * (left["home_team"].map(r["net_final"]) - left["away_team"].map(r["net_final"]))
+          + np.where(left["neutral"] == 1, 0.0, tr["hfa"]))
+    p = norm.cdf(mu / sg)
+    v = pd.concat([pd.Series(p * (1 - p), index=left["home_team"]),
+                   pd.Series(p * (1 - p), index=left["away_team"])]).groupby(level=0).sum()
+    assert teams["win_sd"].mean() > 1.06 * float(np.sqrt(v).mean())
 
 
 def test_simulator_reproduces_the_schedule():
@@ -173,9 +199,13 @@ def test_default_board_uses_the_unadjusted_replacement(proj):
 
 
 def test_shares_normalise_to_the_team_total(proj):
-    """Every target belongs to somebody, and only to one somebody."""
+    """Every target belongs to somebody, and only to one somebody. In season the
+    weight is availability for the games left, not games over seventeen."""
     for team, g in proj[proj["position"].isin(["WR", "TE", "RB"])].groupby("team"):
-        w = (g["target_share_eb"] * g["games"].clip(0, 17) / 17).sum()
+        avail = g["avail"] if "avail" in g.columns else g["games"].clip(0, 17) / 17
+        if avail.sum() == 0:
+            continue
+        w = (g["target_share_eb"] * avail).sum()
         assert w == pytest.approx(0.99, abs=0.02), team
 
 

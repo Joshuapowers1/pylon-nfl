@@ -32,7 +32,9 @@ def load_schedule(season=TARGET_SEASON) -> pd.DataFrame:
     for c in ("home_team", "away_team"):
         g[c] = g[c].replace(TEAM_ALIASES)
     g["neutral"] = (g["location"].astype(str).str.lower() != "home").astype(int)
-    return g[["game_id", "week", "home_team", "away_team", "neutral"]].reset_index(drop=True)
+    # `result` is home score minus away score, NaN until the game is final. The
+    # simulator plays only the NaN rows and takes the rest as written.
+    return g[["game_id", "week", "home_team", "away_team", "neutral", "result"]].reset_index(drop=True)
 
 
 def game_matrix(sched: pd.DataFrame, ratings: pd.DataFrame, cal: dict):
@@ -46,12 +48,21 @@ def game_matrix(sched: pd.DataFrame, ratings: pd.DataFrame, cal: dict):
 
 
 def simulate(sched: pd.DataFrame, ratings: pd.DataFrame, cal: dict,
-             n_sims: int = N_SIMS, seed: int = RANDOM_SEED, sigma_team: float | None = None):
+             n_sims: int = N_SIMS, seed: int = RANDOM_SEED, sigma_team=None):
     """sigma_team is the season-long, team-constant strength error measured by
     backtest.py. Drawing it once per simulated season and holding it across all
     seventeen games is what separates a win distribution with the right spread
     from one that is roughly a third too narrow. Without it, every win-total and
-    playoff-odds number the model produces is overconfident."""
+    playoff-odds number the model produces is overconfident.
+
+    It may be a scalar or a per-team mapping. In season it is per team, because
+    a rating that has absorbed eight weeks of evidence is less uncertain than
+    the August one it replaced, and by a different amount for a team that has
+    had its bye.
+
+    Completed games are not simulated. Their real margin is written into every
+    simulated season, so a 7-1 team is 7-1 in all 25,000 of them and only the
+    games still to play carry noise."""
     rng = np.random.default_rng(seed)
     if sigma_team is None:
         bt = CONF / "backtest.json"
@@ -59,6 +70,14 @@ def simulate(sched: pd.DataFrame, ratings: pd.DataFrame, cal: dict,
     teams = sorted(set(sched["home_team"]) | set(sched["away_team"]))
     tix = {t: i for i, t in enumerate(teams)}
     nT, nG = len(teams), len(sched)
+    if isinstance(sigma_team, (pd.Series, dict)):
+        st = pd.Series(sigma_team)
+        sigma_vec = np.array([float(st.get(t, st.mean())) for t in teams])
+    else:
+        sigma_vec = np.full(nT, float(sigma_team))
+    result = (sched["result"].to_numpy(dtype=float) if "result" in sched.columns
+              else np.full(nG, np.nan))
+    played = ~np.isnan(result)
 
     # The playoff bracket resolves outside the vectorised regular-season block,
     # so it needs the ratings in index order. Populate here rather than in run()
@@ -93,11 +112,16 @@ def simulate(sched: pd.DataFrame, ratings: pd.DataFrame, cal: dict,
         # Simulate margins for the whole slate at once.
         # One strength draw per team per simulated season, applied to every
         # game that team plays. This is the persistent component.
-        team_eff = rng.normal(0.0, sigma_team, size=(b, nT))
+        team_eff = rng.normal(0.0, 1.0, size=(b, nT)) * sigma_vec[None, :]
         m = (mu[None, :]
              + team_eff[:, hi] - team_eff[:, ai]
              + rng.normal(0.0, sigma, size=(b, nG)))
         tie = rng.random((b, nG)) < TIE_PROBABILITY
+        if played.any():
+            # Overwrite after drawing, so the random stream (and therefore every
+            # published number) does not depend on how many games are final.
+            m[:, played] = result[played][None, :]
+            tie[:, played] = (result[played] == 0)[None, :]
         home_win = (m > 0) & ~tie
         away_win = (m <= 0) & ~tie
 
@@ -245,9 +269,9 @@ def _run_bracket(seeds, mu, cal, rng, teams):
     return _play(hi_, lo_, cal, rng)
 
 
-def run(ratings: pd.DataFrame, cal: dict, n_sims: int = N_SIMS):
+def run(ratings: pd.DataFrame, cal: dict, n_sims: int = N_SIMS, sigma_team=None):
     sched = load_schedule()
-    res, wd, sd = simulate(sched, ratings, cal, n_sims=n_sims)
+    res, wd, sd = simulate(sched, ratings, cal, n_sims=n_sims, sigma_team=sigma_team)
     res.to_csv(OUT / "team_projections.csv", index=False)
     wd.to_csv(OUT / "win_distributions.csv", index=False)
     sd.to_csv(OUT / "seed_distributions.csv", index=False)
