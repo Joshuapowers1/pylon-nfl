@@ -808,6 +808,19 @@ textarea.txt{width:100%; min-height:150px; resize:vertical; font-family:var(--f-
 .foot-fine{font-size:11px; color:var(--ink-4); line-height:1.55; max-width:78ch; padding-top:14px; border-top:1px solid var(--line);}
 @media (max-width:700px){ .foot-meta{text-align:left;} }
 .two{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+/* HTML bar charts (rankBars, divergingBars). Real type sizes at every width. */
+.bx{display:flex; flex-direction:column; gap:5px; font-family:var(--f-mono); font-size:12.5px; line-height:1.2;}
+.bx .hbrow, .bx .dvrow{display:grid; align-items:center; column-gap:10px; min-height:20px;}
+.bx-l{color:var(--ink-2); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.hb-t{display:flex; align-items:center; gap:7px; min-width:0;}
+.hb-t i{display:block; flex:none; height:var(--bh,12px); min-width:2px; border-radius:3px;}
+.hb-t em, .dv-t em{font-style:normal; color:var(--ink-2); white-space:nowrap;}
+.dv-t{position:relative; display:block; height:max(var(--bh,12px), 16px);}
+.dv-t::before{content:""; position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:var(--line-strong);}
+.dv-t i{position:absolute; top:50%; transform:translateY(-50%); height:var(--bh,12px); min-width:2px; border-radius:3px;}
+.dv-t em{position:absolute; top:50%; transform:translateY(-50%);}
+.dv-head{min-height:14px;}
+.dv-zero{text-align:center; font-size:10.5px; letter-spacing:.1em; color:var(--ink-3);}
 /* Grid items default to min-width:auto, so a wide table inside a column sizes
    the whole track to its content and the page scrolls sideways instead of the
    table scrolling inside its own box. */
@@ -1149,55 +1162,52 @@ function winRibbon(team, opts={}){
 /* Horizontal diverging bars. One row per item, zero anchored in the middle.
    Positive uses the "model higher" blue, negative the "model lower" red -
    the same two hues carry that meaning everywhere in the app. */
+/* Bar charts are HTML, not SVG. An SVG drawn on a 1000-unit canvas is scaled
+   to whatever card it sits in, so in a half-width card its 11px labels landed
+   at about 5px and nobody could read them. HTML rows keep the type at its real
+   size at every width, and the bar lengths are still percentages of the track. */
 function divergingBars(items, opts={}){
-  const rowH = opts.rowH || 22, labelW = opts.labelW || 46, valW = opts.valW || 62;
-  const H = items.length*rowH + 26;
-  const max = Math.max(...items.map(d=>Math.abs(d.v)), .0001) * 1.08;
-  const plotW = 1000 - labelW - valW;
-  const mid = labelW + plotW/2;
-  const sc = v => (v/max)*(plotW/2);
-  let rows='';
-  items.forEach((d,i)=>{
-    const y = 22 + i*rowH, bh = Math.min(rowH-7, 13);
-    const len = Math.abs(sc(d.v));
-    const x = d.v>=0 ? mid : mid-len;
-    const col = d.v>=0 ? 'var(--up)' : 'var(--down)';
-    rows += `<g class="dvrow" data-k="${esc(d.key||d.label)}">
-      <rect x="0" y="${y-4}" width="1000" height="${rowH}" fill="transparent"/>
-      <text x="${labelW-8}" y="${y+bh/2+1}" text-anchor="end" font-size="11" font-family="var(--f-mono)"
-        fill="var(--ink-2)" dominant-baseline="middle">${esc(d.label)}</text>
-      <rect x="${x.toFixed(1)}" y="${y}" width="${Math.max(len,1).toFixed(1)}" height="${bh}" rx="3" fill="${col}"/>
-      <text x="${(d.v>=0? mid+len+7 : mid-len-7).toFixed(1)}" y="${y+bh/2+1}"
-        text-anchor="${d.v>=0?'start':'end'}" font-size="11" font-family="var(--f-mono)"
-        fill="var(--ink-3)" dominant-baseline="middle">${esc(d.vLabel!=null?d.vLabel:sgn(d.v))}</text>
-    </g>`;
-  });
-  return `<svg viewBox="0 0 1000 ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Diverging bar chart')}">
-    <line x1="${mid}" y1="14" x2="${mid}" y2="${H-6}" stroke="var(--line-strong)" stroke-width="1"/>
-    <text x="${mid}" y="10" text-anchor="middle" font-size="9.5" font-family="var(--f-mono)"
-      letter-spacing=".1em" fill="var(--ink-4)">${esc(opts.zeroLabel||'')}</text>
-    ${rows}</svg>`;
+  const max = Math.max(...items.map(d=>Math.abs(d.v)), .0001);
+  const bh = Math.min((opts.rowH||22)-8, 14);
+  const lw = opts.labelW || 46;
+  /* Each half of the track keeps room at its outer edge for the longest value
+     label, so the biggest bar's number never runs off the card on a phone. */
+  const vw = 10 + 7.6*Math.max(...items.map(d=>String(d.vLabel!=null?d.vLabel:sgn(d.v)).length));
+  const rows = items.map(d=>{
+    const frac = (Math.abs(d.v)/max).toFixed(4), pos = d.v>=0;
+    const len = `(50% - ${vw.toFixed(0)}px) * ${frac}`;
+    const col = pos ? 'var(--up)' : 'var(--down)';
+    return `<div class="dvrow" data-k="${esc(d.key||d.label)}" style="grid-template-columns:${lw}px 1fr">
+      <span class="bx-l">${esc(d.label)}</span>
+      <span class="dv-t" style="--bh:${bh}px">
+        <i style="${pos?'left':'right'}:50%;width:calc(${len})"></i>
+        <em style="${pos?'left':'right'}:calc(50% + ${len} + 6px)">${esc(d.vLabel!=null?d.vLabel:sgn(d.v))}</em>
+      </span>
+    </div>`.replace('<i style="', `<i style="background:${col};`);
+  }).join('');
+  return `<div class="bx dv" aria-label="${esc(opts.aria||'Diverging bar chart')}">
+    ${opts.zeroLabel?`<div class="dvrow dv-head" style="grid-template-columns:${lw}px 1fr"><span></span><span class="dv-zero">${esc(opts.zeroLabel)}</span></div>`:''}
+    ${rows}</div>`;
 }
 
 /* Ranked single-hue bars, for magnitude with no meaningful zero crossing. */
 function rankBars(items, opts={}){
-  const rowH = opts.rowH||20, labelW=opts.labelW||120;
-  const H = items.length*rowH + 8;
   const max = Math.max(...items.map(d=>d.v), .0001);
-  // Reserve room for the longest value label, or the widest bar's label runs
-  // straight off the right edge of the viewBox.
-  const valW = opts.valW || Math.max(56, 7.2*Math.max(...items.map(d=>String(d.vLabel!=null?d.vLabel:'').length)));
-  const plotW = 1000-labelW-valW;
-  let rows='';
-  items.forEach((d,i)=>{
-    const y=4+i*rowH, bh=Math.min(rowH-6,12), len=(d.v/max)*plotW;
-    rows += `<g>
-      <text x="${labelW-8}" y="${y+bh/2}" text-anchor="end" font-size="11" font-family="var(--f-mono)" fill="var(--ink-2)" dominant-baseline="middle">${esc(d.label)}</text>
-      <rect x="${labelW}" y="${y}" width="${Math.max(len,1).toFixed(1)}" height="${bh}" rx="3" fill="${d.color||'var(--q4)'}"/>
-      <text x="${(labelW+len+7).toFixed(1)}" y="${y+bh/2}" font-size="11" font-family="var(--f-mono)" fill="var(--ink-3)" dominant-baseline="middle">${esc(d.vLabel!=null?d.vLabel:f1(d.v))}</text>
-    </g>`;
-  });
-  return `<svg viewBox="0 0 1000 ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(opts.aria||'Ranked bars')}">${rows}</svg>`;
+  const bh = Math.min((opts.rowH||20)-8, 14);
+  const lw = opts.labelW || 120;
+  // Reserve room after the longest bar for its value label.
+  const vw = 10 + 7.6*Math.max(...items.map(d=>String(d.vLabel!=null?d.vLabel:f1(d.v)).length));
+  const rows = items.map(d=>{
+    const frac = Math.max(d.v,0)/max;
+    return `<div class="hbrow" style="grid-template-columns:${lw}px 1fr">
+      <span class="bx-l">${esc(d.label)}</span>
+      <span class="hb-t" style="--bh:${bh}px">
+        <i style="width:calc((100% - ${vw.toFixed(0)}px) * ${frac.toFixed(4)});background:${d.color||'var(--q4)'}"></i>
+        <em>${esc(d.vLabel!=null?d.vLabel:f1(d.v))}</em>
+      </span>
+    </div>`;
+  }).join('');
+  return `<div class="bx" aria-label="${esc(opts.aria||'Ranked bars')}">${rows}</div>`;
 }
 
 /* Stacked probability bar - used for playoff seeding. */
