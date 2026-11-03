@@ -1447,6 +1447,23 @@ function teamSheet(code){
        <div><dt>Super Bowl</dt><dd>${pct(t.super_bowl,1)}</dd></div>
      </div>
 
+     ${(()=>{
+       const done = sch.filter(g=>g[3]!=null && g[4]!=null);
+       if(!done.length) return '';
+       const pf = done.reduce((a,g)=>a+g[3],0), pa = done.reduce((a,g)=>a+g[4],0);
+       return `<div class="blk">
+         <h4>2026 so far</h4>
+         <div class="dl">
+           <div><dt>Record</dt><dd>${t.wins_to_date}-${t.losses_to_date}${t.ties_to_date?'-'+t.ties_to_date:''}</dd></div>
+           <div><dt>Points for</dt><dd>${pf}</dd></div>
+           <div><dt>Points against</dt><dd>${pa}</dd></div>
+           <div><dt>Point differential</dt><dd style="color:${pf-pa>0?'var(--up)':pf-pa<0?'var(--down)':'inherit'}">${pf-pa>0?'+':''}${pf-pa}</dd></div>
+           <div><dt>Weight on 2026 plays</dt><dd>${t.w_inseason!=null?pct(t.w_inseason,0):'&ndash;'}</dd></div>
+           <div><dt>August rating</dt><dd>${t.pre_power_rating!=null?sgn(t.pre_power_rating):'&ndash;'}</dd></div>
+         </div>
+       </div>`;
+     })()}
+
      <div class="blk">
        <h4>Win distribution &middot; 25,000 simulated seasons</h4>
        ${winRibbon(code,{h:74, line:line})}
@@ -1511,14 +1528,22 @@ function teamSheet(code){
      </div>
 
      <div class="blk">
-       <h4>2026 schedule</h4>
-       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:5px">
+       <h4>2026 schedule &middot; results so far, Pylon's number for the rest</h4>
+       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:5px">
          ${sch.map(g=>{
             const opp=BYTEAM[g[1]];
+            const done = g[3]!=null && g[4]!=null;
+            const res = done ? (g[3]>g[4]?'W':g[3]<g[4]?'L':'T') : null;
+            /* Upcoming games carry the model's win probability from the same
+               margin the matchup page uses, so the two can never disagree. */
+            const m = done ? null : (g[2] ? modelMargin(g[1], code) : -modelMargin(code, g[1]));
+            const wp = m==null ? null : winProb(m);
             return `<button class="card" style="padding:7px 8px;text-align:left;cursor:pointer" data-t="${g[1]}" title="${esc(opp.name)}">
               <div class="eyebrow" style="font-size:9px">WK ${g[0]}</div>
               <div class="num" style="font-size:12.5px;font-weight:500">${mark(g[1],18)}${g[2]?'':'@'}</div>
-              <div class="dim num" style="font-size:10px">${sgn(opp.power_rating)}</div>
+              ${done
+                ? `<div class="num" style="font-size:11px;font-weight:600;color:${res==='W'?'var(--up)':res==='L'?'var(--down)':'inherit'}">${res} ${g[3]}-${g[4]}</div>`
+                : `<div class="dim num" style="font-size:10.5px">${pct(wp,0)} to win</div>`}
             </button>`;
          }).join('')}
        </div>
@@ -1551,8 +1576,12 @@ function playerSheet(p){
    </div>
    <div class="sheet-body">
      <div class="dl">
-       <div><dt>Projected points</dt><dd>${f1(p.proj_points)}</dd></div>
-       <div><dt>Per game</dt><dd>${f1(p.proj_ppg)}</dd></div>
+       ${p.points_to_date!=null ? `
+       <div><dt>Scored so far</dt><dd>${f1(p.points_to_date)}</dd></div>
+       <div><dt>Games played</dt><dd>${p.games_to_date||0}</dd></div>
+       <div><dt>Rest of season</dt><dd>${f1(p.proj_ros)}</dd></div>` : ''}
+       <div><dt>${p.points_to_date!=null?'Season total':'Projected points'}</dt><dd>${f1(p.proj_points)}</dd></div>
+       <div><dt>${p.points_to_date!=null?'Per game from here':'Per game'}</dt><dd>${f1(p.proj_ppg)}</dd></div>
        <div><dt>17-game pace</dt><dd>${f1(p.proj_points_17g)}</dd></div>
        <div><dt>Expected games</dt><dd>${f1(p.games)}</dd></div>
        <div><dt>Value over repl.</dt><dd>${p.vorp!=null?f1(p.vorp):'&ndash;'}</dd></div>
@@ -1584,7 +1613,7 @@ function playerSheet(p){
      </div>
 
      <div class="blk">
-       <h4>Projected production</h4>
+       <h4>${p.points_to_date!=null?'Season production &middot; so far plus projected':'Projected production'}</h4>
        <div class="dl">
          ${isQB?`
            <div><dt>Pass attempts</dt><dd>${f0(p.pass_att)}</dd></div>
@@ -1610,7 +1639,7 @@ function playerSheet(p){
        ${divergingBars([{label:'SLOTS', v:p.arb, vLabel:(p.arb>0?'+':'')+p.arb}],
           {rowH:30,labelW:66,valW:70,zeroLabel:'FAIR'})}
        <div class="dl" style="margin-top:8px">
-         <div><dt>Live ADP</dt><dd>${esc(p.adp_formatted)}</dd></div>
+         <div><dt>${D.meta.in_season?'Preseason ADP':'Live ADP'}</dt><dd>${esc(p.adp_formatted)}</dd></div>
          <div><dt>ADP rank</dt><dd>${p.adp_rank}</dd></div>
          <div><dt>Model value rank</dt><dd>${p.value_rank}</dd></div>
          <div><dt>Verdict</dt><dd style="font-size:13px">${verdictTag(p.verdict)}</dd></div>
@@ -1819,7 +1848,8 @@ function pageOverview(){
      <div class="kpi"><div class="v">${(BT.straight_up_game_accuracy*100).toFixed(1)}%</div><div class="l">Straight-up game accuracy. A closing Vegas line hits near 66%.</div></div>
      <div class="kpi"><div class="v">25,000</div><div class="l">Simulated seasons on the real 2026 schedule</div></div>
      <div class="kpi"><div class="v">${D.meta.n_players}</div><div class="l">Players projected, each with 10,000 of their own simulations</div></div>
-     <div class="kpi"><div class="v">${VIG[1]? VIG[1].overround_pct.toFixed(1)+'%':'&ndash;'}</div><div class="l">Sportsbook vig stripped out before a single comparison is made</div></div>
+     ${(()=>{ const v = VIG.find(x=>/DraftKings/.test(x.book)) || VIG[0];
+        return `<div class="kpi"><div class="v">${v? (v.overround_pct>0?'+':'')+v.overround_pct.toFixed(1)+'%':'&ndash;'}</div><div class="l">${v? esc(v.book.replace(' (',', ').replace(')','')) : 'Market'} overround, stripped out before a single comparison is made</div></div>`; })()}
    </div>
 
    <div class="two" style="margin-bottom:12px">
@@ -2001,8 +2031,9 @@ function pagePlayers(){
     {h:'Player', k:'player', left:true, f:r=>`<span class="pos-dot" style="background:${posColor(r.position)}"></span>${esc(r.player)}`},
     {h:'Pos', k:'pos_rank', f:r=>`${r.position}${r.pos_rank&&r.pos_rank<900?r.pos_rank:''}`, asc:true},
     {h:'Team', k:'team', f:r=>`${mark(r.team,17)}${r.team}`, asc:true},
-    {h:'Pts', k:'proj_points', f:r=>f1(r.proj_points), title:'Projected PPR points, risk-adjusted for games played'},
-    {h:'PPG', k:'proj_ppg', f:r=>f1(r.proj_ppg)},
+    {h:'Pts', k:'proj_points', f:r=>f1(r.proj_points), title:D.meta.in_season?'Season PPR points: scored so far plus the rest-of-season projection':'Projected PPR points, risk-adjusted for games played'},
+    ...(D.meta.in_season ? [{h:'So far', k:'points_to_date', f:r=>r.points_to_date!=null?f1(r.points_to_date):'&ndash;', title:'PPR points already scored in 2026'}] : []),
+    {h:'PPG', k:'proj_ppg', f:r=>f1(r.proj_ppg), title:D.meta.in_season?'Projected points per game from here':''},
     {h:'17g', k:'proj_points_17g', f:r=>f1(r.proj_points_17g), title:'Points at a healthy 17-game pace, for comparing to industry sets'},
     {h:'G', k:'games', f:r=>f1(r.games), title:'Expected games played'},
     {h:'Tgt', k:'targets', f:r=>r.targets>0?f0(r.targets):'&ndash;'},
@@ -2147,7 +2178,7 @@ function pageMarket(){
     {n:'Make playoffs', m:['Make Playoffs']},
     {n:'Divisions', m:markets.filter(x=>x.startsWith('Division'))},
     {n:'Win totals', m:markets.filter(x=>x.startsWith('Win Total'))},
-  ];
+  ].filter(g=>g.m.length);
   p.innerHTML = `
    ${head('Model versus market',
      'Every price here is de-vigged before it is compared to anything. A sportsbook\'s 32 Super Bowl prices sum to well over 100%, and comparing a model to raw prices produces an edge on all 32 teams, which is arithmetic rather than insight.')}
@@ -2684,19 +2715,28 @@ const SIM = (()=>{
   const baseNet = Float64Array.from(codes.map(c=>BYTEAM[c].power_rating));  // already in points
 
   // Flatten the real schedule into typed arrays once.
-  const H=[],A=[];
+  const H=[],A=[],R=[];
   const seen=new Set();
   codes.forEach(c=>(D.schedule[c]||[]).forEach(g=>{
     const home = g[2] ? c : g[1], away = g[2] ? g[1] : c;
     const key = g[0]+':'+home+':'+away;
     if(seen.has(key)) return; seen.add(key);
     H.push(ix[home]); A.push(ix[away]);
+    // Home margin when the game is final, NaN while it is still to play.
+    const done = g[3]!=null && g[4]!=null;
+    R.push(done ? (g[2] ? g[3]-g[4] : g[4]-g[3]) : NaN);
   }));
   const hIdx = Int32Array.from(H), aIdx = Int32Array.from(A), nG = hIdx.length;
+  const res = Float64Array.from(R);
+  const nPlayed = R.filter(x=>!Number.isNaN(x)).length;
 
   const HFA = D.calibration.translation.hfa;
   const SG  = D.backtest.variance_split.sigma_game_pts;
   const ST  = D.backtest.variance_split.sigma_team_pts;
+  /* Same posterior as the Python engine: a rating that has absorbed this
+     season's games is less uncertain, by sqrt(1 - w) for its own weight w. */
+  const STi = Float64Array.from(codes.map(c=>ST*Math.sqrt(1-Math.min(Math.max(BYTEAM[c].w_inseason||0,0),1))));
+  const STmean = STi.reduce((a,b)=>a+b,0)/nT;
 
   /* Deterministic PRNG so a given scenario always returns the same numbers. */
   function mulberry32(a){ return function(){
@@ -2730,10 +2770,12 @@ const SIM = (()=>{
 
     for(let s=0;s<nSims;s++){
       W.fill(0); DW.fill(0); DL.fill(0); CW.fill(0); CL.fill(0);
-      for(let i=0;i<nT;i++){ eff[i]=gauss()*ST; jit[i]=rnd()*1e-7; }
+      for(let i=0;i<nT;i++){ eff[i]=gauss()*STi[i]; jit[i]=rnd()*1e-7; }
       for(let g=0;g<nG;g++){
         const h=hIdx[g], a=aIdx[g];
-        const m = HFA + (net[h]+eff[h]) - (net[a]+eff[a]) + gauss()*SG;
+        const noise = gauss()*SG;
+        const m = Number.isNaN(res[g]) ? HFA + (net[h]+eff[h]) - (net[a]+eff[a]) + noise : res[g];
+        if(m===0){ W[h]+=0.5; W[a]+=0.5; continue; }
         const hw = m>0;
         if(hw) W[h]++; else W[a]++;
         if(div[h]===div[a]){ if(hw){DW[h]++;DL[a]++;} else {DW[a]++;DL[h]++;} }
@@ -2777,7 +2819,7 @@ const SIM = (()=>{
       one_seed:s1[i]/nSims, conf_champ:cc[i]/nSims, super_bowl:sb[i]/nSims,
     }));
   }
-  return {run, codes, ix, nGames:nG, HFA, SG, ST};
+  return {run, codes, ix, nGames:nG, nPlayed, HFA, SG, ST, STmean};
 })();
 
 /* ---------------------------------------------------------------- SIMULATOR */
@@ -2789,8 +2831,8 @@ function pageSim(){
      'This is not a picture of the model, it is the model. The same Monte Carlo that produced every number on this site runs in your browser. Move a team and the whole league re-solves, because a season is a closed system and one team getting better makes seventeen opponents worse.')}
    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
      <div class="kpi"><div class="v" id="simN">10,000</div><div class="l">seasons per run</div></div>
-     <div class="kpi"><div class="v">${SIM.nGames}</div><div class="l">real games simulated each season</div></div>
-     <div class="kpi"><div class="v">${SIM.ST}</div><div class="l">team sigma, drawn once per season and held all year</div></div>
+     <div class="kpi"><div class="v">${SIM.nGames - SIM.nPlayed}</div><div class="l">games still to play, simulated each season${SIM.nPlayed?`, with ${SIM.nPlayed} already final and locked to their real scores`:''}</div></div>
+     <div class="kpi"><div class="v">${SIM.STmean.toFixed(2)}</div><div class="l">team sigma${SIM.nPlayed?' (average, shrunk by this season\'s evidence)':''}, drawn once per season and held all year</div></div>
      <div class="kpi"><div class="v">${SIM.SG}</div><div class="l">game sigma, redrawn every week</div></div>
      <div class="kpi"><div class="v" id="simMs">&ndash;</div><div class="l">last run time</div></div>
    </div>
@@ -2917,10 +2959,14 @@ function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(DRAFT)
 /* Scoring conversion. Projections are built in full PPR, so a half-point or
    standard league is the same projection with reception credit removed. */
 function scoredPoints(p){
-  const r = p.receptions || 0;
-  return DRAFT.scoring==='ppr' ? p.proj_points
-       : DRAFT.scoring==='half' ? p.proj_points - 0.5*r
-       : p.proj_points - r;
+  /* In season a draft is a mid-season redraft or a trade, and points already
+     scored cannot be acquired, so the board runs on what is left. */
+  const ros = D.meta.in_season && p.proj_ros!=null;
+  const base = ros ? p.proj_ros : p.proj_points;
+  const r = (ros ? p.receptions_ros : p.receptions) || 0;
+  return DRAFT.scoring==='ppr' ? base
+       : DRAFT.scoring==='half' ? base - 0.5*r
+       : base - r;
 }
 /* Replacement level scales with league size: a 10-team league starts fewer
    players, so the bar a pick has to clear is higher. */
@@ -2929,7 +2975,7 @@ function replacementRanks(){
   return {QB:Math.round(14*k), RB:Math.round(30*k), WR:Math.round(38*k), TE:Math.round(13*k)};
 }
 function draftPool(){
-  const pool = PLAYERS.filter(p=>POS.includes(p.position) && p.proj_points>0)
+  const pool = PLAYERS.filter(p=>POS.includes(p.position) && (D.meta.in_season ? p.proj_ros>0 : p.proj_points>0))
                       .map(p=>({...p, pts:scoredPoints(p)}));
   const rep = replacementRanks(), base={};
   POS.forEach(pos=>{
@@ -2955,8 +3001,10 @@ function draftPool(){
 function pageDraftRoom(){
   const p=document.getElementById('pg-draft');
   p.innerHTML = `
-   ${head('Draft room',
-     'Set your league up, then take players off the board as they go. Value over replacement recomputes for your size and scoring on every pick, and the scarcity meter tells you what is actually running out. Your board is saved in this browser.')}
+   ${head(D.meta.in_season ? 'Rest-of-season board' : 'Draft room',
+     D.meta.in_season
+       ? 'Draft season is over, so this board ranks what every player is worth from here: rest-of-season points, value over replacement for your league size and scoring, and what is running out at each position. Use it for a redraft, a trade, or the waiver wire. Your board is saved in this browser.'
+       : 'Set your league up, then take players off the board as they go. Value over replacement recomputes for your size and scoring on every pick, and the scarcity meter tells you what is actually running out. Your board is saved in this browser.')}
    <div class="bar">
      <label class="eyebrow" style="align-self:center">League</label>
      <select class="sel" id="dTeams">${[8,10,12,14,16].map(n=>`<option ${n===DRAFT.teams?'selected':''}>${n}</option>`).join('')}</select>
@@ -3147,7 +3195,7 @@ function pageEV(){
     {n:'Playoffs', m:['Make Playoffs']},
     {n:'Divisions', m:markets.filter(x=>x.startsWith('Division'))},
     {n:'Win totals', m:markets.filter(x=>x.startsWith('Win Total'))},
-  ];
+  ].filter(g=>g.m.length);
   p.innerHTML = `
    ${head('Edge and expected value',
      "Every price here is de-vigged before anything is compared to it. Edit any price to your live one and the expected value and stake recompute. A sportsbook's thirty-two Super Bowl prices sum to well over a hundred percent, and comparing a model to raw prices manufactures an edge on all thirty-two teams, which is arithmetic rather than insight.")}
@@ -3322,7 +3370,7 @@ function playerCompare(mountEl){
       ['Carries', p=>p.rush_att>0?f0(p.rush_att):'&ndash;'],
       ['Rushing yards', p=>p.rush_yards>0?f0(p.rush_yards):'&ndash;'],
       ['Total TDs', p=>f1((p.rec_td||0)+(p.rush_td||0)+(p.pass_td||0))],
-      ['Live ADP', p=>p.adp_formatted||'&ndash;'],
+      [D.meta.in_season?'Preseason ADP':'Live ADP', p=>p.adp_formatted||'&ndash;'],
       ['Model value rank', p=>p.value_rank||'&ndash;'],
       ['Gap vs the room', p=>p.arb==null?'&ndash;':(p.arb>0?'+':'')+p.arb],
     ];
@@ -3397,7 +3445,7 @@ function pageMatchups(){
 
    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
      <div class="kpi"><div class="v">${MATCHUPS.length}</div><div class="l">games projected</div></div>
-     <div class="kpi"><div class="v">${meanSp.toFixed(1)}<small> pts</small></div><div class="l">average disagreement with the closing line</div></div>
+     <div class="kpi"><div class="v">${meanSp.toFixed(1)}<small> pts</small></div><div class="l">average disagreement with the ${WEEK_NO>1?'posted':'closing'} line</div></div>
      <div class="kpi"><div class="v">${withLines.filter(g=>Math.abs(g.spread_edge)>=3).length}</div><div class="l">games the model disagrees by 3 points or more</div></div>
      <div class="kpi"><div class="v">${biggestSp?esc(biggestSp.away+' at '+biggestSp.home):'&ndash;'}</div><div class="l">biggest gap on the spread, ${biggestSp?Math.abs(biggestSp.spread_edge).toFixed(1):''} points</div></div>
      <div class="kpi"><div class="v">${biggestTot?esc(biggestTot.away+' at '+biggestTot.home):'&ndash;'}</div><div class="l">biggest gap on the total, ${biggestTot?Math.abs(biggestTot.total_edge).toFixed(1):''} points</div></div>
@@ -3495,7 +3543,7 @@ function gradedSoFar(){
      <p class="muted" style="font-size:13px;margin:0 0 12px;max-width:80ch">
        The August digest ${G.digest_verifies ? 'still verifies' : '<b>no longer verifies</b>'}: the file being graded
        is the file that was published. Game calls are graded from Week 1, and every week since has been sealed
-       before its first kickoff${weeks.length ? ' (weeks ' + weeks.join(', ') + ' so far)' : ''}. Win totals are
+       before its first kickoff${weeks.length ? ' (week' + (weeks.length>1?'s ':' ') + weeks.join(', ') + ' so far)' : ''}. Win totals are
        compared with the August projection pro-rated to the games each team has played.
      </p>
      <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
@@ -4093,7 +4141,9 @@ function liveSentence(g, m){
 function pageLive(){
   const p = document.getElementById('pg-live');
   p.innerHTML = head('Live right now',
-    "Every other number on this site was worked out in August and frozen. This page asks the scoreboard what is actually happening and puts the model's guess beside it, so you can watch it be right or wrong instead of taking anybody's word for it.")
+    (D.meta.in_season
+      ? "Every number on this site was refit on " + new Date(D.meta.built+'T12:00:00Z').toLocaleDateString('en-US',{month:'long',day:'numeric'}) + " from every play through Week " + D.meta.through_week + ". This page asks the scoreboard what is happening now and puts the model's guess beside it, so you can watch it be right or wrong instead of taking anybody's word for it."
+      : "Every other number on this site was worked out before kickoff and frozen. This page asks the scoreboard what is actually happening and puts the model's guess beside it, so you can watch it be right or wrong instead of taking anybody's word for it."))
     + '<div id="liveBody"></div>';
   /* Draw the committed slate first. Nothing is ever blank or spinning. */
   LIVE.games = seedLive(); LIVE.week = (D.live_seed && D.live_seed.week) || WEEK_NO;
@@ -4160,7 +4210,7 @@ function renderLive(){
          On the hosted site the scores fill in and refresh themselves.`
       : `Scores from the public ESPN scoreboard, refreshed ${LIVE.games.some(g=>g.state==='in') ? 'every 45 seconds while games are being played' : 'every five minutes'}.
          Last checked ${LIVE.fetched ? etFmt(LIVE.fetched, {hour:'numeric', minute:'2-digit', second:'2-digit'}) : 'just now'}.`}
-    Pylon's number for each game is worked out from ratings fixed in August, so it never sees the score before guessing.
+    Pylon's number for each game comes from ratings ${D.meta.in_season ? 'refit through Week '+D.meta.through_week : 'fixed before the season'}, so it never sees the score before guessing.
   </p>`;
 }
 

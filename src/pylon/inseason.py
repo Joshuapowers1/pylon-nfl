@@ -283,6 +283,9 @@ def add_to_date(proj: pd.DataFrame, td: pd.DataFrame) -> pd.DataFrame:
     t = td.set_index("player_id")
     j = p["player_id"].map
     p["proj_ros"] = p["proj_points"]
+    # Kept so a half-PPR or standard league can strip reception credit from
+    # the rest-of-season number without guessing how many catches are left.
+    p["receptions_ros"] = p["receptions"]
     p["points_to_date"] = j(t["points_to_date"]).fillna(0.0)
     p["games_to_date"] = j(t["games_to_date"]).fillna(0).astype(int)
     for c in _VOLUME:

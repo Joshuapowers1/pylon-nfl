@@ -97,6 +97,19 @@ if(lv.cards < 12) errors.push(`[live] only ${lv.cards} games rendered`);
 if(lv.says !== lv.cards) errors.push(`[live] ${lv.cards} cards but ${lv.says} explanations`);
 if(lv.blank) errors.push(`[live] ${lv.blank} games rendered an empty sentence`);
 
+/* The in-browser simulator has to agree with the engine that published every
+   other number. In season that only holds if it locks completed games and uses
+   the same posterior team error, which it once did not: it re-rolled all 272
+   games, so an 0-7 team got its August odds back in the scenario lab. */
+const simAgree = await r.evaluate(()=>{
+  const out = SIM.run({}, 4000, 1207);
+  const diff = out.reduce((a,x)=>a+Math.abs(x.proj_wins-BYTEAM[x.team].proj_wins),0)/out.length;
+  const below = out.filter(x=>BYTEAM[x.team].wins_to_date!=null && x.proj_wins < BYTEAM[x.team].wins_to_date - 1e-9).map(x=>x.team);
+  return {diff, below};
+});
+if(!(simAgree.diff < 0.15)) errors.push(`[sim] browser simulator is ${simAgree.diff.toFixed(3)} wins from the engine on average`);
+if(simAgree.below.length) errors.push(`[sim] simulated wins below wins already banked: ${simAgree.below.join(', ')}`);
+
 // The model must price a game the pipeline never ran, from committed ratings.
 const mm = await r.evaluate(()=>{
   const g = LIVE.games[0];

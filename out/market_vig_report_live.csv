@@ -1,12 +1,12 @@
 book,n_outcomes,raw_sum,overround_pct,power_k,largest_method_gap_team,power_vs_proportional_pp
-Super Bowl LXI (Polymarket),32,1.0155,1.55,1.0055,SF,0.064
-AFC Champion (Polymarket),16,0.9705,-2.95,0.9861,BUF,-0.299
-NFC Champion (Polymarket),16,1.0,0.0,1.0,DAL,0.0
-Division AFC East (Polymarket),4,0.9945,-0.55,0.9913,,
-Division AFC North (Polymarket),4,0.9905,-0.95,0.9911,,
-Division AFC South (Polymarket),4,1.0575,5.75,1.0983,,
-Division AFC West (Polymarket),4,1.0225,2.25,1.0262,,
-Division NFC East (Polymarket),4,0.9735,-2.65,0.977,,
-Division NFC North (Polymarket),4,1.045,4.5,1.0348,,
-Division NFC South (Polymarket),4,0.9675,-3.25,0.9756,,
-Division NFC West (Polymarket),4,0.987,-1.3,0.982,,
+Super Bowl LXI (Polymarket),32,1.0105,1.05,1.0037,SF,0.044
+AFC Champion (Polymarket),16,0.9605,-3.95,0.9816,BUF,-0.364
+NFC Champion (Polymarket),16,0.992,-0.8,0.9964,SF,-0.081
+Division AFC East (Polymarket),4,0.9945,-0.55,0.9912,,
+Division AFC North (Polymarket),4,0.9795,-2.05,0.9811,,
+Division AFC South (Polymarket),4,1.054,5.4,1.0884,,
+Division AFC West (Polymarket),4,1.0135,1.35,1.0157,,
+Division NFC East (Polymarket),4,0.9685,-3.15,0.9726,,
+Division NFC North (Polymarket),4,1.035,3.5,1.0271,,
+Division NFC South (Polymarket),4,0.967,-3.3,0.9752,,
+Division NFC West (Polymarket),4,0.972,-2.8,0.961,,

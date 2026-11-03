@@ -145,9 +145,19 @@ def build() -> dict:
     sch = {}
     for tm in TEAM_META:
         g = sched[(sched["home_team"] == tm) | (sched["away_team"] == tm)].sort_values("week")
+        # [week, opponent, home flag, points for, points against]. The two
+        # scores are null until the game is final, so the page can show the
+        # result where there is one and the model's number where there is not,
+        # and the in-browser simulator can lock what has already happened.
+        def _pts(r, side):
+            v = r[side]
+            return None if pd.isna(v) else int(v)
         sch[tm] = [[int(r["week"]),
                     r["away_team"] if r["home_team"] == tm else r["home_team"],
-                    1 if r["home_team"] == tm else 0] for _, r in g.iterrows()]
+                    1 if r["home_team"] == tm else 0,
+                    _pts(r, "home_score" if r["home_team"] == tm else "away_score"),
+                    _pts(r, "away_score" if r["home_team"] == tm else "home_score")]
+                   for _, r in g.iterrows()]
 
     # ---- players -----------------------------------------------------------
     p = players.copy()
@@ -171,15 +181,15 @@ def build() -> dict:
              "p_top3","p_top5","p_top12","p_bust","vorp","pos_rank","target_share_eb",
              "rush_share_eb","depth","adp","adp_formatted","adp_rank","value_rank","arb",
              "verdict","bye","override"]
-    pcols += [c for c in ("points_to_date", "games_to_date", "proj_ros", "games_ros", "status")
-              if c in p.columns]
+    pcols += [c for c in ("points_to_date", "games_to_date", "proj_ros", "games_ros", "receptions_ros",
+                          "status") if c in p.columns]
     pround = {"games":1,"proj_points":1,"proj_ppg":1,"proj_points_17g":1,"targets":1,
               "receptions":1,"rec_yards":0,"rec_td":1,"rush_att":1,"rush_yards":0,"rush_td":1,
               "pass_att":0,"pass_yards":0,"pass_td":1,"interceptions":1,"p10":1,"p25":1,"p50":1,
               "p75":1,"p90":1,"p_top3":3,"p_top5":3,"p_top12":3,"p_bust":3,"vorp":1,"pos_rank":0,
               "target_share_eb":4,"rush_share_eb":4,"depth":0,"adp":1,"adp_rank":0,
               "value_rank":0,"arb":0,"bye":0,"points_to_date":1,"games_to_date":0,
-              "proj_ros":1,"games_ros":1}
+              "proj_ros":1,"games_ros":1,"receptions_ros":1}
     p = p.sort_values("proj_points", ascending=False)
 
     # ---- market ------------------------------------------------------------

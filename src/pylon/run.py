@@ -143,7 +143,7 @@ def main(n_sims=N_SIMS, rebuild=False, player_sims=8000):
             "p_top3", "p_top5", "p_top12", "p_bust", "vorp", "pos_rank", "overall_value_rank",
             "target_share_eb", "rush_share_eb", "depth", "override"]
     keep += [c for c in ("avail", "status", "games_2026", "games_to_date", "games_ros", "points_to_date",
-                         "proj_ros", "ppg_to_date") if c in sim.columns]
+                         "proj_ros", "receptions_ros", "ppg_to_date") if c in sim.columns]
     out = sim[keep].sort_values("proj_points", ascending=False)
     out.to_csv(OUT / "player_projections.csv", index=False)
     _t(f"projected {len(out):,} players with {player_sims:,} sims each", t0)
