@@ -1,13 +1,13 @@
 {
-  "through_week": 8,
-  "current_week": 9,
+  "through_week": 9,
+  "current_week": 10,
   "applied": true,
   "k": 8.0,
-  "w_mean": 0.4854,
-  "w_min": 0.4667,
-  "w_max": 0.5,
-  "games_mean": 7.562,
-  "plays_2026": 12530,
+  "w_mean": 0.5147,
+  "w_min": 0.5,
+  "w_max": 0.5294,
+  "games_mean": 8.5,
+  "plays_2026": 14009,
   "k_usage": {
     "target_share": 3,
     "rush_share": 1,
@@ -17,5 +17,5 @@
     "off_td_per_game": 8
   },
   "sigma_team_prior": 4.055,
-  "sigma_team_mean": 2.908
+  "sigma_team_mean": 2.825
 }

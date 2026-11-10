@@ -173,6 +173,168 @@
         }
       ],
       "digest": "9378b458ea392c4b"
+    },
+    "10": {
+      "week": 10,
+      "stamped_at": "2026-11-10T20:10:51Z",
+      "first_kickoff_utc": "2026-11-13T01:15:00Z",
+      "games": [
+        {
+          "id": "2026-W10-WAS-NYG",
+          "week": 10,
+          "away": "WAS",
+          "home": "NYG",
+          "model_spread_home": -2.91,
+          "model_total": 43.88,
+          "home_win_prob": 0.5837,
+          "market_spread_home": -2.5,
+          "market_total": 41.5
+        },
+        {
+          "id": "2026-W10-NE-DET",
+          "week": 10,
+          "away": "NE",
+          "home": "DET",
+          "model_spread_home": -0.26,
+          "model_total": 49.35,
+          "home_win_prob": 0.5075,
+          "market_spread_home": -2.5,
+          "market_total": 51.5
+        },
+        {
+          "id": "2026-W10-KC-ATL",
+          "week": 10,
+          "away": "KC",
+          "home": "ATL",
+          "model_spread_home": 2.05,
+          "model_total": 47.19,
+          "home_win_prob": 0.4409,
+          "market_spread_home": 3.5,
+          "market_total": 45.5
+        },
+        {
+          "id": "2026-W10-HOU-CLE",
+          "week": 10,
+          "away": "HOU",
+          "home": "CLE",
+          "model_spread_home": 3.45,
+          "model_total": 43.39,
+          "home_win_prob": 0.4009,
+          "market_spread_home": 4.5,
+          "market_total": 39.5
+        },
+        {
+          "id": "2026-W10-MIN-GB",
+          "week": 10,
+          "away": "MIN",
+          "home": "GB",
+          "model_spread_home": -6.79,
+          "model_total": 41.15,
+          "home_win_prob": 0.6893,
+          "market_spread_home": -3.5,
+          "market_total": 41.5
+        },
+        {
+          "id": "2026-W10-MIA-IND",
+          "week": 10,
+          "away": "MIA",
+          "home": "IND",
+          "model_spread_home": -3.88,
+          "model_total": 43.79,
+          "home_win_prob": 0.611,
+          "market_spread_home": -2.5,
+          "market_total": 40.5
+        },
+        {
+          "id": "2026-W10-CAR-NO",
+          "week": 10,
+          "away": "CAR",
+          "home": "NO",
+          "model_spread_home": -1.51,
+          "model_total": 45.36,
+          "home_win_prob": 0.5436,
+          "market_spread_home": -1.5,
+          "market_total": 48.5
+        },
+        {
+          "id": "2026-W10-BUF-NYJ",
+          "week": 10,
+          "away": "BUF",
+          "home": "NYJ",
+          "model_spread_home": 5.79,
+          "model_total": 47.55,
+          "home_win_prob": 0.337,
+          "market_spread_home": 8.5,
+          "market_total": 50.5
+        },
+        {
+          "id": "2026-W10-JAX-TEN",
+          "week": 10,
+          "away": "JAX",
+          "home": "TEN",
+          "model_spread_home": 10.1,
+          "model_total": 43.52,
+          "home_win_prob": 0.2314,
+          "market_spread_home": 10.5,
+          "market_total": 46.5
+        },
+        {
+          "id": "2026-W10-LA-ARI",
+          "week": 10,
+          "away": "LA",
+          "home": "ARI",
+          "model_spread_home": 8.16,
+          "model_total": 45.57,
+          "home_win_prob": 0.2764,
+          "market_spread_home": 9.5,
+          "market_total": 40.5
+        },
+        {
+          "id": "2026-W10-SEA-LV",
+          "week": 10,
+          "away": "SEA",
+          "home": "LV",
+          "model_spread_home": 5.76,
+          "model_total": 41.86,
+          "home_win_prob": 0.3377,
+          "market_spread_home": 6.0,
+          "market_total": 40.5
+        },
+        {
+          "id": "2026-W10-SF-DAL",
+          "week": 10,
+          "away": "SF",
+          "home": "DAL",
+          "model_spread_home": 5.65,
+          "model_total": 52.08,
+          "home_win_prob": 0.3405,
+          "market_spread_home": 3.5,
+          "market_total": 55.5
+        },
+        {
+          "id": "2026-W10-PIT-CIN",
+          "week": 10,
+          "away": "PIT",
+          "home": "CIN",
+          "model_spread_home": -4.99,
+          "model_total": 47.62,
+          "home_win_prob": 0.6416,
+          "market_spread_home": -3.5,
+          "market_total": 49.5
+        },
+        {
+          "id": "2026-W10-LAC-BAL",
+          "week": 10,
+          "away": "LAC",
+          "home": "BAL",
+          "model_spread_home": -9.32,
+          "model_total": 42.03,
+          "home_win_prob": 0.7509,
+          "market_spread_home": -5.5,
+          "market_total": 38.5
+        }
+      ],
+      "digest": "2501e690c550dc98"
     }
   }
 }
